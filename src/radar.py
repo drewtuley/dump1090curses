@@ -93,9 +93,10 @@ def main(screen):
     show.start()
     c = screen.getch()
     runstate['run'] = False
+    
 try:
     curses.wrapper(main)
-except KeyboardInterrupt:
-	exit()
+except:
+    exit()
 
 	
