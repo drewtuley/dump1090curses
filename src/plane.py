@@ -49,8 +49,9 @@ class Plane:
 
     def show(self):
         print "Id=%s callsign=%s squawk=%04d alt=%s track=%s gs=%s lat=%s long=%s" % (self.id, self.callsign, int(self.squawk), self.altitude, self.track, self.gs, self.lat, self.long)
-
-    def showheader(self, win):
+        
+    @classmethod
+    def showheader(cls,win):
         col = 0
         for id in Plane.columns:
             win.addstr(0, col, Plane.columns[id][0])
