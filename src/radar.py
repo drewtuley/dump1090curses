@@ -32,12 +32,12 @@ def removeplanes():
     for id in tozap:
         del planes[id]
 
-def getplanes(lock):
+def getplanes(lock, run):
     c_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM);
     c_socket.connect(('localhost', 30003));
 
     for line in c_socket.makefile('r'):
-        if die:
+        if not run['run']:
             return
         parts = [x.strip() for x in line.split(',')]
         if parts[0] == 'MSG':
@@ -52,9 +52,9 @@ def getplanes(lock):
             lock.release()
 
 
-def showplanes(win, lock):
-    while not die:
-        time.sleep(.500)
+def showplanes(win, lock, run):
+    while run['run']:
+        time.sleep(.400)
         row = 2
         win.erase()
         Plane.showheader(win)
@@ -62,7 +62,7 @@ def showplanes(win, lock):
         for id in sorted(planes, key=planes.__getitem__):
             if row < rows - 1:
                 planes[id].showincurses(win, row)
-                row = row + 1
+                row += 1
 
         now = str(datetime.utcnow())
         try:
@@ -85,14 +85,14 @@ def main(screen):
     win.bkgd(curses.color_pair(1))
     win.box()
 
-    die = False
+    runstate = {'run':True}
     lock = thread.allocate_lock()
-    get = threading.Thread(target=getplanes, args=(lock, ))
-    show = threading.Thread(target=showplanes, args=(win, lock, ))
+    get = threading.Thread(target=getplanes, args=(lock, runstate ))
+    show = threading.Thread(target=showplanes, args=(win, lock, runstate ))
     get.start()
     show.start()
     c = screen.getch()
-    die = True
+    runstate['run'] = False
 try:
     curses.wrapper(main)
 except KeyboardInterrupt:
