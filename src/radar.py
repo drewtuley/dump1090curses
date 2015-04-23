@@ -93,6 +93,7 @@ def main(screen):
     show.start()
     c = screen.getch()
     runstate['run'] = False
+    time.sleep(1)
     
 try:
     curses.wrapper(main)
