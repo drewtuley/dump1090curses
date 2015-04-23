@@ -8,90 +8,93 @@
 #MSG,7,111,11111,40649F,111111,2015/04/15,08:19:35.880,2015/04/15,08:19:35.869,,25725,,,,,,,,,,0
 
 
-import socket,os, curses, threading, thread, time
-from plane import Plane
+import curses
 from datetime import datetime
+from plane import Plane
+import socket
+import thread
+import threading
+import time
 
-planes={}
-cols=155
-rows=28
-die=False
+planes = {}
+cols = 155
+rows = 28
+die = False
 
 def removeplanes():
-	""" Remove any plane with eventdate older than 30s """
-	tozap=[]
-	for id in planes:
-		plane=planes[id]
-		if (datetime.utcnow()-plane.eventdate).total_seconds() > 30:
-			tozap.append(id)	
+    """ Remove any plane with eventdate older than 30s """
+    tozap = []
+    for id in planes:
+        plane = planes[id]
+        if (datetime.utcnow()-plane.eventdate).total_seconds() > 30:
+            tozap.append(id)	
 	
-	for id in tozap:
-		del planes[id]
+    for id in tozap:
+        del planes[id]
 
 def getplanes(lock):
-	c_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM);
-	c_socket.connect(('localhost',30003));
+    c_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM);
+    c_socket.connect(('localhost', 30003));
 
-	for line in c_socket.makefile('r'):
-		if die:
-			return
-		parts=[x.strip() for x in line.split(',')]
-		if parts[0] == 'MSG':
-			id = parts[4]
-			lock.acquire()
-			if id in planes:
-				plane =planes[id]
-			else:
-				plane = Plane(parts[4], datetime.utcnow())
-				planes[id]=plane
-			plane.update(parts)
-			lock.release()
+    for line in c_socket.makefile('r'):
+        if die:
+            return
+        parts = [x.strip() for x in line.split(',')]
+        if parts[0] == 'MSG':
+            id = parts[4]
+            lock.acquire()
+            if id in planes:
+                plane = planes[id]
+            else:
+                plane = Plane(parts[4], datetime.utcnow())
+                planes[id] = plane
+            plane.update(parts)
+            lock.release()
 
 
 def showplanes(win, lock):
-	plane = Plane('abcdef',datetime.utcnow())
-	while not die:
-		time.sleep(.500)
-		row=2
-		win.erase()
-		plane.showheader(win)
-		lock.acquire()
-		for id in sorted(planes, key=planes.__getitem__):
-			if row < rows - 1:
-				planes[id].showincurses(win, row)
-				row=row+1
+    while not die:
+        time.sleep(.500)
+        row = 2
+        win.erase()
+        Plane.showheader(win)
+        lock.acquire()
+        for id in sorted(planes, key=planes.__getitem__):
+            if row < rows - 1:
+                planes[id].showincurses(win, row)
+                row = row + 1
 
-		now=str(datetime.utcnow())
-		try:
-			win.addstr(rows-1,cols-5-len(now),now)
-			win.addstr(rows-1,cols-45,str(die))
-		except:
-			pass	
-		win.refresh()
-		removeplanes()
-		lock.release()
+        now = str(datetime.utcnow())
+        try:
+            win.addstr(rows-1, cols-5-len(now), now)
+            win.addstr(rows-1, cols-45, str(die))
+        except:
+            pass	
+        win.refresh()
+        removeplanes()
+        lock.release()
 
 
 def main(screen):
-	curses.start_color()
-	curses.init_pair(1,curses.COLOR_WHITE, curses.COLOR_BLACK)
+    curses.start_color()
+    curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLACK)
 
-	screen.refresh()
+    screen.refresh()
 
-	win = curses.newwin(rows,cols,1,1)
-	win.bkgd(curses.color_pair(1))
-	win.box()
+    win = curses.newwin(rows, cols, 1, 1)
+    win.bkgd(curses.color_pair(1))
+    win.box()
 
-	die = False
-	lock = thread.allocate_lock()
-	get = threading.Thread(target=getplanes, args=(lock,))
-	show =threading.Thread(target=showplanes, args=(win, lock,))
-	get.start()
-	show.start()
-	c=screen.getch()
-	die = True
+    die = False
+    lock = thread.allocate_lock()
+    get = threading.Thread(target=getplanes, args=(lock, ))
+    show = threading.Thread(target=showplanes, args=(win, lock, ))
+    get.start()
+    show.start()
+    c = screen.getch()
+    die = True
 try:
-	curses.wrapper(main)
+    curses.wrapper(main)
 except KeyboardInterrupt:
 	exit()
 
