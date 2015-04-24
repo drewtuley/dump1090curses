@@ -19,8 +19,7 @@ import time
 planes = {}
 cols = 155
 rows = 28
-die = False
-total_count = 0
+
 
 def removeplanes():
     """ Remove any plane with eventdate older than 30s """
@@ -48,7 +47,7 @@ def getplanes(lock, run):
                 plane = planes[id]
             else:
                 plane = Plane(parts[4], datetime.utcnow())
-                total_count += 1
+                run['total_count'] += 1
                 planes[id] = plane
             plane.update(parts)
             lock.release()
@@ -69,7 +68,7 @@ def showplanes(win, lock, run):
         now = str(datetime.utcnow())
         try:
             win.addstr(rows-1, 1, 'Current Planes:'+str(len(planes)))
-            win.addstr(rows-1, 30, 'Total Planes (session):'+str(total_count))
+            win.addstr(rows-1, 30, 'Total Planes (session):'+str(run['total_count']))
             win.addstr(rows-1, cols-5-len(now), now)
         except:
             pass	
@@ -88,7 +87,7 @@ def main(screen):
     win.bkgd(curses.color_pair(1))
     win.box()
 
-    runstate = {'run':True}
+    runstate = {'run':True, 'total_count':0}
     lock = thread.allocate_lock()
     get = threading.Thread(target=getplanes, args=(lock, runstate ))
     show = threading.Thread(target=showplanes, args=(win, lock, runstate ))
