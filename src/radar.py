@@ -49,6 +49,8 @@ def getplanes(lock, run):
                 plane = Plane(parts[4], datetime.utcnow())
                 run['total_count'] += 1
                 planes[id] = plane
+                if len(planes) > run['max_session']:
+                    run['max_session'] = len(planes)
             plane.update(parts)
             lock.release()
 
@@ -67,8 +69,7 @@ def showplanes(win, lock, run):
 
         now = str(datetime.utcnow())
         try:
-            win.addstr(rows-1, 1, 'Current Planes:'+str(len(planes)))
-            win.addstr(rows-1, 30, 'Total Planes (session):'+str(run['total_count']))
+            win.addstr(rows-1, 1, 'Current :'+str(len(planes))+' Total (session):'+str(run['total_count'])+' Max (session):'+str(run['max_session']))
             win.addstr(rows-1, cols-5-len(now), now)
         except:
             pass	
@@ -87,7 +88,7 @@ def main(screen):
     win.bkgd(curses.color_pair(1))
     win.box()
 
-    runstate = {'run':True, 'total_count':0}
+    runstate = {'run':True, 'total_count':0, 'max_session':0}
     lock = thread.allocate_lock()
     get = threading.Thread(target=getplanes, args=(lock, runstate ))
     show = threading.Thread(target=showplanes, args=(win, lock, runstate ))
