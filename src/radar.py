@@ -97,7 +97,7 @@ def main(screen):
     show = threading.Thread(target=showplanes, args=(win, lock, runstate ))
     get.start()
     show.start()
-    while screen.getch() != ERR:
+    while screen.getch() == curses.ERR:
         pass
     runstate['run'] = False
     time.sleep(1)
