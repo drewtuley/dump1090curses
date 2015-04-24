@@ -47,17 +47,17 @@ def getplanes(lock, run):
                 plane = planes[id]
             else:
                 plane = Plane(parts[4], datetime.utcnow())
-                run['total_count'] += 1
+                run['session_count'] += 1
                 planes[id] = plane
-                if len(planes) > run['max_session']:
-                    run['max_session'] = len(planes)
+                if len(planes) > run['session_max']:
+                    run['session_max'] = len(planes)
             plane.update(parts)
             lock.release()
 
 
 def showplanes(win, lock, run):
     while run['run']:
-        time.sleep(.400)
+        time.sleep(.100)
         row = 2
         win.erase()
         Plane.showheader(win)
@@ -66,16 +66,19 @@ def showplanes(win, lock, run):
             if row < rows - 1:
                 planes[id].showincurses(win, row)
                 row += 1
+            else:
+                break
 
         now = str(datetime.utcnow())
         try:
-            win.addstr(rows-1, 1, 'Current :'+str(len(planes))+' Total (session):'+str(run['total_count'])+' Max (session):'+str(run['max_session']))
+            win.addstr(rows-1, 1, 'Current :'+str(len(planes))+' Total (session):'+str(run['session_count'])+' Max (session):'+str(run['session_max']))
             win.addstr(rows-1, cols-5-len(now), now)
         except:
-            pass	
-        win.refresh()
+            pass
         removeplanes()
         lock.release()
+        win.refresh()
+
 
 
 def main(screen):
@@ -88,13 +91,14 @@ def main(screen):
     win.bkgd(curses.color_pair(1))
     win.box()
 
-    runstate = {'run':True, 'total_count':0, 'max_session':0}
+    runstate = {'run':True, 'session_count':0, 'session_max':0}
     lock = thread.allocate_lock()
     get = threading.Thread(target=getplanes, args=(lock, runstate ))
     show = threading.Thread(target=showplanes, args=(win, lock, runstate ))
     get.start()
     show.start()
-    c = screen.getch()
+    while screen.getch() != ERR:
+        pass
     runstate['run'] = False
     time.sleep(1)
     
