@@ -5,8 +5,16 @@ import sys
 
 class Plane:
     """A simple SBC Plane class"""
-    columns = {0:('ICAO', 7), 1:('Callsign', 11), 2:('Squawk', 7), 3:('Alt', 7), 4:('VSpeed', 9), 5:('Track', 7), 6:('Speed(kts)', 12), 7:('Lat', 10), 8:('Long', 10), 9:('nearest', 30), 10:('eventdate', 26), 11:('>15s', 6), 12:('Reg', 6)}
-    locations = {'LBA':(53.8736961, -1.6732249), 'Leeds':(53.797365, -1.5580089), 'Harrogate':(53.9771475, -1.5430934), 'Skipton':(53.9552364, -2.0219937), 'Bradford':(53.7470237, -1.728551), 'Sheffield':(53.3957166, -1.4994562), 'Hawes':(54.3040185, -2.198943), 'Doncaster':(53.5188469, -1.1200236), 'Wakefield':(53.6782581, -1.3712726), 'Manc-EGCC':(53.2114, -2.1630)}
+    columns = {0:('ICAO', 7), 1:('Callsign', 11), 2:('Squawk', 7), 3:('Alt', 7), 
+        4:('VSpeed', 9), 5:('Track', 7), 6:('Speed(kts)', 12), 7:('Lat', 10), 
+        8:('Long', 10), 9:('Nearest Location', 30), 10:('Eventdate', 26), 11:('>15s', 6), 
+        12:('Reg', 6)}
+    # these locations are of interest to me - insert your own - simple 'Name':(digital_lat, digital_long)
+    locations = {'LBA':(53.8736961, -1.6732249), 'Leeds':(53.797365, -1.5580089), 
+        'Harrogate':(53.9771475, -1.5430934), 'Skipton':(53.9552364, -2.0219937), 
+        'Bradford':(53.7470237, -1.728551), 'Sheffield':(53.3957166, -1.4994562), 
+        'Hawes':(54.3040185, -2.198943), 'Doncaster':(53.5188469, -1.1200236), 
+        'Wakefield':(53.6782581, -1.3712726), 'Manc-EGCC':(53.2114, -2.1630)}
     callsigns = {}
     radar24url = 'http://www.flightradar24.com/data/_ajaxcalls/autocomplete_airplanes.php?&term='
 
@@ -34,6 +42,10 @@ class Plane:
         self.appeardate = now
 	
     def get_registration(self, id):
+        """ 
+        Not sure how long radar24 will keep this REST endpoint exposed 
+        But might as well use it while we can
+        """
         geturl = Plane.radar24url + str(id)
         try:
             response = requests.get(geturl)
@@ -92,6 +104,12 @@ class Plane:
 
 
     def update(self, parts):
+        """
+        Update internal representation of each plane based on the contents
+        of the update message
+        TODO: Would be more efficient to use the message type (parts[1]) to 
+        work out which elements are relevant
+        """
         can_update_nearest = False
         if len(parts[6]) > 0 and len(parts[7]) > 0:
             self.eventdate = datetime.strptime(parts[6] + " " + parts[7], "%Y/%m/%d %H:%M:%S.%f")
@@ -119,11 +137,10 @@ class Plane:
             self.update_nearest()
 
     def update_nearest(self):
-        nearest = 200
+        nearest = 400
         for loc in Plane.locations:
             data = Plane.locations[loc]
-            #print "%s %s %s %s" % ((self.lat), (self.long), (data[0]), (data[1]))
-            distance = distance_on_sphere(float(self.lat), float(self.long), float(data[0]), float(data[1]))
+            distance = distance_on_sphere(float(self.lat), float(self.long), (data[0]), (data[1]))
             if distance < nearest:
                 nearest = distance
                 br = bearing(data[0], data[1], float(self.lat), float(self.long))
@@ -131,6 +148,9 @@ class Plane:
 
 
 def distance_on_sphere(lat1, long1, lat2, long2):
+    """
+    Courtesy of http://www.johndcook.com/blog/python_longitude_latitude/
+    """
     deg_to_rad = math.pi / 180.0
 
     phi1 = (90.0 - lat1) * deg_to_rad
@@ -142,9 +162,12 @@ def distance_on_sphere(lat1, long1, lat2, long2):
     cos = (math.sin(phi1) * math.sin(phi2) * math.cos(theta1-theta2) + math.cos(phi1) * math.cos(phi2))
     arc = math.acos(cos)
 
-    return arc * 3441.15
+    return arc * 3440
 
 def bearing(lat1, long1, lat2, long2):
+    """
+    Courtesy of http://www.movable-type.co.uk/scripts/latlong.html
+    """
     dtor = math.pi / 180.0
     rlat1 = lat1 * dtor
     rlat2 = lat2 * dtor
@@ -165,7 +188,6 @@ def cardinal(bearing):
 
 if len(sys.argv) > 1 and sys.argv[1] == 'test':
     testplane = Plane('AABBCC', datetime.utcnow())
-
 
     # test distance_on_sphere
     leeds = Plane.locations['Leeds']
