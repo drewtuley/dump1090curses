@@ -100,7 +100,7 @@ def main(screen):
     
     while runstate['run']:
         ch = screen.getch()
-        if ch != curses.ERR and ch == 113:
+        if ch == 113:
             runstate['run'] = False
         
     time.sleep(1)
