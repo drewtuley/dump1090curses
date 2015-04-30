@@ -55,7 +55,7 @@ class Plane:
             callsigns = {}
         
         if id in callsigns.keys():
-            reg = callsigns[id]
+            reg = callsigns[id]+'*'
         else:
             reg = self.get_registration_from_fr24(id)
             callsigns[id] = reg
