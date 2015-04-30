@@ -10,7 +10,7 @@ import shelve
 
 CALLSIGNS = 'callsigns'
 if __name__ == "__main__":
-    db = shelve.open('planes.db')
+    db = shelve.open('plane.db')
     
     if db.has_key(CALLSIGNS):
         cs = db[CALLSIGNS]
