@@ -2,6 +2,9 @@ from datetime import datetime
 import math
 import requests
 import sys
+import shelve
+
+CALLSIGNS = 'callsigns'
 
 class Plane:
     """A simple SBC Plane class"""
@@ -17,7 +20,8 @@ class Plane:
         'Wakefield':(53.6782581, -1.3712726), 'Manc-EGCC':(53.2114, -2.1630)}
     callsigns = {}
     radar24url = 'http://www.flightradar24.com/data/_ajaxcalls/autocomplete_airplanes.php?&term='
-
+    db = None
+    
     def __init__(self, id, now):
         self.id = id
         self.registration = self.get_registration(id)
@@ -42,6 +46,24 @@ class Plane:
         self.appeardate = now
 	
     def get_registration(self, id):
+        if Plane.db == None:
+            Plane.db = shelve.open('plane.db')
+        
+        if Plane.db.has_key(CALLSIGNS):
+            callsigns = Plane.db[CALLSIGNS]
+        else:
+            callsigns = {}
+        
+        if id in callsigns.keys():
+            reg = callsigns[id]
+        else:
+            reg = self.get_registration_from_fr24(id)
+            callsigns[id] = reg
+            Plane.db[CALLSIGNS] = callsigns
+        
+        return reg
+    
+    def get_registration_from_fr24(self, id):
         """ 
         Not sure how long radar24 will keep this REST endpoint exposed 
         But might as well use it while we can
