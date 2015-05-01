@@ -26,7 +26,7 @@ def removeplanes():
     tozap = []
     for id in planes:
         plane = planes[id]
-        if (datetime.utcnow()-plane.eventdate).total_seconds() > 30:
+        if (datetime.now()-plane.eventdate).total_seconds() > 30:
             tozap.append(id)	
 	
     for id in tozap:
@@ -46,7 +46,7 @@ def getplanes(lock, run):
             if id in planes:
                 plane = planes[id]
             else:
-                plane = Plane(parts[4], datetime.utcnow())
+                plane = Plane(parts[4], datetime.now())
                 run['session_count'] += 1
                 planes[id] = plane
                 if len(planes) > run['session_max']:
@@ -69,7 +69,7 @@ def showplanes(win, lock, run):
             else:
                 break
 
-        now = str(datetime.utcnow())
+        now = str(datetime.now())
         try:
             win.addstr(rows-1, 1, 'Current :'+str(len(planes))+' Total (session):'+str(run['session_count'])+' Max (session):'+str(run['session_max']))
             win.addstr(rows-1, cols-5-len(now), now)
