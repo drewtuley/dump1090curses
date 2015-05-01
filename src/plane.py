@@ -27,7 +27,7 @@ class Plane:
         self.registration = self.get_registration(id)
         if id in Plane.callsigns.keys():
             cachetime = Plane.callsigns[id][1]
-            if (datetime.utcnow()-cachetime).total_seconds() > 30 * 60:
+            if (datetime.now()-cachetime).total_seconds() > 30 * 60:
                 del Plane.callsigns[id]
                 self.callsign = '?'
             else:
@@ -118,7 +118,7 @@ class Plane:
             elif idx == 10:
                 win.addstr(row, col, str(self.eventdate))
             elif idx == 11:
-                if (datetime.utcnow()-self.eventdate).total_seconds() > 15:
+                if (datetime.now()-self.eventdate).total_seconds() > 15:
                     win.addstr(row, col, ' *')
             elif idx == 12:
                 win.addstr(row, col, self.registration)
@@ -137,7 +137,7 @@ class Plane:
             self.eventdate = datetime.strptime(parts[6] + " " + parts[7], "%Y/%m/%d %H:%M:%S.%f")
         if len(parts[10]) > 0:
             self.callsign = parts[10]
-            Plane.callsigns[self.id] = (self.callsign, datetime.utcnow())
+            Plane.callsigns[self.id] = (self.callsign, datetime.now())
         if len(parts[11]) > 0:
             self.altitude = parts[11]
         if len(parts[12]) > 0:
@@ -209,7 +209,7 @@ def cardinal(bearing):
 
 
 if len(sys.argv) > 1 and sys.argv[1] == 'test':
-    testplane = Plane('AABBCC', datetime.utcnow())
+    testplane = Plane('AABBCC', datetime.now())
 
     # test distance_on_sphere
     leeds = Plane.locations['Leeds']
@@ -233,9 +233,9 @@ if len(sys.argv) > 1 and sys.argv[1] == 'test':
     testplane.update(update)
     print testplane.nearest
 
-    Plane.callsigns['AABBCCDD'] = ('Hellcat', datetime.utcnow())
+    Plane.callsigns['AABBCCDD'] = ('Hellcat', datetime.now())
     update = ['', '', '', '', '', '', '', '', '', '', 'Pussy', '', '', '', '53.123456', '-1.5223123', '', '', '', '']
-    testplane2 = Plane('AABBCCDD', datetime.utcnow())
+    testplane2 = Plane('AABBCCDD', datetime.now())
     print testplane2.callsign
     testplane2.update(update)
     print testplane2.callsign
