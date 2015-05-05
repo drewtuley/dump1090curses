@@ -79,6 +79,7 @@ def showplanes(win, lock, run):
         lock.release()
         win.refresh()
 
+    Plane.close_database()
 
 
 def main(screen):
