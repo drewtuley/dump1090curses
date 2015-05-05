@@ -7,10 +7,13 @@
 __author__ = "andrew.tuley"
 __date__ = "$30-Apr-2015 13:27:11$"
 import shelve
+import os
+
 
 CALLSIGNS = 'callsigns'
 if __name__ == "__main__":
-    db = shelve.open('plane.db')
+    dbname = os.genenv('REGDBNAME','plane.db')
+    db = shelve.open(dbname)
     
     if db.has_key(CALLSIGNS):
         cs = db[CALLSIGNS]
