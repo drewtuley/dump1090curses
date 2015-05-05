@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
-import socket, time
+import socket
+import time
 
 c_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM);
 c_socket.connect(('localhost',30003));
