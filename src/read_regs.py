@@ -12,7 +12,7 @@ import os
 
 CALLSIGNS = 'callsigns'
 if __name__ == "__main__":
-    dbname = os.getenv('REGDBNAME','plane.db')
+    dbname = os.getenv('REGDBNAME','planes.db')
     db = shelve.open(dbname)
     
     try:

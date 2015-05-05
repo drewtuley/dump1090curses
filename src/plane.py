@@ -48,7 +48,7 @@ class Plane:
 	
     def get_registration(self, id):
         if Plane.db == None:
-            dbname = os.getenv('REGDBNAME', 'plane.db')
+            dbname = os.getenv('REGDBNAME', 'planes.db')
             Plane.db = shelve.open(dbname)
         
         if Plane.db.has_key(CALLSIGNS):
