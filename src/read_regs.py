@@ -15,7 +15,12 @@ if __name__ == "__main__":
     dbname = os.getenv('REGDBNAME','plane.db')
     db = shelve.open(dbname)
     
-    if db.has_key(CALLSIGNS):
-        cs = db[CALLSIGNS]
-        for k in cs:
-            print (k+'='+cs[k])
+    try:
+        if db.has_key(CALLSIGNS):
+            cs = db[CALLSIGNS]
+            for k in cs:
+                print (k+'='+cs[k])
+    except:
+        pass
+    
+    db.close()
