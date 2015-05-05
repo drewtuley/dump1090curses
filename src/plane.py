@@ -2,6 +2,7 @@ from datetime import datetime
 import math
 import requests
 import sys
+import os
 import shelve
 
 CALLSIGNS = 'callsigns'
@@ -47,7 +48,8 @@ class Plane:
 	
     def get_registration(self, id):
         if Plane.db == None:
-            Plane.db = shelve.open('plane.db')
+            dbname = os.getenv('REGDBNAME', 'plane.db')
+            Plane.db = shelve.open(dbname)
         
         if Plane.db.has_key(CALLSIGNS):
             callsigns = Plane.db[CALLSIGNS]
@@ -83,6 +85,11 @@ class Plane:
 
     def show(self):
         print "Id=%s callsign=%s squawk=%04d alt=%s track=%s gs=%s lat=%s long=%s" % (self.id, self.callsign, int(self.squawk), self.altitude, self.track, self.gs, self.lat, self.long)
+        
+    @classmethod
+    def close_database(cls):
+        if Plane.db != None:
+            Plane.db.close()
         
     @classmethod
     def showheader(cls,win):
