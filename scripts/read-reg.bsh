@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# display loaded regs
+# display loaded regs 
 
 sleep 2
 clear

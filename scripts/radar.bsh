@@ -2,6 +2,7 @@
 
 
 # start the dump1090/radar display
+
 sleep 2
 clear
 DUMP1090=$HOME/git/dump1090curses
