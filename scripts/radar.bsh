@@ -1,0 +1,16 @@
+#!/bin/bash
+
+
+# start the dump1090/radar display
+sleep 2
+clear
+DUMP1090=$HOME/git/dump1090curses
+DATA=${DUMP1090}
+if [ ! -d ${DATA} ]; then
+    mkdir -m 777 ${DATA}
+fi
+REGDBNAMES=${DATA}/planes.db
+
+export REGDBNAMES
+python ${DUMP1090}/src/radar.py
+

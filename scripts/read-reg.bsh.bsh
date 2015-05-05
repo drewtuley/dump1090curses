@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# start the dump1090/radar display
+sleep 2
+clear
+DUMP1090=$HOME/git/dump1090curses
+DATA=${DUMP1090}
+if [ ! -d ${DATA} ]; then
+   echo "Error: no ${DATA} dir"
+   exit 1
+fi
+export REGDBNAMES=${DATA}/planes.db
+python ${DUMP1090}/src/read_regs.py
