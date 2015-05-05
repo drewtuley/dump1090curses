@@ -10,8 +10,7 @@ DATA=${DUMP1090}
 if [ ! -d ${DATA} ]; then
     mkdir -m 777 ${DATA}
 fi
-REGDBNAME=${DATA}/planes.db
+export REGDBNAME=${DATA}/planes.db
 
-export REGDBNAMES
 python ${DUMP1090}/src/radar.py
 
