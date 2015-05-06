@@ -8,6 +8,7 @@ __author__ = "andrew.tuley"
 __date__ = "$30-Apr-2015 13:27:11$"
 import shelve
 import os
+import sys
 
 
 CALLSIGNS = 'callsigns'
@@ -21,6 +22,7 @@ if __name__ == "__main__":
             for k in cs:
                 print (k+'='+cs[k])
     except:
-        pass
+        e = sys.exc_info()[0]
+        print 'failed to read callsigns cos of '+str(e)
     
     db.close()

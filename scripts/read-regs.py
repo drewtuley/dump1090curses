@@ -20,6 +20,7 @@ if __name__ == "__main__":
         os.environ['REGDBNAME'] = data+'/planes.db'
         script=dump1090+'/src/read_regs.py'
         if os.access(script, os.X_OK):
+	    print script
             os.execl(script, data)
         else:
             print 'unable to execute '+script
