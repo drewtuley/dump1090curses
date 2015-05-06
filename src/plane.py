@@ -22,6 +22,7 @@ class Plane:
     callsigns = {}
     radar24url = 'http://www.flightradar24.com/data/_ajaxcalls/autocomplete_airplanes.php?&term='
     db = None
+    dbname = None
     
     def __init__(self, id, now):
         self.id = id
@@ -46,14 +47,24 @@ class Plane:
         self.eventdate = now	
         self.appeardate = now
 	
+    @classmethod
+    def open_database(cls):
+        Plane.dbname = os.getenv('REGDBNAME', 'planes.db')
+        Plane.db = shelve.open(Plane.dbname)
+            
     def get_registration(self, id):
         if Plane.db == None:
-            dbname = os.getenv('REGDBNAME', 'planes.db')
-            Plane.db = shelve.open(dbname)
+            open_database()
         
-        if Plane.db.has_key(CALLSIGNS):
-            callsigns = Plane.db[CALLSIGNS]
-        else:
+        try:
+            if Plane.db.has_key(CALLSIGNS):
+                callsigns = Plane.db[CALLSIGNS]
+            else:
+                callsigns = {}
+        except:
+            # failed with dberror probably
+            os.remove(Plane.dbname)
+            open_database()
             callsigns = {}
         
         if id in callsigns.keys():
