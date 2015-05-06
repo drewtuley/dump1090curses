@@ -54,7 +54,7 @@ class Plane:
             
     def get_registration(self, id):
         if Plane.db == None:
-            open_database()
+            Plane.open_database()
         
         try:
             if Plane.db.has_key(CALLSIGNS):
@@ -64,7 +64,7 @@ class Plane:
         except:
             # failed with dberror probably
             os.remove(Plane.dbname)
-            open_database()
+            Plane.open_database()
             callsigns = {}
         
         if id in callsigns.keys():
