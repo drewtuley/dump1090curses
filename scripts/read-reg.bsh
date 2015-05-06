@@ -4,7 +4,7 @@
 
 
 DUMP1090=$HOME/git/dump1090curses
-DATA=${DUMP1090}
+DATA=${DUMP1090}/data
 if [ ! -d ${DATA} ]; then
    echo "Error: no ${DATA} dir"
    exit 1
