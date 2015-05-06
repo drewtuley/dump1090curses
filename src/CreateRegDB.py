@@ -14,7 +14,7 @@ import sys
 from datetime import datetime
 
 if __name__ == "__main__":
-    db_filename = 'data/sqlite_||||||||||||planes.db'
+    db_filename = 'data/sqlite_planes.db'
     schema_filename = 'data/RegDBSetup.sql'
 
     if os.path.exists(db_filename):
