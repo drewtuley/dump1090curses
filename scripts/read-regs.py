@@ -17,7 +17,7 @@ if __name__ == "__main__":
         if not os.access(data, os.R_OK):
             print 'Unable to access data dir:'+data
             exit(1)
-        os.environ['REGDBNAME'] = data
+        os.environ['REGDBNAME'] = data+'/planes.db'
         script=dump1090+'/src/read_regs.py'
         if os.access(script, os.X_OK):
             os.execl(script, data)
