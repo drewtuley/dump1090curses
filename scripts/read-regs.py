@@ -21,3 +21,6 @@ if __name__ == "__main__":
         script=dump1090+'/src/read_regs.py'
         if os.access(script, os.X_OK):
             os.execl(script, data)
+        else:
+            print 'unable to execute '+script
+            exit(1)
