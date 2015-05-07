@@ -59,8 +59,7 @@ class Plane:
     @classmethod
     def updatedb(self, reg, id):
         sql = 'insert into registration select "'+id+'", "'+reg+'","'+str(datetime.now())+'"'
-        crs = Plane.conn.cursor()
-        crs.execute(sql)
+        Plane.conn.execute(sql)
         
     def get_registration(self, id):
         if Plane.conn == None:
