@@ -17,7 +17,7 @@ if __name__ == "__main__":
         if not os.access(data, os.R_OK):
             print 'Warning: Unable to access data dir:'+data
             os.mkdir(data)
-        os.environ['REGDBNAME'] = data+'/planes.db'
+        os.environ['REGDBNAME'] = data+'/sqlite_planes.db'
         script=dump1090+'/src/radar.py'
         if os.access(script, os.X_OK):
             os.execl(dump1090+'/src/radar.py','x')

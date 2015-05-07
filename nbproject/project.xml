@@ -5,6 +5,7 @@
         <data xmlns="http://nbpython.dev.java.net/ns/php-project/1">
             <name>dump1090curses</name>
             <sources>
+                <root id="src.scripts.dir"/>
                 <root id="src.src.dir"/>
             </sources>
             <tests/>

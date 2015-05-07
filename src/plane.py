@@ -3,9 +3,8 @@ import math
 import requests
 import sys
 import os
-import shelve
+import sqlite3
 
-CALLSIGNS = 'callsigns'
 
 class Plane:
     """A simple SBC Plane class"""
@@ -49,31 +48,37 @@ class Plane:
 	
     @classmethod
     def open_database(cls):
-        Plane.dbname = os.getenv('REGDBNAME', 'planes.db')
-        Plane.db = shelve.open(Plane.dbname)
+        Plane.dbname = os.getenv('REGDBNAME', 'sqlite_planes.db')
+        Plane.db = sqlite3.connect(Plane.dbname)
+     
+    @classmethod
+    def close_database(cls):
+        if Plane.db != None:
+            Plane.db.close()
             
+    @classmethod
+    def updatedb(self, reg, id):
+        sql = 'insert into registration select "'+id+'", "'+reg+'","'+datetime.now()+'"'
+        crs = Plane.db.cursor()
+        crs.execute(sql)
+        
     def get_registration(self, id):
         if Plane.db == None:
             Plane.open_database()
         
-        try:
-            if Plane.db.has_key(CALLSIGNS):
-                callsigns = Plane.db[CALLSIGNS]
+        sql = 'select registration from registration where icao_code = "'+id+'"'
+        cursor = Plane.db.cursor()
+        cursor.execute(sql)
+        for row in cursor.fetchall():
+            reg = row
+            if len(reg) > 0:
+                reg=reg+'*'
             else:
-                callsigns = {}
-        except:
-            # failed with dberror probably
-            os.remove(Plane.dbname)
-            Plane.open_database()
-            callsigns = {}
-        
-        if id in callsigns.keys():
-            reg = callsigns[id]+'*'
-        else:
-            reg = self.get_registration_from_fr24(id)
-            callsigns[id] = reg
-            Plane.db[CALLSIGNS] = callsigns
-        
+                # no reg in db, so try FR24 
+               reg = self.get_registration_from_fr24(id)
+               if len(reg)>0:
+                   Plane.updatedb(reg, id)
+    
         return reg
     
     def get_registration_from_fr24(self, id):
@@ -97,10 +102,7 @@ class Plane:
     def show(self):
         print "Id=%s callsign=%s squawk=%04d alt=%s track=%s gs=%s lat=%s long=%s" % (self.id, self.callsign, int(self.squawk), self.altitude, self.track, self.gs, self.lat, self.long)
         
-    @classmethod
-    def close_database(cls):
-        if Plane.db != None:
-            Plane.db.close()
+
         
     @classmethod
     def showheader(cls,win):
