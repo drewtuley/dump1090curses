@@ -38,6 +38,7 @@ def getplanes(lock, run):
 
     for line in c_socket.makefile('r'):
         if not run['run']:
+            Plane.close_database()
             return
         parts = [x.strip() for x in line.split(',')]
         if parts[0] == 'MSG':
@@ -78,8 +79,6 @@ def showplanes(win, lock, run):
         removeplanes()
         lock.release()
         win.refresh()
-
-    Plane.close_database()
 
 
 def main(screen):
