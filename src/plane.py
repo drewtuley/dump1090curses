@@ -66,7 +66,7 @@ class Plane:
         logging.debug('Update db with:'+sql)
         upd = Plane.conn.execute(sql)
         Plane.conn.commit()
-        logging.debug('update result='+upd.description)
+        logging.debug('update result='+str(upd.description)
         
     def get_registration(self, id):
         if Plane.conn == None:
