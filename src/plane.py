@@ -20,7 +20,7 @@ class Plane:
         'Wakefield':(53.6782581, -1.3712726), 'Manc-EGCC':(53.2114, -2.1630)}
     callsigns = {}
     radar24url = 'http://www.flightradar24.com/data/_ajaxcalls/autocomplete_airplanes.php?&term='
-    db = None
+    conn = None
     dbname = None
     
     def __init__(self, id, now):
@@ -49,26 +49,27 @@ class Plane:
     @classmethod
     def open_database(cls):
         Plane.dbname = os.getenv('REGDBNAME', 'sqlite_planes.db')
-        Plane.db = sqlite3.connect(Plane.dbname)
+        Plane.conn = sqlite3.connect(Plane.dbname)
      
     @classmethod
     def close_database(cls):
-        if Plane.db != None:
-            Plane.db.close()
+        if Plane.conn != None:
+            Plane.conn.close()
             
     @classmethod
     def updatedb(self, reg, id):
         sql = 'insert into registration select "'+id+'", "'+reg+'","'+datetime.now()+'"'
-        crs = Plane.db.cursor()
+        crs = Plane.conn.cursor()
         crs.execute(sql)
         
     def get_registration(self, id):
-        if Plane.db == None:
+        if Plane.conn == None:
             Plane.open_database()
         
         sql = 'select registration from registration where icao_code = "'+id+'"'
-        cursor = Plane.db.cursor()
+        cursor = Plane.conn.cursor()
         cursor.execute(sql)
+        reg = ''
         for row in cursor.fetchall():
             reg = row
             if len(reg) > 0:
