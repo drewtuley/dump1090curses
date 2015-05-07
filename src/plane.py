@@ -77,9 +77,10 @@ class Plane:
         cursor.execute(sql)
         reg = ''
         for row in cursor.fetchall():
-            reg = row
-            if len(reg) > 0:
-                reg=reg[0]+'*'
+            registration = row
+            if len(registration) > 0:
+                reg=registration[0]+'*'
+                logging.info('Reg '+registration[0]+' in cache')
         if len(reg) == 0:
             # no reg in db, so try FR24 
            reg = self.get_registration_from_fr24(id)
