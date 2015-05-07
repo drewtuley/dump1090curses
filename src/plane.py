@@ -74,11 +74,11 @@ class Plane:
             reg = row
             if len(reg) > 0:
                 reg=reg[0]+'*'
-            else:
-                # no reg in db, so try FR24 
-               reg = self.get_registration_from_fr24(id)
-               if len(reg)>0:
-                   Plane.updatedb(reg, id)
+        if len(reg) == 0:
+            # no reg in db, so try FR24 
+           reg = self.get_registration_from_fr24(id)
+           if len(reg)>0:
+               Plane.updatedb(reg, id)
     
         return reg
     
