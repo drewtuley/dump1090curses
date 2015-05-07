@@ -64,7 +64,8 @@ class Plane:
     def updatedb(self, reg, id):
         sql = 'insert into registration select "'+id+'", "'+reg+'","'+str(datetime.now())+'"'
         logging.debug('Update db with:'+sql)
-        Plane.conn.execute(sql)
+        upd = Plane.conn.execute(sql)
+        logging.debug('update result='+upd)
         
     def get_registration(self, id):
         if Plane.conn == None:
