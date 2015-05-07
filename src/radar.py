@@ -103,7 +103,7 @@ def main(screen):
         if ch == 113:
             runstate['run'] = False
         
-    time.sleep(1)
+    time.sleep(2)
     
 try:
     curses.wrapper(main)

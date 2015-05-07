@@ -23,7 +23,7 @@ class Plane:
     radar24url = 'http://www.flightradar24.com/data/_ajaxcalls/autocomplete_airplanes.php?&term='
     conn = None
     dbname = None
-    logging.basicConfig(filename='log/plane.log', level=logging.DEBUG)
+    logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%d/%m/%Y %I:%M:%S %p', filename='log/plane.log', level=logging.DEBUG)
     
     def __init__(self, id, now):
         self.id = id

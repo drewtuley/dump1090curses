@@ -15,8 +15,10 @@ if __name__ == "__main__":
     crs = conn.cursor()
     
     crs.execute('select * from registration')
+    idx = 1
     for row in crs.fetchall():
         icao, reg, dt = row
-        print icao, reg, dt
+        print idx, icao, reg, dt
+        idx += 1
         
     conn.close()
