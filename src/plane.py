@@ -4,6 +4,7 @@ import requests
 import sys
 import os
 import sqlite3
+import logging
 
 
 class Plane:
@@ -22,6 +23,7 @@ class Plane:
     radar24url = 'http://www.flightradar24.com/data/_ajaxcalls/autocomplete_airplanes.php?&term='
     conn = None
     dbname = None
+    logging.basicConfig(filename='log/plane.log', level=logging.DEBUG)
     
     def __init__(self, id, now):
         self.id = id
@@ -49,16 +51,19 @@ class Plane:
     @classmethod
     def open_database(cls):
         Plane.dbname = os.getenv('REGDBNAME', 'sqlite_planes.db')
+        logging.info('Opening db '+Plane.dbname)
         Plane.conn = sqlite3.connect(Plane.dbname)
      
     @classmethod
     def close_database(cls):
         if Plane.conn != None:
+            logging.info('Closing db')
             Plane.conn.close()
             
     @classmethod
     def updatedb(self, reg, id):
         sql = 'insert into registration select "'+id+'", "'+reg+'","'+str(datetime.now())+'"'
+        logging.debug('Update db with:'+sql)
         Plane.conn.execute(sql)
         
     def get_registration(self, id):
