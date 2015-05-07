@@ -58,7 +58,7 @@ class Plane:
             
     @classmethod
     def updatedb(self, reg, id):
-        sql = 'insert into registration select "'+id+'", "'+reg+'","'+datetime.now()+'"'
+        sql = 'insert into registration select "'+id+'", "'+reg+'","'+str(datetime.now())+'"'
         crs = Plane.conn.cursor()
         crs.execute(sql)
         
