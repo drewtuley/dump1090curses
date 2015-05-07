@@ -73,7 +73,7 @@ class Plane:
         for row in cursor.fetchall():
             reg = row
             if len(reg) > 0:
-                reg=reg+'*'
+                reg=reg[0]+'*'
             else:
                 # no reg in db, so try FR24 
                reg = self.get_registration_from_fr24(id)
