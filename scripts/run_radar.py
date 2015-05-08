@@ -14,10 +14,16 @@ if __name__ == "__main__":
     if len(home) > 0:
         dump1090=home+'/git/dump1090curses'
         data=dump1090+'/data'
+        logdir=dump1090+'/log'
         if not os.access(data, os.R_OK):
             print 'Warning: Unable to access data dir:'+data
             os.mkdir(data)
+        
+        if not os.access(logdir, os.R_OK):
+            os.mkdir(logdir)
+            
         os.environ['REGDBNAME'] = data+'/sqlite_planes.db'
+        os.environ['LOGDIR'] = logdir
         script=dump1090+'/src/radar.py'
         if os.access(script, os.X_OK):
             os.execl(dump1090+'/src/radar.py','x')

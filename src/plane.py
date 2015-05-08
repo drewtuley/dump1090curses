@@ -23,7 +23,7 @@ class Plane:
     radar24url = 'http://www.flightradar24.com/data/_ajaxcalls/autocomplete_airplanes.php?&term='
     conn = None
     dbname = None
-    logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%d/%m/%Y %I:%M:%S %p', filename='log/plane.log', level=logging.DEBUG)
+    logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%d/%m/%Y %I:%M:%S %p', filename=os.getenv('LOGDIR')+'/plane.log', level=logging.DEBUG)
     
     def __init__(self, id, now):
         self.id = id
@@ -50,30 +50,30 @@ class Plane:
 	
     @classmethod
     def open_database(cls):
-        Plane.dbname = os.getenv('REGDBNAME', 'sqlite_planes.db')
-        logging.info('Opening db '+Plane.dbname)
-        Plane.conn = sqlite3.connect(Plane.dbname)
+        if cls.conn == None:
+            cls.dbname = os.getenv('REGDBNAME', 'sqlite_planes.db')
+            logging.info('Opening db '+cls.dbname)
+            cls.conn = sqlite3.connect(cls.dbname)
      
     @classmethod
     def close_database(cls):
-        if Plane.conn != None:
+        if cls.conn != None:
             logging.info('Closing db')
-            Plane.conn.close()
+            cls.conn.close()
             
     @classmethod
-    def updatedb(self, reg, id):
+    def updatedb(cls, reg, id):
         sql = 'insert into registration select "'+id+'", "'+reg+'","'+str(datetime.now())+'"'
         logging.debug('Update db with:'+sql)
-        upd = Plane.conn.execute(sql)
-        Plane.conn.commit()
+        upd = cls.conn.execute(sql)
+        cls.conn.commit()
         logging.debug('update result='+str(upd.description))
         
     def get_registration(self, id):
-        if Plane.conn == None:
-            Plane.open_database()
+        self.open_database()
         
         sql = 'select registration from registration where icao_code = "'+id+'"'
-        cursor = Plane.conn.cursor()
+        cursor = self.conn.cursor()
         cursor.execute(sql)
         reg = ''
         for row in cursor.fetchall():
@@ -85,7 +85,7 @@ class Plane:
             # no reg in db, so try FR24 
            reg = self.get_registration_from_fr24(id)
            if len(reg)>0:
-               Plane.updatedb(reg, id)
+               self.updatedb(reg, id)
     
         return reg
     
