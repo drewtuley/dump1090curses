@@ -15,6 +15,7 @@ import socket
 import thread
 import threading
 import time
+import sys
 
 planes = {}
 cols = 155
@@ -104,7 +105,11 @@ def main(screen):
             runstate['run'] = False
         
     time.sleep(2)
-    
+ 
+print len(sys.argv)
+print sys.argv 
+if len(sys.argv) > 1:
+   rows=int(sys.argv[1])-4
 try:
     curses.wrapper(main)
 except:

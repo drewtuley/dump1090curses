@@ -8,6 +8,7 @@ __author__ = "andrew.tuley"
 __date__ = "$06-May-2015 09:27:35$"
 
 import os
+import string
 
 if __name__ == "__main__":
     home=os.getenv('HOME')
@@ -25,8 +26,13 @@ if __name__ == "__main__":
         os.environ['REGDBNAME'] = data+'/sqlite_planes.db'
         os.environ['LOGDIR'] = logdir
         script=dump1090+'/src/radar.py'
+	lines = 23
+	with os.popen('tput lines') as fd:
+            for line in fd:
+		lines = (string.rstrip(line))
+	print 'opening with '+str(lines)+' lines'
         if os.access(script, os.X_OK):
-            os.execl(dump1090+'/src/radar.py','x')
+            os.execl(dump1090+'/src/radar.py','x',lines)
         else:
             print 'Error: unable to execute '+script
             exit(1)
