@@ -84,7 +84,7 @@ class Plane:
         if len(reg) == 0:
             # no reg in db, so try FR24 
            reg = self.get_registration_from_fr24(id)
-           if len(reg)>0:
+           if len(reg)>0 and reg != 'x':
                self.updatedb(reg, id)
     
         return reg
