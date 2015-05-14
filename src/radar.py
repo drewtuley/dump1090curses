@@ -55,6 +55,7 @@ def getplanes(lock, run):
                 if len(planes) > run['session_max']:
                     run['session_max'] = len(planes)
             plane.update(parts)
+            removeplanes()
             lock.release()
 
 
@@ -78,7 +79,7 @@ def showplanes(win, lock, run):
             win.addstr(rows-1, cols-5-len(now), now)
         except:
             pass
-        removeplanes()
+        
         lock.release()
         win.refresh()
 
