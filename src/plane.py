@@ -69,6 +69,7 @@ class Plane:
         upd = cls.conn.execute(sql)
         cls.conn.commit()
         logging.debug('update result='+str(upd.description))
+        
     @classmethod
     def log_observation(cls, id):
         sql = 'insert into observation select ifnull(max(instance)+1,1), "'+id+'","'+str(datetime.now())+'",null from observation where icao_code="'+id+'"'
