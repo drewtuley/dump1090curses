@@ -7,7 +7,7 @@ create table if not exists registration (
 CREATE INDEX if not exists reg_idx on registration(icao_code);
 
 CREATE TABLE IF NOT EXISTS observation (
-    instance int primary key,
+    instance int,
     icao_code text,
     starttime datetime,
     endtime datetime null
