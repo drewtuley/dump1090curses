@@ -23,5 +23,5 @@ if __name__ == "__main__":
         
         conn.commit()
         
-        db.close()
+        conn.close()
             
