@@ -69,6 +69,12 @@ class Plane:
         upd = cls.conn.execute(sql)
         cls.conn.commit()
         logging.debug('update result='+str(upd.description))
+    @classmethod
+    def log_observation(cls, id):
+        sql = 'insert into observation select ifnull(max(instance)+1,1), "'+id+'","'+str(datetime.now())+'",null from observation where icao_code="'+id+'"'
+        logging.debug('adding observation with SQL:'+sql)
+        cls.conn.execute(sql)
+        cls.conn.commit()
         
     def get_registration(self, id):
         self.open_database()
@@ -82,6 +88,7 @@ class Plane:
             if len(registration) > 0:
                 reg=registration[0]+'*'
                 logging.info('Reg '+registration[0]+' in cache')
+                self.log_observation(id)
         if len(reg) == 0:
             # no reg in db, so try FR24 
            reg = self.get_registration_from_fr24(id)
