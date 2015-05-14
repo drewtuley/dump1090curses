@@ -12,7 +12,7 @@ import sqlite3
 
 if __name__ == "__main__":
     db_filename = 'data/sqlite_planes.db'
-    schema_filename = 'data/RegDBSetup.sql'
+    schema_filename = 'src/utils/RegDBSetup.sql'
         
 
     with sqlite3.connect(db_filename) as conn:      
