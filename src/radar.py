@@ -32,6 +32,7 @@ def removeplanes():
 	
     for id in tozap:
         del planes[id]
+        Plane.log_observation_end(id)
 
 def getplanes(lock, run):
     c_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM);

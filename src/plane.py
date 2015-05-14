@@ -60,6 +60,8 @@ class Plane:
     def close_database(cls):
         if cls.conn != None:
             logging.info('Closing db')
+            sql = 'update observation set endtime="'+str(datetime.now())+" where endtime is null"
+            cls.conn.execute(sql)
             cls.conn.close()
             
     @classmethod
