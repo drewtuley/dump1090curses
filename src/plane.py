@@ -92,7 +92,7 @@ class Plane:
     
     @classmethod
     def log_observation_end(cls, id, instance):
-        sql = 'update observation set endtime = "'+str(datetime.now())+'" where icao_code = "'+id+'" and endtime is null and instance ='+instance
+        sql = 'update observation set endtime = "'+str(datetime.now())+'" where icao_code = "'+id+'" and endtime is null and instance ='+str(instance)
         logging.debug('ending observation with SQL:'+sql)
         cls.conn.execute(sql)
         cls.conn.commit()
