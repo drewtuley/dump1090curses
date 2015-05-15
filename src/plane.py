@@ -48,6 +48,7 @@ class Plane:
         self.nearest = '?'
         self.eventdate = now	
         self.appeardate = now
+        self.observe_instance = 0
 	
     @classmethod
     def open_database(cls):
@@ -66,7 +67,7 @@ class Plane:
             cls.conn.close()
             
     @classmethod
-    def updatedb(cls, reg, id):
+    def update_registration(cls, reg, id):
         sql = 'insert into registration select "'+id+'", "'+reg+'","'+str(datetime.now())+'"'
         logging.debug('Update db with:'+sql)
         upd = cls.conn.execute(sql)
@@ -79,10 +80,19 @@ class Plane:
         logging.debug('adding observation with SQL:'+sql)
         cls.conn.execute(sql)
         cls.conn.commit()
+        
+        sql = 'select ifnull(max(instance),1) from observation where icao_code ="'+id+'"'
+        crs = cls.conn.cursor()
+        crs.execute(sql)
+        instance = 0
+        for row in crs.fetchall():
+            instance, = row
+            
+        return instance
     
     @classmethod
-    def log_observation_end(cls, id):
-        sql = 'update observation set endtime = "'+str(datetime.now())+'" where icao_code = "'+id+'" and endtime is null'
+    def log_observation_end(cls, id, instance):
+        sql = 'update observation set endtime = "'+str(datetime.now())+'" where icao_code = "'+id+'" and endtime is null and instance ='+instance
         logging.debug('ending observation with SQL:'+sql)
         cls.conn.execute(sql)
         cls.conn.commit()
@@ -99,12 +109,12 @@ class Plane:
             if len(registration) > 0:
                 reg=registration[0]+'*'
                 logging.info('Reg '+registration[0]+' in cache')
-                self.log_observation_start(id)
+                self.observe_instance = self.log_observation_start(id)
         if len(reg) == 0:
             # no reg in db, so try FR24 
            reg = self.get_registration_from_fr24(id)
            if len(reg)>0 and reg != 'x':
-               self.updatedb(reg, id)
+               self.update_registration(reg, id)
     
         return reg
     

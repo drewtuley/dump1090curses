@@ -31,8 +31,9 @@ def removeplanes():
             tozap.append(id)	
 	
     for id in tozap:
+        instance = planes[id].observe_instance
         del planes[id]
-        Plane.log_observation_end(id)
+        Plane.log_observation_end(id, instance)
 
 def getplanes(lock, run):
     c_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM);
