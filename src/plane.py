@@ -88,6 +88,8 @@ class Plane:
         for row in crs.fetchall():
             instance, = row
             
+        logging.debug('ICAO '+id+' shows observation instance of '+str(instance))   
+        
         return instance
     
     @classmethod
