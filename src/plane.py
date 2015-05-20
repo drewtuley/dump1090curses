@@ -24,7 +24,7 @@ class Plane:
     conn = None
     dbname = None
     dt=str(datetime.now())[:10]
-    logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%d/%m/%Y %I:%M:%S %p', filename=os.getenv('LOGDIR')+'/plane_'+dt+'.log', level=logging.DEBUG)
+    logging.basicConfig(format='%(asctime)s %(message)s', filename=os.getenv('LOGDIR')+'/plane_'+dt+'.log', level=logging.DEBUG)
     
     def __init__(self, id, now):
         self.id = id
