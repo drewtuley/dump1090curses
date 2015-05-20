@@ -31,9 +31,11 @@ def removeplanes():
             tozap.append(id)	
 	
     for id in tozap:
-        instance = planes[id].observe_instance
+        try:
+            Plane.log_observation_end(id, planes[id].observe_instance)
+        except AttributeError: 
+            pass
         del planes[id]
-        Plane.log_observation_end(id, instance)
 
 def getplanes(lock, run):
     c_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM);
