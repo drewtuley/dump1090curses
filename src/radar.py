@@ -16,8 +16,11 @@ import thread
 import threading
 import time
 import sys
+import copy
 
 planes = {}
+registration_queue = []
+
 cols = 155
 rows = 28
 
@@ -46,7 +49,8 @@ def getplanes(lock, run):
             if id in planes:
                 plane = planes[id]
             else:
-                plane = Plane(parts[4], datetime.now())
+                plane = Plane(id, datetime.now())
+                registration_queue.append(id)
                 run['session_count'] += 1
                 planes[id] = plane
                 if len(planes) > run['session_max']:
@@ -81,8 +85,30 @@ def showplanes(win, lock, run):
         lock.release()
         win.refresh()
 
+def get_registration_from_fr24(self, id):
+        """ 
+        Not sure how long radar24 will keep this REST endpoint exposed 
+        But might as well use it while we can
+        """
+        geturl = Plane.radar24url + str(id)
+        try:
+            response = requests.get(geturl)
+            if response.status_code == 200:
+                return response.json()[0]['id']
+            else:
+                return ''
+        except:
+            return 'x'
+
 def get_registrations(lock, runstate):
     while runstate['run']:
+        regs = copy.copy(registration_queue)
+        for id in regs:
+            reg = get_registration_from_fr24(id)
+            lock.aquire()
+            planes[id].registration = reg
+            registration_queue.remove(id)
+            lock.release()
         time.sleep(.500)
     
 def main(screen):
@@ -102,7 +128,7 @@ def main(screen):
     registration = threading.Thread(target=get_registrations, args=(lock, runstate ))
     get.start()
     show.start()
-    #registration.start()
+    registration.start()
     
     while runstate['run']:
         ch = screen.getch()
