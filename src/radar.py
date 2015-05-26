@@ -26,9 +26,6 @@ planes = {}
 registration_queue = []
 RADAR24URL = 'http://www.flightradar24.com/data/_ajaxcalls/autocomplete_airplanes.php?&term='
 
-conn = None
-dbname = None
-
 cols = 155
 rows = 28
 
@@ -100,25 +97,24 @@ def showplanes(win, lock, run):
 def open_database():
     dbname = os.getenv('REGDBNAME', 'sqlite_planes.db')
     logging.info('Opening db '+dbname)
-    conn = sqlite3.connect(dbname)
+    return sqlite3.connect(dbname)
      
 
-def close_database():
-    if conn != None:
-        logging.info('Closing db')
-        sql = 'update observation set endtime="'+str(datetime.now())+'" where endtime is null'
-        conn.execute(sql)
-        conn.commit()
-        conn.close()
-        
-def update_registration(reg, id):
+def close_database(conn):
+    logging.info('Closing db')
+    sql = 'update observation set endtime="'+str(datetime.now())+'" where endtime is null'
+    conn.execute(sql)
+    conn.commit()
+    conn.close()
+
+def update_registration(reg, id, conn):
     sql = 'insert into registration select "'+id+'", "'+reg+'","'+str(datetime.now())+'"'
     logging.debug('Update db with:'+sql)
     upd = conn.execute(sql)
     conn.commit()
     logging.debug('update result='+str(upd.description))
 
-def get_registration(id):
+def get_registration(id, conn):
 
     sql = 'select registration from registration where icao_code = "'+id+'"'
     cursor = conn.cursor()
@@ -134,7 +130,7 @@ def get_registration(id):
         # no reg in db, so try FR24 
        reg = get_registration_from_fr24(id)
        if len(reg)>0 and reg != 'x':
-           update_registration(reg, id)
+           update_registration(reg, id, conn)
 
     return reg
     
@@ -155,16 +151,17 @@ def get_registration_from_fr24(id):
             return 'x'
 
 def get_registrations(lock, runstate):
-    open_database()
+    conn = open_database()
     while runstate['run']:
         regs = copy.copy(registration_queue)
         for id in regs:
-            reg = get_registration(id)
+            reg = get_registration(id, conn)
             lock.acquire()
             planes[id].registration = reg
             registration_queue.remove(id)
             lock.release()
         time.sleep(.500)
+    close_database(conn)
     
 def main(screen):
     curses.start_color()
