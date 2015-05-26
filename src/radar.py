@@ -113,9 +113,25 @@ def update_registration(reg, id, conn):
     upd = conn.execute(sql)
     conn.commit()
     logging.debug('update result='+str(upd.description))
+    
+def log_observation_start(id, conn):
+    sql = 'insert into observation select ifnull(max(instance)+1,1), "'+id+'","'+str(datetime.now())+'",null from observation where icao_code="'+id+'"'
+    logging.debug('adding observation with SQL:'+sql)
+    conn.execute(sql)
+    conn.commit()
+
+    sql = 'select ifnull(max(instance),1) from observation where icao_code ="'+id+'"'
+    crs = conn.cursor()
+    crs.execute(sql)
+    instance = 0
+    for row in crs.fetchall():
+        instance, = row
+
+    logging.debug('ICAO '+id+' shows observation instance of '+str(instance))   
+
+    return instance
 
 def get_registration(id, conn):
-
     sql = 'select registration from registration where icao_code = "'+id+'"'
     cursor = conn.cursor()
     cursor.execute(sql)
@@ -125,7 +141,6 @@ def get_registration(id, conn):
         if len(registration) > 0:
             reg=registration[0]+'*'
             logging.info('Reg '+registration[0]+' in cache')
-            #self.observe_instance = self.log_observation_start(id)
     if len(reg) == 0:
         # no reg in db, so try FR24 
        reg = get_registration_from_fr24(id)
@@ -158,6 +173,7 @@ def get_registrations(lock, runstate):
             reg = get_registration(id, conn)
             lock.acquire()
             planes[id].registration = reg
+            planes[id].observe_instance = log_observation_start(id, conn)
             registration_queue.remove(id)
             lock.release()
         time.sleep(.500)
