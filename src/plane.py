@@ -191,6 +191,7 @@ class Plane:
         TODO: Would be more efficient to use the message type (parts[1]) to 
         work out which elements are relevant
         """
+        self.active = True      # reactivate if necessary
         can_update_nearest = False
         if len(parts[6]) > 0 and len(parts[7]) > 0:
             self.eventdate = datetime.strptime(parts[6] + " " + parts[7], "%Y/%m/%d %H:%M:%S.%f")

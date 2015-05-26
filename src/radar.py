@@ -81,7 +81,10 @@ def showplanes(win, lock, run):
         lock.release()
         win.refresh()
 
-
+def get_registrations(lock, runstate):
+    while runstate['run']:
+        time.sleep(.500)
+    
 def main(screen):
     curses.start_color()
     curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLACK)
@@ -96,8 +99,10 @@ def main(screen):
     lock = thread.allocate_lock()
     get = threading.Thread(target=getplanes, args=(lock, runstate ))
     show = threading.Thread(target=showplanes, args=(win, lock, runstate ))
+    registration = threading.Thread(target=get_registraions, args=(lock, runstate ))
     get.start()
     show.start()
+    registration.start()
     
     while runstate['run']:
         ch = screen.getch()
