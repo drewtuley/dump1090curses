@@ -119,7 +119,6 @@ def update_registration(reg, id):
     logging.debug('update result='+str(upd.description))
 
 def get_registration(id):
-    open_database()
 
     sql = 'select registration from registration where icao_code = "'+id+'"'
     cursor = conn.cursor()
@@ -156,6 +155,7 @@ def get_registration_from_fr24(id):
             return 'x'
 
 def get_registrations(lock, runstate):
+    open_database()
     while runstate['run']:
         regs = copy.copy(registration_queue)
         for id in regs:
