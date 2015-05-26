@@ -20,6 +20,7 @@ import copy
 import logging
 import requests
 import sqlite3
+import os
 
 planes = {}
 registration_queue = []
