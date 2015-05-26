@@ -99,7 +99,7 @@ def main(screen):
     lock = thread.allocate_lock()
     get = threading.Thread(target=getplanes, args=(lock, runstate ))
     show = threading.Thread(target=showplanes, args=(win, lock, runstate ))
-    registration = threading.Thread(target=get_registraions, args=(lock, runstate ))
+    registration = threading.Thread(target=get_registrations, args=(lock, runstate ))
     get.start()
     show.start()
     #registration.start()
