@@ -96,6 +96,7 @@ def get_registration_from_fr24(id):
         But might as well use it while we can
         """
         geturl = Plane.radar24url + str(id)
+        logging.debug('lookup '+str(id)+' on FR24 via:'+geturl)
         try:
             response = requests.get(geturl)
             if response.status_code == 200:
