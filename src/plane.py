@@ -28,7 +28,7 @@ class Plane:
     
     def __init__(self, id, now):
         self.id = id
-        self.registration = self.get_registration(id)
+        self.registration = str(id)     #self.get_registration(id)
         if id in Plane.callsigns.keys():
             cachetime = Plane.callsigns[id][1]
             if (datetime.now()-cachetime).total_seconds() > 30 * 60:
