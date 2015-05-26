@@ -24,6 +24,7 @@ import os
 
 planes = {}
 registration_queue = []
+inactive_queue = []
 RADAR24URL = 'http://www.flightradar24.com/data/_ajaxcalls/autocomplete_airplanes.php?&term='
 
 cols = 155
@@ -36,7 +37,7 @@ def removeplanes():
         plane = planes[id]
         if (datetime.now()-plane.eventdate).total_seconds() > 30:
             plane.active = False	
-
+            inactive_queue.append(id)
 
 def getplanes(lock, run):
     c_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM);
@@ -128,9 +129,14 @@ def log_observation_start(id, conn):
         instance, = row
 
     logging.debug('ICAO '+id+' shows observation instance of '+str(instance))   
-
     return instance
-
+    
+def log_observation_end(id, instance, conn):
+    sql = 'update observation set endtime = "'+str(datetime.now())+'" where icao_code = "'+id+'" and endtime is null and instance ='+str(instance)
+    logging.debug('ending observation with SQL:'+sql)
+    conn.execute(sql)
+    conn.commit()
+        
 def get_registration(id, conn):
     sql = 'select registration from registration where icao_code = "'+id+'"'
     cursor = conn.cursor()
@@ -177,6 +183,18 @@ def get_registrations(lock, runstate):
             planes[id].observe_instance = instance
             registration_queue.remove(id)
             lock.release()
+            
+        inactives = copy.copy(inactive_queue)
+        for id in inactives:
+            try:
+                instance = planes[id].observe_instance
+                log_observation_end(id, instance, conn)
+            except:
+                pass
+            lock.acquire()
+            inactive_queue.remove(id)
+            lock.release()
+            
         time.sleep(.500)
     close_database(conn)
     
@@ -195,6 +213,7 @@ def main(screen):
     get = threading.Thread(target=getplanes, args=(lock, runstate ))
     show = threading.Thread(target=showplanes, args=(win, lock, runstate ))
     registration = threading.Thread(target=get_registrations, args=(lock, runstate ))
+    
     get.start()
     show.start()
     registration.start()
