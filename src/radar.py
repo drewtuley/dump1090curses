@@ -97,10 +97,9 @@ def showplanes(win, lock, run):
         win.refresh()
 
 def open_database():
-    if conn == None:
-        dbname = os.getenv('REGDBNAME', 'sqlite_planes.db')
-        logging.info('Opening db '+dbname)
-        conn = sqlite3.connect(dbname)
+    dbname = os.getenv('REGDBNAME', 'sqlite_planes.db')
+    logging.info('Opening db '+dbname)
+    conn = sqlite3.connect(dbname)
      
 
 def close_database():
