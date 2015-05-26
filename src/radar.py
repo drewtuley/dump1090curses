@@ -19,9 +19,14 @@ import sys
 import copy
 import logging
 import requests
+import sqlite3
 
 planes = {}
 registration_queue = []
+RADAR24URL = 'http://www.flightradar24.com/data/_ajaxcalls/autocomplete_airplanes.php?&term='
+
+conn = None
+dbname = None
 
 cols = 155
 rows = 28
@@ -91,12 +96,55 @@ def showplanes(win, lock, run):
         lock.release()
         win.refresh()
 
+def open_database():
+    if conn == None:
+        dbname = os.getenv('REGDBNAME', 'sqlite_planes.db')
+        logging.info('Opening db '+dbname)
+        conn = sqlite3.connect(dbname)
+     
+
+def close_database():
+    if conn != None:
+        logging.info('Closing db')
+        sql = 'update observation set endtime="'+str(datetime.now())+'" where endtime is null'
+        conn.execute(sql)
+        conn.commit()
+        conn.close()
+        
+def update_registration(reg, id):
+    sql = 'insert into registration select "'+id+'", "'+reg+'","'+str(datetime.now())+'"'
+    logging.debug('Update db with:'+sql)
+    upd = conn.execute(sql)
+    conn.commit()
+    logging.debug('update result='+str(upd.description))
+
+def get_registration(id):
+    open_database()
+
+    sql = 'select registration from registration where icao_code = "'+id+'"'
+    cursor = conn.cursor()
+    cursor.execute(sql)
+    reg = ''
+    for row in cursor.fetchall():
+        registration = row
+        if len(registration) > 0:
+            reg=registration[0]+'*'
+            logging.info('Reg '+registration[0]+' in cache')
+            #self.observe_instance = self.log_observation_start(id)
+    if len(reg) == 0:
+        # no reg in db, so try FR24 
+       reg = get_registration_from_fr24(id)
+       if len(reg)>0 and reg != 'x':
+           update_registration(reg, id)
+
+    return reg
+    
 def get_registration_from_fr24(id):
         """ 
         Not sure how long radar24 will keep this REST endpoint exposed 
         But might as well use it while we can
         """
-        geturl = Plane.radar24url + str(id)
+        geturl = RADAR24URL + str(id)
         logging.debug('lookup '+str(id)+' on FR24 via:'+geturl)
         try:
             response = requests.get(geturl)
@@ -111,7 +159,7 @@ def get_registrations(lock, runstate):
     while runstate['run']:
         regs = copy.copy(registration_queue)
         for id in regs:
-            reg = get_registration_from_fr24(id)
+            reg = get_registration(id)
             lock.acquire()
             planes[id].registration = reg
             registration_queue.remove(id)
