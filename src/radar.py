@@ -17,6 +17,7 @@ import threading
 import time
 import sys
 import copy
+import logging
 
 planes = {}
 registration_queue = []
