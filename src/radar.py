@@ -35,7 +35,7 @@ def removeplanes():
 
     for id in planes:
         plane = planes[id]
-        if (datetime.now()-plane.eventdate).total_seconds() > 30:
+        if (datetime.now()-plane.eventdate).total_seconds() > 30 and plane.active:
             plane.active = False	
             inactive_queue.append(id)
 
