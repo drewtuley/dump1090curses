@@ -18,6 +18,7 @@ import time
 import sys
 import copy
 import logging
+import os
 
 planes = {}
 registration_queue = []
