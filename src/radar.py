@@ -105,7 +105,7 @@ def get_registrations(lock, runstate):
         regs = copy.copy(registration_queue)
         for id in regs:
             reg = get_registration_from_fr24(id)
-            lock.aquire()
+            lock.acquire()
             planes[id].registration = reg
             registration_queue.remove(id)
             lock.release()
