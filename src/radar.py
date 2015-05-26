@@ -77,8 +77,13 @@ def showplanes(win, lock, run):
                     break
 
         now = str(datetime.now())
+        current = 0
+        for id in planes:
+            if planes[id].active:
+                current += 1
+                
         try:
-            win.addstr(rows-1, 1, 'Current :'+str(len(planes))+' Total (session):'+str(run['session_count'])+' Max (session):'+str(run['session_max']))
+            win.addstr(rows-1, 1, 'Current :'+str(current)+' Total (session):'+str(run['session_count'])+' Max (session):'+str(run['session_max']))
             win.addstr(rows-1, cols-5-len(now), now)
         except:
             pass
