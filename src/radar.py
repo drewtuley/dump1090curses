@@ -171,9 +171,10 @@ def get_registrations(lock, runstate):
         regs = copy.copy(registration_queue)
         for id in regs:
             reg = get_registration(id, conn)
+            instance = log_observation_start(id, conn)
             lock.acquire()
             planes[id].registration = reg
-            planes[id].observe_instance = log_observation_start(id, conn)
+            planes[id].observe_instance = instance
             registration_queue.remove(id)
             lock.release()
         time.sleep(.500)

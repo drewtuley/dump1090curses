@@ -1,9 +1,7 @@
 from datetime import datetime
 import math
-import requests
 import sys
 import os
-import sqlite3
 import logging
 
 
@@ -20,7 +18,6 @@ class Plane:
         'Hawes':(54.3040185, -2.198943), 'Doncaster':(53.5188469, -1.1200236), 
         'Wakefield':(53.6782581, -1.3712726), 'Manc-EGCC':(53.2114, -2.1630)}
     callsigns = {}
-    radar24url = 'http://www.flightradar24.com/data/_ajaxcalls/autocomplete_airplanes.php?&term='
     conn = None
     dbname = None
     dt=str(datetime.now())[:10]
@@ -49,48 +46,7 @@ class Plane:
         self.eventdate = now	
         self.appeardate = now
         self.active = True
-	
-    @classmethod
-    def open_database(cls):
-        if cls.conn == None:
-            cls.dbname = os.getenv('REGDBNAME', 'sqlite_planes.db')
-            logging.info('Opening db '+cls.dbname)
-            cls.conn = sqlite3.connect(cls.dbname)
-     
-    @classmethod
-    def close_database(cls):
-        if cls.conn != None:
-            logging.info('Closing db')
-            sql = 'update observation set endtime="'+str(datetime.now())+'" where endtime is null'
-            cls.conn.execute(sql)
-            cls.conn.commit()
-            cls.conn.close()
-            
-    @classmethod
-    def update_registration(cls, reg, id):
-        sql = 'insert into registration select "'+id+'", "'+reg+'","'+str(datetime.now())+'"'
-        logging.debug('Update db with:'+sql)
-        upd = cls.conn.execute(sql)
-        cls.conn.commit()
-        logging.debug('update result='+str(upd.description))
-        
-    @classmethod
-    def log_observation_start(cls, id):
-        sql = 'insert into observation select ifnull(max(instance)+1,1), "'+id+'","'+str(datetime.now())+'",null from observation where icao_code="'+id+'"'
-        logging.debug('adding observation with SQL:'+sql)
-        cls.conn.execute(sql)
-        cls.conn.commit()
-        
-        sql = 'select ifnull(max(instance),1) from observation where icao_code ="'+id+'"'
-        crs = cls.conn.cursor()
-        crs.execute(sql)
-        instance = 0
-        for row in crs.fetchall():
-            instance, = row
-            
-        logging.debug('ICAO '+id+' shows observation instance of '+str(instance))   
-        
-        return instance
+	     
     
     @classmethod
     def log_observation_end(cls, id, instance):
@@ -98,43 +54,7 @@ class Plane:
         logging.debug('ending observation with SQL:'+sql)
         cls.conn.execute(sql)
         cls.conn.commit()
-        
-    def get_registration(self, id):
-        self.open_database()
-        
-        sql = 'select registration from registration where icao_code = "'+id+'"'
-        cursor = self.conn.cursor()
-        cursor.execute(sql)
-        reg = ''
-        for row in cursor.fetchall():
-            registration = row
-            if len(registration) > 0:
-                reg=registration[0]+'*'
-                logging.info('Reg '+registration[0]+' in cache')
-                self.observe_instance = self.log_observation_start(id)
-        if len(reg) == 0:
-            # no reg in db, so try FR24 
-           reg = self.get_registration_from_fr24(id)
-           if len(reg)>0 and reg != 'x':
-               self.update_registration(reg, id)
     
-        return reg
-    
-    def get_registration_from_fr24(self, id):
-        """ 
-        Not sure how long radar24 will keep this REST endpoint exposed 
-        But might as well use it while we can
-        """
-        geturl = Plane.radar24url + str(id)
-        try:
-            response = requests.get(geturl)
-            if response.status_code == 200:
-                return response.json()[0]['id']
-            else:
-                return ''
-        except:
-            return 'x'
-
     def __lt__(self, other):
         return self.appeardate < other.appeardate
 
