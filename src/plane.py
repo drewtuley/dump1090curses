@@ -48,6 +48,7 @@ class Plane:
         self.nearest = '?'
         self.eventdate = now	
         self.appeardate = now
+        self.active = True
 	
     @classmethod
     def open_database(cls):

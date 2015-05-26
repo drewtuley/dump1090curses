@@ -24,18 +24,12 @@ rows = 28
 
 def removeplanes():
     """ Remove any plane with eventdate older than 30s """
-    tozap = []
+
     for id in planes:
         plane = planes[id]
         if (datetime.now()-plane.eventdate).total_seconds() > 30:
-            tozap.append(id)	
-	
-    for id in tozap:
-        try:
-            Plane.log_observation_end(id, planes[id].observe_instance)
-        except AttributeError: 
-            pass
-        del planes[id]
+            plane.active = False	
+
 
 def getplanes(lock, run):
     c_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM);
@@ -70,11 +64,12 @@ def showplanes(win, lock, run):
         Plane.showheader(win)
         lock.acquire()
         for id in sorted(planes, key=planes.__getitem__):
-            if row < rows - 1:
-                planes[id].showincurses(win, row)
-                row += 1
-            else:
-                break
+            if planes[id].active:
+                if row < rows - 1:
+                    planes[id].showincurses(win, row)
+                    row += 1
+                else:
+                    break
 
         now = str(datetime.now())
         try:
