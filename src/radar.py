@@ -45,7 +45,6 @@ def getplanes(lock, run):
 
     for line in c_socket.makefile('r'):
         if not run['run']:
-            Plane.close_database()
             return
         parts = [x.strip() for x in line.split(',')]
         if parts[0] == 'MSG':
