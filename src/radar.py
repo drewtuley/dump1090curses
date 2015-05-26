@@ -85,7 +85,7 @@ def showplanes(win, lock, run):
         lock.release()
         win.refresh()
 
-def get_registration_from_fr24(self, id):
+def get_registration_from_fr24(id):
         """ 
         Not sure how long radar24 will keep this REST endpoint exposed 
         But might as well use it while we can
