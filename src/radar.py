@@ -18,17 +18,13 @@ import time
 import sys
 import copy
 import logging
-import os
+import requests
 
 planes = {}
 registration_queue = []
 
 cols = 155
 rows = 28
-
-dt=str(datetime.now())[:10]
-logging.basicConfig(format='%(asctime)s %(message)s', filename=os.getenv('LOGDIR')+'/radar_'+dt+'.log', level=logging.DEBUG)
-
 
 def removeplanes():
     """ Remove any plane with eventdate older than 30s """
