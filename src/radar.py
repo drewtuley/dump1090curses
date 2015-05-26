@@ -189,7 +189,7 @@ def get_registrations(lock, runstate):
                 instance = planes[id].observe_instance
                 log_observation_end(id, instance, conn)
             except:
-                pass
+                logging.debug('unable to log observation end for id '+str(id))
             lock.acquire()
             inactive_queue.remove(id)
             lock.release()
