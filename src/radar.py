@@ -65,7 +65,7 @@ def getplanes(lock, run):
 
 def showplanes(win, lock, run):
     while run['run']:
-        time.sleep(.100)
+        time.sleep(.200)
         row = 2
         win.erase()
         Plane.showheader(win)
@@ -176,14 +176,18 @@ def get_registrations(lock, runstate):
     conn = open_database()
     while runstate['run']:
         regs = copy.copy(registration_queue)
+        update_list = {}
         for id in regs:
             reg = get_registration(id, conn)
             instance = log_observation_start(id, conn)
-            lock.acquire()
-            planes[id].registration = reg
-            planes[id].observe_instance = instance
+            update_list[id] = (reg, instance)
+        
+        lock.acquire()
+        for id in update_list:
+            planes[id].registration = update_list[id][0]
+            planes[id].observe_instance = update_list[id][1]
             registration_queue.remove(id)
-            lock.release()
+        lock.release()
             
         inactives = copy.copy(inactive_queue)
         for id in inactives:
