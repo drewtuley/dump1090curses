@@ -57,8 +57,7 @@ def getplanes(lock, run):
                 registration_queue.append(id)
                 run['session_count'] += 1
                 planes[id] = plane
-                if len(planes) > run['session_max']:
-                    run['session_max'] = len(planes)
+                
             plane.update(parts)
             removeplanes()
             lock.release()
@@ -85,6 +84,9 @@ def showplanes(win, lock, run):
             if planes[id].active:
                 current += 1
                 
+        if current > run['session_max']:
+            run['session_max'] = len(planes)     
+            
         try:
             win.addstr(rows-1, 1, 'Current :'+str(current)+' Total (session):'+str(run['session_count'])+' Max (session):'+str(run['session_max']))
             win.addstr(rows-1, cols-5-len(now), now)
