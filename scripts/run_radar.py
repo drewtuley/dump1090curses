@@ -31,7 +31,7 @@ if __name__ == "__main__":
             
         if not os.access(db, os.R_OK):    
             try:
-                os.execl('src/utils/UpdateRegDB.py','x')
+                os.system('src/utils/UpdateRegDB.py')
             except:
                 print ('Error: Failed to update/create db')
                 exit(1)
