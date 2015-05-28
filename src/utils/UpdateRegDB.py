@@ -16,7 +16,7 @@ if __name__ == "__main__":
         
 
     with sqlite3.connect(db_filename) as conn:      
-        print 'Creating/Updating schema'
+        print 'Creating/Updating schema: '+schema_filename
         with open(schema_filename, 'rt') as f:
             schema = f.read()
             conn.executescript(schema)

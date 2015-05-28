@@ -25,6 +25,7 @@ if __name__ == "__main__":
         if not os.access(data, os.R_OK):
             print 'Warning: Unable to access data dir:'+data
             os.mkdir(data)
+            os.execl('src/utils/UpdateRegDB.py')
         
         if not os.access(logdir, os.R_OK):
             os.mkdir(logdir)
