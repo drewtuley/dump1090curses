@@ -22,9 +22,14 @@ if __name__ == "__main__":
         
         data='data'
         logdir='log'
+        db=data+'/sqlite_planes.db'
+        os.environ['REGDBNAME'] = db
+        os.environ['LOGDIR'] = logdir
         if not os.access(data, os.R_OK):
             print 'Warning: Unable to access data dir:'+data
             os.mkdir(data)
+            
+        if not os.access(db, os.R_OK):    
             try:
                 os.execl('src/utils/UpdateRegDB.py','x')
             except:
@@ -34,8 +39,7 @@ if __name__ == "__main__":
         if not os.access(logdir, os.R_OK):
             os.mkdir(logdir)
             
-        os.environ['REGDBNAME'] = data+'/sqlite_planes.db'
-        os.environ['LOGDIR'] = logdir
+        
         script='src/radar.py'
 	lines = 23
 	with os.popen('tput lines') as fd:
