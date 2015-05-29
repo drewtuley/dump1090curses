@@ -102,7 +102,7 @@ class Plane:
                 if (datetime.now()-self.eventdate).total_seconds() > 15:
                     win.addstr(row, col, ' *')
             elif idx == 12:
-                if self.registration[:6] in SAC_planes:
+                if self.registration[:6] in Plane.SAC_planes:
                     win.addstr(row, col, self.registration, curse.A_REVERSE)
                 else:
                     win.addstr(row, col, self.registration)
