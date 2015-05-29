@@ -3,6 +3,7 @@ import math
 import sys
 import os
 import logging
+import curses
 
 
 class Plane:
@@ -17,7 +18,7 @@ class Plane:
         'Bradford':(53.7470237, -1.728551), 'Sheffield':(53.3957166, -1.4994562), 
         'Hawes':(54.3040185, -2.198943), 'Doncaster':(53.5188469, -1.1200236), 
         'Wakefield':(53.6782581, -1.3712726), 'Manc-EGCC':(53.2114, -2.1630)}
-    SAC_planes = ['G-BODE','G-BODB','G-BNOH','G-SACS','G-SACT','G-SACY','G-SACX']
+    SAC_planes = ['G-GDFG','G-BODE','G-BODB','G-BNOH','G-SACS','G-SACT','G-SACY','G-SACX']
     
     callsigns = {}
     conn = None
@@ -103,7 +104,7 @@ class Plane:
                     win.addstr(row, col, ' *')
             elif idx == 12:
                 if self.registration[:6] in Plane.SAC_planes:
-                    win.addstr(row, col, self.registration, curse.A_REVERSE)
+                    win.addstr(row, col, self.registration, curses.A_REVERSE)
                 else:
                     win.addstr(row, col, self.registration)
             col += Plane.columns[idx][1]
