@@ -76,37 +76,41 @@ class Plane:
 
     def showincurses(self, win, row):
         col = 0
+        if (datetime.now()-self.eventdate).total_seconds() > 15:
+            colour = curses.color_pair(2)
+        else:
+            colour = curses.color_pair(1)
         for idx in Plane.columns:
             if idx == 0:
-                win.addstr(row, col, self.id)
+                win.addstr(row, col, self.id, colour)
             elif idx == 1:
-                win.addstr(row, col, self.callsign)
+                win.addstr(row, col, self.callsign, colour)
             elif idx == 2:
-                win.addstr(row, col, '{0:04d}'.format(int(self.squawk)))
+                win.addstr(row, col, '{0:04d}'.format(int(self.squawk)), colour)
             elif idx == 3:
-                win.addstr(row, col, str(self.altitude))
+                win.addstr(row, col, str(self.altitude), colour)
             elif idx == 4:
-                win.addstr(row, col, str(self.vspeed))
+                win.addstr(row, col, str(self.vspeed), colour)
             elif idx == 5:
-                win.addstr(row, col, '{0:03d}'.format(int(self.track)))
+                win.addstr(row, col, '{0:03d}'.format(int(self.track)), colour)
             elif idx == 6:
-                win.addstr(row, col, '{0:03d}'.format(int(self.gs)))
+                win.addstr(row, col, '{0:03d}'.format(int(self.gs)), colour)
             elif idx == 7:
-                win.addstr(row, col, str(self.lat))
+                win.addstr(row, col, str(self.lat), colour)
             elif idx == 8:
-                win.addstr(row, col, str(self.long))
+                win.addstr(row, col, str(self.long), colour)
             elif idx == 9:
-                win.addstr(row, col, self.nearest)
+                win.addstr(row, col, self.nearest, colour)
             elif idx == 10:
-                win.addstr(row, col, str(self.eventdate))
+                win.addstr(row, col, str(self.eventdate), colour)
             elif idx == 11:
                 if (datetime.now()-self.eventdate).total_seconds() > 15:
-                    win.addstr(row, col, ' *',curses.color_pair(2))
+                    win.addstr(row, col, ' *', colour)
             elif idx == 12:
                 if self.registration[:6] in Plane.SAC_planes:
                     win.addstr(row, col, self.registration, curses.A_REVERSE)
                 else:
-                    win.addstr(row, col, self.registration)
+                    win.addstr(row, col, self.registration, colour)
             col += Plane.columns[idx][1]
 
 
