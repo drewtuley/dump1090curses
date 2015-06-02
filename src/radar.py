@@ -202,6 +202,7 @@ def get_registrations(lock, runstate):
 def main(screen):
     curses.start_color()
     curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLACK)
+    curses.init_pair(2, curses.COLOR_GREY, curses.COLOR_BLACK)
  
     screen.refresh()
 
