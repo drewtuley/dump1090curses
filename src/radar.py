@@ -69,7 +69,7 @@ def showplanes(win, lock, run):
         row = 2
         win.erase()
         Plane.showheader(win)
-        lock.acquire()
+        #lock.acquire()
         for id in sorted(planes, key=planes.__getitem__):
             if planes[id].active:
                 if row < rows - 1:
@@ -93,7 +93,7 @@ def showplanes(win, lock, run):
         except:
             pass
         
-        lock.release()
+        #lock.release()
         win.refresh()
 
 def open_database():
