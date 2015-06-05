@@ -17,9 +17,12 @@ if __name__ == "__main__":
 
         with sqlite3.connect(db_filename) as conn:      
             print 'Updating Registrations from : '+update_filename
-            with open(schema_filename, 'rt') as f:
+            with open(update_filename, 'rt') as f:
                 for line in f:
-                    icao, reg, = line
+                    icao, reg = (line.split(','))
                     print ('Adding reg:'+reg)
+                    sql = 'insert into registration select "'+icao+'","'+reg+'",datetime() where not exists (select * from registration where icao_code="'+icao+'"'
+                    conn.execute(sql)
+
 
             conn.commit()
