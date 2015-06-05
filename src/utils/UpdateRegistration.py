@@ -19,9 +19,10 @@ if __name__ == "__main__":
             print 'Updating Registrations from : '+update_filename
             with open(update_filename, 'rt') as f:
                 for line in f:
-                    icao, reg = (line.split(','))
+                    icao, reg = (line.strip().split(','))
                     print ('Adding reg:'+reg)
-                    sql = 'insert into registration select "'+icao+'","'+reg+'",datetime() where not exists (select * from registration where icao_code="'+icao+'"'
+                    sql = 'insert into registration select "'+icao+'","'+reg+'",datetime() where not exists (select * from registration where icao_code="'+icao+'")'
+                    print (sql)	
                     conn.execute(sql)
 
 
