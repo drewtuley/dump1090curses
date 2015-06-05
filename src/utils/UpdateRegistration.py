@@ -13,7 +13,6 @@ if __name__ == "__main__":
     db_filename = 'data/sqlite_planes.db'
     if len(sys.argv) >= 2:
         update_filename = sys.argv[1]
-        
 
         with sqlite3.connect(db_filename) as conn:      
             print 'Updating Registrations from : '+update_filename
