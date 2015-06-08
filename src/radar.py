@@ -70,10 +70,13 @@ def showplanes(win, lock, run):
         win.erase()
         Plane.showheader(win)
         #lock.acquire()
+        cached=0
         for id in sorted(planes, key=planes.__getitem__):
             if planes[id].active:
                 if row < rows - 1:
                     planes[id].showincurses(win, row)
+                    if planes[id].registration[-1:] == '*':
+                        cached += 1
                     row += 1
                 else:
                     break
@@ -86,9 +89,9 @@ def showplanes(win, lock, run):
                 
         if current > run['session_max']:
             run['session_max'] = len(planes)     
-            
+        coverage = cached*100/current    
         try:
-            win.addstr(rows-1, 1, 'Current :'+str(current)+' Total (session):'+str(run['session_count'])+' Max (session):'+str(run['session_max']))
+            win.addstr(rows-1, 1, 'Current :'+str(current)+' Total (session):'+str(run['session_count'])+' Max (session):'+str(run['session_max'])+' Cache %:'+str(coverage))
             win.addstr(rows-1, cols-5-len(now), now)
         except:
             pass
