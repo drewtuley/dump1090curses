@@ -8,10 +8,14 @@ __author__ = "andrew.tuley"
 __date__ = "$06-May-2015 15:17:29$"
 
 import sqlite3
+import ConfigParser
 
 
 if __name__ == "__main__":
-    db_filename = 'data/sqlite_planes.db'
+    config=ConfigParser.SafeConfigParser()
+    config.read('dump1090curses.props')
+    
+    db_filename = config.get('directories','data')+'/'+config.get('database','dbname')
     schema_filename = 'src/utils/RegDBSetup.sql'
         
 

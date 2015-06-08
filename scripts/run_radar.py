@@ -26,7 +26,7 @@ if __name__ == "__main__":
         
         data=config.get('directories','data')
         logdir=config.get('directories','log')
-        db=data+config.get('database','dbname')
+        db=data+'/'+config.get('database','dbname')
         
         if not os.access(data, os.R_OK):
             print 'Warning: Unable to access data dir:'+data

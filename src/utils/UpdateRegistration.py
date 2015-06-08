@@ -8,9 +8,13 @@ __author__ = "andrew.tuley"
 __date__ = "$05-Jun-2015 15:38:50$"
 import sqlite3
 import sys
+import ConfigParser
 
 if __name__ == "__main__":
-    db_filename = 'data/sqlite_planes.db'
+    config=ConfigParser.SafeConfigParser()
+    config.read('dump1090curses.props')
+    
+    db_filename = config.get('directories','data')+'/'+config.get('database','dbname')
     if len(sys.argv) >= 2:
         update_filename = sys.argv[1]
 
