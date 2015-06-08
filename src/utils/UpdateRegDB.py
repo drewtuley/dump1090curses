@@ -25,4 +25,15 @@ if __name__ == "__main__":
             schema = f.read()
             conn.executescript(schema)
         
+        print 'Adding location data'
+        locations = {'LBA':(53.8736961, -1.6732249), 'Leeds':(53.797365, -1.5580089), 
+        'Harrogate':(53.9771475, -1.5430934), 'Skipton':(53.9552364, -2.0219937), 
+        'Bradford':(53.7470237, -1.728551), 'Sheffield':(53.3957166, -1.4994562), 
+        'Hawes':(54.3040185, -2.198943), 'Doncaster':(53.5188469, -1.1200236), 
+        'Wakefield':(53.6782581, -1.3712726), 'Manc-EGCC':(53.2114, -2.1630)}
+        
+        crsr = conn.cursor()
+        for loc in locations:
+            crsr.execute('insert into location select "'+loc+'",'+locations[loc][0]+','+locations[loc][1])
+            
         conn.commit()

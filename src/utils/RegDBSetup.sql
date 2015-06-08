@@ -14,3 +14,10 @@ CREATE TABLE IF NOT EXISTS observation (
 );
 
 CREATE INDEX IF NOT EXISTS obv_idx on observation(instance, icao_code);
+
+CREATE TABLE IF NOT EXISTS location (
+    name text primary key,
+    latitude float,
+    longitude float
+);
+
