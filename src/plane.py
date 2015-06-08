@@ -121,29 +121,30 @@ class Plane:
         TODO: Would be more efficient to use the message type (parts[1]) to 
         work out which elements are relevant
         """
-        self.active = True      # reactivate if necessary
-        can_update_nearest = False
-        if len(parts[6]) > 0 and len(parts[7]) > 0:
-            self.eventdate = datetime.strptime(parts[6] + " " + parts[7], "%Y/%m/%d %H:%M:%S.%f")
-        if len(parts[10]) > 0:
-            self.callsign = parts[10]
-            Plane.callsigns[self.id] = (self.callsign, datetime.now())
-        if len(parts[11]) > 0:
-            self.altitude = parts[11]
-        if len(parts[12]) > 0:
-            self.gs = parts[12]
-        if len(parts[13]) > 0:
-            self.track = parts[13]
-        if len(parts[14]) > 0:
-            self.lat = parts[14]
-            can_update_nearest = True
-        if len(parts[15]) > 0:
-            self.long = parts[15]
-            can_update_nearest = True
-        if len(parts[16]) > 0:
-            self.vspeed = parts[16]
-        if len(parts[17]) > 0:
-            self.squawk = parts[17]
+        if len(parts) >= 16:
+            self.active = True      # reactivate if necessary
+            can_update_nearest = False
+            if len(parts[6]) > 0 and len(parts[7]) > 0:
+                self.eventdate = datetime.strptime(parts[6] + " " + parts[7], "%Y/%m/%d %H:%M:%S.%f")
+            if len(parts[10]) > 0:
+                self.callsign = parts[10]
+                Plane.callsigns[self.id] = (self.callsign, datetime.now())
+            if len(parts[11]) > 0:
+                self.altitude = parts[11]
+            if len(parts[12]) > 0:
+                self.gs = parts[12]
+            if len(parts[13]) > 0:
+                self.track = parts[13]
+            if len(parts[14]) > 0:
+                self.lat = parts[14]
+                can_update_nearest = True
+            if len(parts[15]) > 0:
+                self.long = parts[15]
+                can_update_nearest = True
+            if len(parts[16]) > 0:
+                self.vspeed = parts[16]
+            if len(parts[17]) > 0:
+                self.squawk = parts[17]
 
         if can_update_nearest:
             self.update_nearest()
