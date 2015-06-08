@@ -180,8 +180,24 @@ def get_registration_from_fr24(id):
         except:
             return 'x'
 
+def get_locations(conn):
+    """ Load my recognizeable locations from location table in db """
+    
+    locations = {}
+    crsr=conn.cursor()
+    crsr.execute('select * from location')
+    for row in crsr.fetchall():
+        place, lat, long, = row
+        locations[place]=(lat,long)
+        
+    return locations
+
 def get_registrations(lock, runstate, config):
     conn = open_database(config)
+    locations_from_db = get_locations(conn)
+    if len(locations_from_db) >0:
+        Plane.locations = locations_from_db
+        
     while runstate['run']:
         regs = copy.copy(registration_queue)
         for id in regs:
