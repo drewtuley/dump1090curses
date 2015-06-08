@@ -88,11 +88,11 @@ def showplanes(win, lock, run):
                 current += 1
                 
         if current > run['session_max']:
-            run['session_max'] = len(planes)     
+            run['session_max'] = len(planes)  
+            
         coverage = cached*100/current    
         try:
-            win.addstr(rows-1, 1, 
-            'Current :{}  Total (session):{}  Max (session):{} Reg Cache :{:.0%}'.format(str(current),str(run['session_count']),str(run['session_max']),str(coverage)))
+            win.addstr(rows-1, 1, 'Current :{}  Total (session):{}  Max (session):{} Reg Cache :{:.0%}'.format(str(current),str(run['session_count']),str(run['session_max']),str(coverage)))
             win.addstr(rows-1, cols-5-len(now), now)
         except:
             pass
