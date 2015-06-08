@@ -20,7 +20,7 @@ import copy
 import logging
 import requests
 import sqlite3
-import os
+import ConfigParser
 
 planes = {}
 registration_queue = []
@@ -104,8 +104,8 @@ def showplanes(win, lock, run):
         #lock.release()
         win.refresh()
 
-def open_database():
-    dbname = os.getenv('REGDBNAME', 'sqlite_planes.db')
+def open_database(config):
+    dbname = config.get('directories','data')+'/'+config.get('database','dbname')
     logging.info('Opening db '+dbname)
     return sqlite3.connect(dbname)
      
@@ -180,8 +180,8 @@ def get_registration_from_fr24(id):
         except:
             return 'x'
 
-def get_registrations(lock, runstate):
-    conn = open_database()
+def get_registrations(lock, runstate, config):
+    conn = open_database(config)
     while runstate['run']:
         regs = copy.copy(registration_queue)
         for id in regs:
@@ -208,6 +208,11 @@ def get_registrations(lock, runstate):
     close_database(conn)
     
 def main(screen):
+    config = ConfigParser.SafeConfigParser()
+    config.read('dump1090curses.props')
+    dt=str(datetime.now())[:10]
+    
+    logging.basicConfig(format='%(asctime)s %(message)s', filename=config.get('directories','log')+'/'+config.get('logging','logname')+dt+'.log', level=logging.DEBUG)
     curses.start_color()
     curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLACK)
     curses.init_pair(2, curses.COLOR_YELLOW, curses.COLOR_BLACK)
@@ -222,7 +227,7 @@ def main(screen):
     lock = thread.allocate_lock()
     get = threading.Thread(target=getplanes, args=(lock, runstate ))
     show = threading.Thread(target=showplanes, args=(win, lock, runstate ))
-    registration = threading.Thread(target=get_registrations, args=(lock, runstate ))
+    registration = threading.Thread(target=get_registrations, args=(lock, runstate, config ))
     
     get.start()
     show.start()

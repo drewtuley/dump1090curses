@@ -9,6 +9,7 @@ __date__ = "$06-May-2015 09:27:35$"
 
 import os
 import string
+import ConfigParser
 
 if __name__ == "__main__":
     home=os.getenv('HOME')
@@ -20,11 +21,13 @@ if __name__ == "__main__":
         
         os.chdir(dump1090)
         
-        data='data'
-        logdir='log'
-        db=data+'/sqlite_planes.db'
-        os.environ['REGDBNAME'] = db
-        os.environ['LOGDIR'] = logdir
+        config = ConfigParser.SafeConfigParser()
+        config.read('dump1090curses.props')
+        
+        data=config.get('directories','data')
+        logdir=config.get('directories','log')
+        db=data+config.get('database','dbname')
+        
         if not os.access(data, os.R_OK):
             print 'Warning: Unable to access data dir:'+data
             os.mkdir(data)

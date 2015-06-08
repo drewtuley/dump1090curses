@@ -1,0 +1,11 @@
+# dump1090curses properties file
+
+[directories]
+data=data
+log=log
+
+[database]
+dbname=sqlite_planes.db
+
+[logging]
+logname=plane_
