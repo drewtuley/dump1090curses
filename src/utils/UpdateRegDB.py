@@ -34,6 +34,8 @@ if __name__ == "__main__":
         
         crsr = conn.cursor()
         for loc in locations:
-            crsr.execute('insert into location select "'+loc+'",'+locations[loc][0]+','+locations[loc][1])
+            sql='insert into location select "'+loc+'",'+str(locations[loc][0])+','+str(locations[loc][1])
+            print sql
+            crsr.execute(sql)
             
         conn.commit()
