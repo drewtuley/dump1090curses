@@ -146,21 +146,26 @@ def log_observation_end(id, instance, conn):
     conn.execute(sql)
     conn.commit()
         
-def get_registration(id, conn):
-    sql = 'select registration from registration where icao_code = "'+id+'"'
-    cursor = conn.cursor()
-    cursor.execute(sql)
+def get_registration(id, conn, reg_cache):
     reg = ''
-    for row in cursor.fetchall():
-        registration = row
-        if len(registration) > 0:
-            reg=registration[0]+'*'
-            logging.info('Reg '+registration[0]+' in cache')
-    if len(reg) == 0:
-        # no reg in db, so try FR24 
-       reg = get_registration_from_fr24(id)
-       if len(reg)>0 and reg != 'x':
-           update_registration(reg, id, conn)
+    
+    if id in reg_cache.keys():
+        reg = reg_cache[id]
+    else:    
+        sql = 'select registration from registration where icao_code = "'+id+'"'
+        cursor = conn.cursor()
+        cursor.execute(sql)
+
+        for row in cursor.fetchall():
+            registration = row
+            if len(registration) > 0:
+                reg=registration[0]+'*'
+                logging.info('Reg '+registration[0]+' in cache')
+        if len(reg) == 0:
+            # no reg in db, so try FR24 
+           reg = get_registration_from_fr24(id)
+           if len(reg)>0 and reg != 'x':
+               update_registration(reg, id, conn)
 
     return reg
     
@@ -192,16 +197,28 @@ def get_locations(conn):
         
     return locations
 
+def warm_reg_cache(conn):
+    crsr = conn.cursor()
+    crsr.execute('select icao_code, registration from registration')
+    cache = {}
+    for row in crsr.fetch_all():
+        icao, reg, = row
+        cache[icao] = reg
+        
+    return cache    
+
 def get_registrations(lock, runstate, config):
     conn = open_database(config)
     locations_from_db = get_locations(conn)
     if len(locations_from_db) >0:
         Plane.locations = locations_from_db
+    
+    reg_cache = warm_reg_cache(conn)    
         
     while runstate['run']:
         regs = copy.copy(registration_queue)
         for id in regs:
-            reg = get_registration(id, conn)
+            reg = get_registration(id, conn, reg_cache)
             instance = log_observation_start(id, conn)
             lock.acquire()
             planes[id].registration = reg
