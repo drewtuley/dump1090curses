@@ -159,12 +159,14 @@ def get_registration(id, conn, reg_cache):
         for row in cursor.fetchall():
             registration = row
             if len(registration) > 0:
+                reg_cache[id] = registration[0]
                 reg=registration[0]+'*'
                 logging.info('Reg '+registration[0]+' in cache')
         if len(reg) == 0:
             # no reg in db, so try FR24 
            reg = get_registration_from_fr24(id)
            if len(reg)>0 and reg != 'x':
+               reg_cache[id] = reg
                update_registration(reg, id, conn)
 
     return reg
