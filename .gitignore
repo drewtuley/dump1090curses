@@ -2,5 +2,5 @@
 /src/planes
 /src/plane.db
 /src/plane.pyc
-/data
+/data/*
 /log

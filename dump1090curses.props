@@ -5,7 +5,7 @@ data=data
 log=log
 
 [database]
-dbname=sqlite_planes.db
+dbname=new_planes.db
 
 [logging]
 logname=plane_
