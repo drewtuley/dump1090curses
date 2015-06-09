@@ -151,6 +151,7 @@ def get_registration(id, conn, reg_cache):
     
     if id in reg_cache.keys():
         reg = reg_cache[id]+'*'
+        logging.info('Registration {} in cache'.format(reg[:-1]))
     else:    
         sql = 'select registration from registration where icao_code = "'+id+'"'
         cursor = conn.cursor()
@@ -161,7 +162,7 @@ def get_registration(id, conn, reg_cache):
             if len(registration) > 0:
                 reg_cache[id] = registration[0]
                 reg=registration[0]+'*'
-                logging.info('Reg '+registration[0]+' in cache')
+                logging.info('Reg '+registration[0]+' in DB')
         if len(reg) == 0:
             # no reg in db, so try FR24 
            reg = get_registration_from_fr24(id)
@@ -207,6 +208,7 @@ def warm_reg_cache(conn):
         icao, reg, = row
         cache[icao] = reg
         
+    logging.info('Loaded {} registrations into cache'.format(len(cache)))    
     return cache    
 
 def get_registrations(lock, runstate, config):
