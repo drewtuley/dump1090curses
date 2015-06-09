@@ -150,7 +150,7 @@ def get_registration(id, conn, reg_cache):
     reg = ''
     
     if id in reg_cache.keys():
-        reg = reg_cache[id]
+        reg = reg_cache[id]+'*'
     else:    
         sql = 'select registration from registration where icao_code = "'+id+'"'
         cursor = conn.cursor()
@@ -203,7 +203,7 @@ def warm_reg_cache(conn):
     crsr = conn.cursor()
     crsr.execute('select icao_code, registration from registration')
     cache = {}
-    for row in crsr.fetch_all():
+    for row in crsr.fetchall():
         icao, reg, = row
         cache[icao] = reg
         
@@ -239,7 +239,7 @@ def get_registrations(lock, runstate, config):
             inactive_queue.remove(id)
             lock.release()
             
-        time.sleep(.500)
+        time.sleep(.0500)
     close_database(conn)
     
 def main(screen):
