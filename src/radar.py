@@ -124,13 +124,13 @@ def update_registration(reg, id, conn):
     conn.commit()
     logging.debug('update result='+str(upd.description))
     
-def log_observation_start(id, conn):
-    sql = 'insert into observation select ifnull(max(instance)+1,1), "'+id+'","'+str(datetime.now())+'",null from observation where icao_code="'+id+'"'
+def log_observation_start(id, conn, curr_instance):
+    sql = 'insert into observation "'+(curr_instance+1)+'","'+id+'","'+str(datetime.now())+'",null '
     logging.debug('adding observation with SQL:'+sql)
     conn.execute(sql)
     conn.commit()
 
-    sql = 'select ifnull(max(instance),1) from observation where icao_code ="'+id+'"'
+    sql = 'select max(instance) from observation where icao_code ="'+id+'"'
     crs = conn.cursor()
     crs.execute(sql)
     instance = 0
@@ -148,10 +148,12 @@ def log_observation_end(id, instance, conn):
         
 def get_registration(id, conn, reg_cache):
     reg = ''
+    instance = 0
     
     if id in reg_cache.keys():
-        reg = reg_cache[id]+'*'
-        logging.info('Registration {} in cache'.format(reg[:-1]))
+        reg = reg_cache[id][0]+'*'
+        instance = reg_cache[id][1]
+        logging.info('Registration {} instance {} in cache'.format(reg[:-1],instance))
     else:    
         sql = 'select registration from registration where icao_code = "'+id+'"'
         cursor = conn.cursor()
@@ -161,6 +163,7 @@ def get_registration(id, conn, reg_cache):
             registration = row
             if len(registration) > 0:
                 reg_cache[id] = registration[0]
+                instance=0
                 reg=registration[0]+'*'
                 logging.info('Reg '+registration[0]+' in DB')
         if len(reg) == 0:
@@ -168,9 +171,10 @@ def get_registration(id, conn, reg_cache):
            reg = get_registration_from_fr24(id)
            if len(reg)>0 and reg != 'x':
                reg_cache[id] = reg
+               instance=0
                update_registration(reg, id, conn)
 
-    return reg
+    return (reg,instance)
     
 def get_registration_from_fr24(id):
         """ 
@@ -202,11 +206,12 @@ def get_locations(conn):
 
 def warm_reg_cache(conn):
     crsr = conn.cursor()
-    crsr.execute('select icao_code, registration from registration')
+    crsr.execute('select r.icao_code, r.registration max(o.instance) '\
+        'from registration r, observation o group by r.icao_code, r.registration')
     cache = {}
     for row in crsr.fetchall():
-        icao, reg, = row
-        cache[icao] = reg
+        icao, reg, instance, = row
+        cache[icao] = (reg,instance)
         
     logging.info('Loaded {} registrations into cache'.format(len(cache)))    
     return cache    
@@ -222,8 +227,8 @@ def get_registrations(lock, runstate, config):
     while runstate['run']:
         regs = copy.copy(registration_queue)
         for id in regs:
-            reg = get_registration(id, conn, reg_cache)
-            instance = log_observation_start(id, conn)
+            reg,curr_instance = get_registration(id, conn, reg_cache)
+            instance = log_observation_start(id, conn, curr_instance)
             lock.acquire()
             planes[id].registration = reg
             planes[id].observe_instance = instance
