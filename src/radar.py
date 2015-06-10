@@ -130,15 +130,15 @@ def log_observation_start(id, conn, curr_instance):
     conn.execute(sql)
     conn.commit()
 
-    sql = 'select max(instance) from observation where icao_code ="'+id+'"'
-    crs = conn.cursor()
-    crs.execute(sql)
-    instance = 0
-    for row in crs.fetchall():
-        instance, = row
+    #sql = 'select max(instance) from observation where icao_code ="'+id+'"'
+    #crs = conn.cursor()
+    #crs.execute(sql)
+    #instance = 0
+    #for row in crs.fetchall():
+     #   instance, = row
 
-    logging.debug('ICAO '+id+' shows observation instance of '+str(instance))   
-    return instance
+    #logging.debug('ICAO '+id+' shows observation instance of '+str(instance))   
+    return curr_instance+1
     
 def log_observation_end(id, instance, conn):
     sql = 'update observation set endtime = "'+str(datetime.now())+'" where icao_code = "'+id+'" and endtime is null and instance ='+str(instance)
