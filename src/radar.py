@@ -207,7 +207,7 @@ def get_locations(conn):
 def warm_reg_cache(conn):
     crsr = conn.cursor()
     crsr.execute('select r.icao_code, r.registration, max(o.instance) '\
-        'from registration r, observation o group by r.icao_code, r.registration')
+        'from registration r, observation o where r.icao_code = o.icao_code group by r.icao_code, r.registration')
     cache = {}
     for row in crsr.fetchall():
         icao, reg, instance, = row
