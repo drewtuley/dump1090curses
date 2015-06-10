@@ -125,7 +125,7 @@ def update_registration(reg, id, conn):
     logging.debug('update result='+str(upd.description))
     
 def log_observation_start(id, conn, curr_instance):
-    sql = 'insert into observation "'+str(curr_instance+1)+'","'+id+'","'+str(datetime.now())+'",null '
+    sql = 'insert into observation select "'+str(curr_instance+1)+'","'+id+'","'+str(datetime.now())+'",null '
     logging.debug('adding observation with SQL:'+sql)
     conn.execute(sql)
     conn.commit()
