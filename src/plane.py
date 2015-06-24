@@ -44,7 +44,7 @@ class Plane:
         self.lat = ''
         self.long = ''
         self.nearest = '?'
-        self.from_antenna = 0.0
+        self.from_antenna = -0.0
         self.eventdate = now	
         self.appeardate = now
         self.active = True
@@ -101,7 +101,8 @@ class Plane:
             elif idx == 9:
                 win.addstr(row, col, self.nearest, colour)
             elif idx == 10:
-                win.addstr(row, col, '{0:3.1f}nm'.format(self.from_antenna), colour)                
+                if self.from_antenna > -0.0:
+                    win.addstr(row, col, '{0:3.1f}nm'.format(self.from_antenna), colour)                
             elif idx == 11:
                 win.addstr(row, col, str(self.eventdate)[11:], colour)
             elif idx == 12:
