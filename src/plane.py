@@ -101,7 +101,7 @@ class Plane:
             elif idx == 9:
                 win.addstr(row, col, self.nearest, colour)
             elif idx == 10:
-                win.addstr(row, col, str(self.from_antenna), colour)                
+                win.addstr(row, col, '{0:3.1f}nm'.format(self.from_antenna), colour)                
             elif idx == 11:
                 win.addstr(row, col, str(self.eventdate)[11:], colour)
             elif idx == 12:
@@ -153,8 +153,7 @@ class Plane:
     def update_nearest(self):
         nearest = 400
         
-        distance=distance_on_sphere(float(self.lat), float(self.long), Plane.antenna_location[0], Plane.antenna_location[1])
-        self.from_antenna = '{0:3.1f}'.format(distance) + 'nm'
+        self.from_antenna=distance_on_sphere(float(self.lat), float(self.long), Plane.antenna_location[0], Plane.antenna_location[1])
         for loc in Plane.locations:
             data = Plane.locations[loc]
             distance = distance_on_sphere(float(self.lat), float(self.long), (data[0]), (data[1]))
