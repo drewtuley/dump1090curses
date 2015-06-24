@@ -44,7 +44,7 @@ class Plane:
         self.lat = ''
         self.long = ''
         self.nearest = '?'
-        self.from_antenna = ''
+        self.from_antenna = 0.0
         self.eventdate = now	
         self.appeardate = now
         self.active = True
