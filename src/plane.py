@@ -9,8 +9,8 @@ class Plane:
     """A simple SBC Plane class"""
     columns = {0:('ICAO', 7), 1:('Callsign', 11), 2:('Squawk', 7), 3:('Alt', 7), 
         4:('VSpeed', 9), 5:('Track', 7), 6:('Speed(kts)', 12), 7:('Lat', 10), 
-        8:('Long', 10), 9:('Nearest Location', 30), 10:('Eventdate', 26), 11:('>15s', 6), 
-        12:('Reg', 6)}
+        8:('Long', 10), 9:('Nearest Location', 25), 10:('Dist from ant',5), 11:('Eventdate', 26), 12:('>15s', 6), 
+        13:('Reg', 6)}
     # these locations are of interest to me - insert your own - simple 'Name':(digital_lat, digital_long)
     locations = {'LBA':(53.8736961, -1.6732249), 'Leeds':(53.797365, -1.5580089), 
         'Harrogate':(53.9771475, -1.5430934), 'Skipton':(53.9552364, -2.0219937), 
@@ -99,11 +99,13 @@ class Plane:
             elif idx == 9:
                 win.addstr(row, col, self.nearest, colour)
             elif idx == 10:
-                win.addstr(row, col, str(self.eventdate)[11:], colour)
+                win.addstr(row, col, str(123), colour)                
             elif idx == 11:
+                win.addstr(row, col, str(self.eventdate)[11:], colour)
+            elif idx == 12:
                 if (datetime.now()-self.eventdate).total_seconds() > 15:
                     win.addstr(row, col, ' *', colour)
-            elif idx == 12:
+            elif idx == 13:
                 if self.registration[:6] in Plane.planes_of_interest:
                     win.addstr(row, col, self.registration, curses.A_REVERSE)
                 else:
