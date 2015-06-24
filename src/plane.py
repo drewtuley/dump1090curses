@@ -9,7 +9,7 @@ class Plane:
     """A simple SBC Plane class"""
     columns = {0:('ICAO', 7), 1:('Callsign', 11), 2:('Squawk', 7), 3:('Alt', 7), 
         4:('VSpeed', 9), 5:('Track', 7), 6:('Speed(kts)', 12), 7:('Lat', 10), 
-        8:('Long', 10), 9:('Nearest Location', 25), 10:('Dist from ant',14), 11:('Eventdate', 26), 12:('>15s', 6), 
+        8:('Long', 10), 9:('Nearest Location', 28), 10:('Dist from ant',14), 11:('Eventdate', 26), 12:('>15s', 6), 
         13:('Reg', 6)}
     # these locations are of interest to me - insert your own - simple 'Name':(digital_lat, digital_long)
     antenna_location = (53.797365, -1.5580089)
@@ -152,7 +152,9 @@ class Plane:
 
     def update_nearest(self):
         nearest = 400
-        self.from_antenna = distance_on_sphere(float(self.lat), float(self.long), Plane.antenna_location[0], Plane.antenna_location[1])
+        
+        distance=distance_on_sphere(float(self.lat), float(self.long), Plane.antenna_location[0], Plane.antenna_location[1])
+        self.from_antenna = '{0:3.1f}'.format(distance)
         for loc in Plane.locations:
             data = Plane.locations[loc]
             distance = distance_on_sphere(float(self.lat), float(self.long), (data[0]), (data[1]))
