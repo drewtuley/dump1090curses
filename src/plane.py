@@ -99,7 +99,7 @@ class Plane:
             elif idx == 9:
                 win.addstr(row, col, self.nearest, colour)
             elif idx == 10:
-                win.addstr(row, col, str(self.eventdate), colour)
+                win.addstr(row, col, str(self.eventdate)[11:], colour)
             elif idx == 11:
                 if (datetime.now()-self.eventdate).total_seconds() > 15:
                     win.addstr(row, col, ' *', colour)
