@@ -101,7 +101,7 @@ def showplanes(win, lock, run):
 	    coverage = 0
 
         try:
-            win.addstr(rows-1, 1, 'Current:{}  Total (session):{}  Max (session):{}  Reg Cache:{}%  Max Distance:{3.1f}nm'.format(str(current),str(run['session_count']),str(run['session_max']),str(int(coverage)),max_distance))
+            win.addstr(rows-1, 1, 'Current:{}  Total (session):{}  Max (session):{}  Reg Cache:{}%  Max Distance:{:3.1f}nm'.format(str(current),str(run['session_count']),str(run['session_max']),str(int(coverage)),max_distance))
             win.addstr(rows-1, cols-5-len(now), now)
         except:
             pass
