@@ -152,7 +152,7 @@ class Plane:
 
     def update_nearest(self):
         nearest = 400
-        self.from_antenna = distance_on_sphere(float(self.lat), float(self.long), antenna_location[0], antenna_location[1])
+        self.from_antenna = distance_on_sphere(float(self.lat), float(self.long), Plane.antenna_location[0], Plane.antenna_location[1])
         for loc in Plane.locations:
             data = Plane.locations[loc]
             distance = distance_on_sphere(float(self.lat), float(self.long), (data[0]), (data[1]))
