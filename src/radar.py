@@ -64,6 +64,7 @@ def getplanes(lock, run):
 
 
 def showplanes(win, lock, run):
+    max_distance = 0
     while run['run']:
         time.sleep(.200)
         row = 2
@@ -71,10 +72,14 @@ def showplanes(win, lock, run):
         Plane.showheader(win)
         #lock.acquire()
         cached=0
+        
         for id in sorted(planes, key=planes.__getitem__):
             if planes[id].active:
                 if row < rows - 1:
                     planes[id].showincurses(win, row)
+                    if planes[id].from_antenna > max_distance:
+                        max_distance = planes[id].from_antenna
+                        
                     if planes[id].registration[-1:] == '*':
                         cached += 1
                     row += 1
@@ -96,7 +101,7 @@ def showplanes(win, lock, run):
 	    coverage = 0
 
         try:
-            win.addstr(rows-1, 1, 'Current:{}  Total (session):{}  Max (session):{}  Reg Cache:{}%'.format(str(current),str(run['session_count']),str(run['session_max']),str(int(coverage))))
+            win.addstr(rows-1, 1, 'Current:{}  Total (session):{}  Max (session):{}  Reg Cache:{}%  Max Distance:{}nm'.format(str(current),str(run['session_count']),str(run['session_max']),str(int(coverage)),str(max_distance)))
             win.addstr(rows-1, cols-5-len(now), now)
         except:
             pass
