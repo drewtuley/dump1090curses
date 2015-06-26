@@ -95,11 +95,12 @@ class Plane:
             elif idx == 6:
                 win.addstr(row, col, '{0:03d}'.format(int(self.gs)), colour)
             elif idx == 7:
-                win.addstr(row, col, str(self.lat), colour)
+                win.addstr(row, col, '{0:2.2f}'.format(float(self.lat)), colour)
             elif idx == 8:
-                win.addstr(row, col, str(self.long), colour)
+                win.addstr(row, col, '{0:2.2f}'.format(float(self.long)), colour)
             elif idx == 9:
-                win.addstr(row, col, self.nearest, colour)
+                if self.nearest != '?':
+                    win.addstr(row, col, self.nearest, colour)
             elif idx == 10:
                 if self.from_antenna > -0.0:
                     win.addstr(row, col, '{0:3.1f}nm'.format(self.from_antenna), colour)                
