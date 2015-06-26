@@ -95,9 +95,15 @@ class Plane:
             elif idx == 6:
                 win.addstr(row, col, '{0:03d}'.format(int(self.gs)), colour)
             elif idx == 7:
-                win.addstr(row, col, '{0:2.2f}'.format(float(self.lat)), colour)
+                try:
+                    win.addstr(row, col, '{0:2.2f}'.format(float(self.lat)), colour)
+                except ValueError:
+                    pass
             elif idx == 8:
-                win.addstr(row, col, '{0:2.2f}'.format(float(self.long)), colour)
+                try:
+                    win.addstr(row, col, '{0:2.2f}'.format(float(self.long)), colour)
+                except ValueError:
+                    pass
             elif idx == 9:
                 if self.nearest != '?':
                     win.addstr(row, col, self.nearest, colour)
