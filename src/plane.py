@@ -139,11 +139,11 @@ class Plane:
                 self.callsign = parts[10]
                 Plane.callsigns[self.id] = (self.callsign, datetime.now())
             if len(parts[11]) > 0:
-                self.altitude = parts[11]
+                self.altitude = int(float(parts[11]))
             if len(parts[12]) > 0:
-                self.gs = parts[12]
+                self.gs = int(float(parts[12]))
             if len(parts[13]) > 0:
-                self.track = parts[13]
+                self.track = int(float(parts[13]))
             if len(parts[14]) > 0:
                 self.lat = parts[14]
                 can_update_nearest = True
@@ -151,9 +151,9 @@ class Plane:
                 self.long = parts[15]
                 can_update_nearest = True
             if len(parts[16]) > 0:
-                self.vspeed = parts[16]
+                self.vspeed = int(float(parts[16]))
             if len(parts[17]) > 0:
-                self.squawk = parts[17]
+                self.squawk = int(float(parts[17]))
 
         if can_update_nearest:
             self.update_nearest()
