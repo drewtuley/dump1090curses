@@ -134,7 +134,11 @@ class Plane:
             self.active = True      # reactivate if necessary
             can_update_nearest = False
             if len(parts[6]) > 0 and len(parts[7]) > 0:
-                self.eventdate = datetime.strptime(parts[6] + " " + parts[7], "%Y/%m/%d %H:%M:%S.%f")
+		try:
+                    self.eventdate = datetime.strptime(parts[6] + " " + parts[7], "%Y/%m/%d %H:%M:%S.%f")
+                except:
+                    logging('Unable to parse '+parts[6]+' and '+parts[7]+' for datetime')
+                    pass
             if len(parts[10]) > 0:
                 self.callsign = parts[10]
                 Plane.callsigns[self.id] = (self.callsign, datetime.now())

@@ -21,11 +21,12 @@ import logging
 import requests
 import sqlite3
 import ConfigParser
+import urllib3.contrib.pyopenssl
 
 planes = {}
 registration_queue = []
 inactive_queue = []
-RADAR24URL = 'http://www.flightradar24.com/data/_ajaxcalls/autocomplete_airplanes.php?&term='
+RADAR24URL = 'https://api.flightradar24.com/common/v1/search.json?fetchBy=reg&query='
 
 cols = 155
 rows = 28
@@ -190,8 +191,9 @@ def get_registration_from_fr24(id):
         logging.debug('lookup '+str(id)+' on FR24 via:'+geturl)
         try:
             response = requests.get(geturl)
+            logging.debug(response.json()['result'])
             if response.status_code == 200:
-                return response.json()[0]['id']
+	            return response.json()['result']['response']['aircraft']['data'][0]['registration']
             else:
                 return ''
         except:
@@ -256,11 +258,13 @@ def get_registrations(lock, runstate, config):
     close_database(conn)
     
 def main(screen):
+    urllib3.contrib.pyopenssl.inject_into_urllib3()
     config = ConfigParser.SafeConfigParser()
     config.read('dump1090curses.props')
     dt=str(datetime.now())[:10]
     
     logging.basicConfig(format='%(asctime)s %(message)s', filename=config.get('directories','log')+'/'+config.get('logging','logname')+dt+'.log', level=logging.DEBUG)
+    logging.captureWarnings(True)
     curses.start_color()
     curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLACK)
     curses.init_pair(2, curses.COLOR_YELLOW, curses.COLOR_BLACK)
