@@ -193,7 +193,10 @@ def get_registration_from_fr24(id):
             response = requests.get(geturl)
             logging.debug(response.json()['result'])
             if response.status_code == 200:
-	            return response.json()['result']['response']['aircraft']['data'][0]['registration']
+                try:
+					return response.json()['result']['response']['aircraft']['data'][0]['registration']
+                except KeyError:
+                    return ''
             else:
                 return ''
         except:
