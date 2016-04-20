@@ -9,3 +9,4 @@ dbname=new_planes.db
 
 [logging]
 logname=plane_
+scrapelog=scrape_

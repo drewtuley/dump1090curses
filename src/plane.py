@@ -12,7 +12,7 @@ class Plane:
         8:('Long', 10), 9:('Nearest Location', 25), 10:('Dist from ant',14), 11:('Eventdate', 20), 12:('>15s', 6), 
         13:('Reg', 6)}
     # these locations are of interest to me - insert your own - simple 'Name':(digital_lat, digital_long)
-    antenna_location = (53.797365, -1.5580089)
+    antenna_location = (53.9714887,-1.5415742)
     locations = {'LBA':(53.8736961, -1.6732249), 'Leeds':(53.797365, -1.5580089), 
         'Harrogate':(53.9771475, -1.5430934), 'Skipton':(53.9552364, -2.0219937), 
         'Bradford':(53.7470237, -1.728551), 'Sheffield':(53.3957166, -1.4994562), 
@@ -137,7 +137,7 @@ class Plane:
 		try:
                     self.eventdate = datetime.strptime(parts[6] + " " + parts[7], "%Y/%m/%d %H:%M:%S.%f")
                 except:
-                    logging('Unable to parse '+parts[6]+' and '+parts[7]+' for datetime')
+                    logging.debug('Unable to parse 6:{} and 7:{} for datetime'.format(parts[6],parts[7]))
                     pass
             if len(parts[10]) > 0:
                 self.callsign = parts[10]
