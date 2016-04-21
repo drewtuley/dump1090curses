@@ -68,25 +68,24 @@ if len(sys.argv) > 1:
 
 		icao = start
 		while icao <= end:
-			id=hex(icao)[2:]
-			if id.upper() not in ids:
-				geturl = RADAR24URL + str(id)
-				logging.debug('lookup '+str(id)+' on FR24 via:'+geturl)
-				try:
-					response = requests.get(geturl)
-					#print (response.json()['result'])
-					if response.status_code == 200:
-						try:
-							reg=response.json()['result']['response']['aircraft']['data'][0]['registration']
-						except KeyError:
-							reg=''
-					else:
+			print('start at {:x}'.format(icao))
+			id='{:X}'.format(icao)[:-1]
+			geturl = RADAR24URL + str(id)+'*'
+			logging.debug('lookup '+str(id)+' on FR24 via:'+geturl)
+			try:
+				response = requests.get(geturl)
+				#print (response.json()['result'])
+				if response.status_code == 200:
+					try:
+						for data in response.json()['result']['response']['aircraft']['data']:
+							reg = data['registration']
+							hex = data['hex']
+							if hex.upper() not in ids:
+								print '{0},{1}'.format(hex, reg)
+								update_registration(reg, hex, conn)
+					except KeyError:
 						reg=''
-				except:
-					reg=''
-
-				if reg != '':
-					print '{0},{1}'.format(id, reg)
-					update_registration(reg, id, conn)
-			icao += 1
+			except:
+				reg=''
+			icao += 16 
 		close_database(conn)

@@ -3,6 +3,7 @@
 [directories]
 data=data
 log=log
+pid=run
 
 [database]
 dbname=new_planes.db
@@ -10,3 +11,7 @@ dbname=new_planes.db
 [logging]
 logname=plane_
 scrapelog=scrape_
+
+[dump1090]
+port=30003
+timeout=1.0

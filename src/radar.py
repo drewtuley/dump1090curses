@@ -38,30 +38,46 @@ def removeplanes():
         plane = planes[id]
         if (datetime.now()-plane.eventdate).total_seconds() > 30 and plane.active:
             plane.active = False	
+            logging.debug('add plane id:'+id+' to inactive queue')
             inactive_queue.append(id)
 
-def getplanes(lock, run):
-    c_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM);
-    c_socket.connect(('localhost', 30003));
+def getplanes(lock, run, config):
+    c_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    c_socket.connect(('localhost', int(config.get('dump1090','port'))))
+    c_socket.settimeout(float(config.get('dump1090','timeout')))
 
-    for line in c_socket.makefile('r'):
-        if not run['run']:
-            return
-        parts = [x.strip() for x in line.split(',')]
-        if parts[0] == 'MSG':
-            id = parts[4]
-            lock.acquire()
-            if id in planes:
-                plane = planes[id]
-            else:
-                plane = Plane(id, datetime.now())
-                registration_queue.append(id)
-                run['session_count'] += 1
-                planes[id] = plane
-                
-            plane.update(parts)
-            removeplanes()
-            lock.release()
+    while run['run']:
+        try:
+			lines = c_socket.recv(4096)
+			for line in lines.strip().split('\n'):
+				logging.debug('got line:'+line.strip())
+				parts = [x.strip() for x in line.split(',')]
+				if parts[0] == 'MSG':
+					id = parts[4]
+					lock.acquire()
+					if id in planes:
+						plane = planes[id]
+					else:
+						plane = Plane(id, datetime.now())
+						registration_queue.append(id)
+						run['session_count'] += 1
+						planes[id] = plane
+						
+					plane.update(parts)
+					removeplanes()
+					lock.release()
+				elif parts[0] == 'STA':
+					id = parts[4]
+					status = parts[10]
+					if status == 'RM':
+					    plane = planes[id]
+					    plane.active = False
+					    logging.debug('set id: '+id+' inactive due to dump1090 remove')
+                        inactive_queue.append(id)
+					    
+        except:
+            pass
+    logging.debug('exit getplanes')
 
 
 def showplanes(win, lock, run):
@@ -96,10 +112,10 @@ def showplanes(win, lock, run):
         if current > run['session_max']:
             run['session_max'] = len(planes)  
            
-	try: 
-	    coverage = cached*100/current    
-	except:
-	    coverage = 0
+        try: 
+            coverage = cached*100/current    
+        except:
+            coverage = 0
 
         try:
             win.addstr(rows-1, 1, 'Current:{}  Total (session):{}  Max (session):{}  Reg Cache:{}%  Max Distance:{:3.1f}nm'.format(str(current),str(run['session_count']),str(run['session_max']),str(int(coverage)),max_distance))
@@ -110,6 +126,7 @@ def showplanes(win, lock, run):
         #lock.release()
         win.refresh()
 
+	
 def open_database(config):
     dbname = config.get('directories','data')+'/'+config.get('database','dbname')
     logging.info('Opening db '+dbname)
@@ -259,6 +276,7 @@ def get_registrations(lock, runstate, config):
             
         time.sleep(.0500)
     close_database(conn)
+    logging.debug('exit get_registrations')
     
 def main(screen):
     urllib3.contrib.pyopenssl.inject_into_urllib3()
@@ -280,7 +298,7 @@ def main(screen):
 
     runstate = {'run':True, 'session_count':0, 'session_max':0}
     lock = thread.allocate_lock()
-    get = threading.Thread(target=getplanes, args=(lock, runstate ))
+    get = threading.Thread(target=getplanes, args=(lock, runstate, config ))
     show = threading.Thread(target=showplanes, args=(win, lock, runstate ))
     registration = threading.Thread(target=get_registrations, args=(lock, runstate, config ))
     
@@ -292,6 +310,7 @@ def main(screen):
         ch = screen.getch()
         if ch == 113:
             runstate['run'] = False
+            logging.debug('kill requested by user')
         
     time.sleep(2)
 
