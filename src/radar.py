@@ -52,7 +52,7 @@ def getplanes(lock, run, config):
 			for line in lines.strip().split('\n'):
 				logging.debug('got line:'+line.strip())
 				parts = [x.strip() for x in line.split(',')]
-				if parts[0] == 'MSG':
+				if parts[0] == 'MSG' and parts[4] != '000000':
 					id = parts[4]
 					lock.acquire()
 					if id in planes:
