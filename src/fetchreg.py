@@ -4,6 +4,7 @@ from datetime import datetime
 import logging
 import requests
 import urllib3.contrib.pyopenssl
+import sys
 
 RADAR24URL = 'https://api.flightradar24.com/common/v1/search.json?fetchBy=reg&query='
 
@@ -12,7 +13,11 @@ dt=str(datetime.now())[:10]
 logging.basicConfig(format='%(asctime)s %(message)s', filename='log'+'/'+'logname'+dt+'.log', level=logging.DEBUG)
 logging.captureWarnings(True)
 
-id='403d*'
+print(sys.argv)
+if len(sys.argv) > 1:
+    id=sys.argv[1]
+else:
+    id='403d*'
 geturl = RADAR24URL + str(id)
 logging.debug('lookup '+str(id)+' on FR24 via:'+geturl)
 response = requests.get(geturl)
