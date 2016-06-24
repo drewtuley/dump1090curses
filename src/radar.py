@@ -169,7 +169,7 @@ def log_observation_end(id, instance, conn):
     conn.execute(sql)
     conn.commit()
         
-def get_registration(id, conn, reg_cache):
+def get_registration(id, conn, reg_cache, config):
     reg = ''
     instance = 0
     
@@ -191,7 +191,7 @@ def get_registration(id, conn, reg_cache):
                 logging.info('Reg '+registration[0]+' in DB')
         if len(reg) == 0:
             # no reg in db, so try FR24 
-           reg = get_registration_from_fr24(id)
+           reg = get_registration_from_fr24(id, config)
            if len(reg)>0 and reg != 'x':
                reg_cache[id] = reg
                instance=0
@@ -199,19 +199,20 @@ def get_registration(id, conn, reg_cache):
 
     return (reg,instance)
     
-def get_registration_from_fr24(id):
+def get_registration_from_fr24(id, config):
         """ 
         Not sure how long radar24 will keep this REST endpoint exposed 
         But might as well use it while we can
         """
-        geturl = RADAR24URL + str(id)
+        url = config.get('fr24','api')
+        geturl = url.format(str(id))
         logging.debug('lookup '+str(id)+' on FR24 via:'+geturl)
         try:
             response = requests.get(geturl)
-            logging.debug(response.json()['result'])
+            logging.debug(response.json()['results'])
             if response.status_code == 200:
                 try:
-					return response.json()['result']['response']['aircraft']['data'][0]['registration']
+					return response.json()['results'][0]['id']
                 except KeyError:
                     return ''
             else:
@@ -254,7 +255,7 @@ def get_registrations(lock, runstate, config):
     while runstate['run']:
         regs = copy.copy(registration_queue)
         for id in regs:
-            reg,curr_instance = get_registration(id, conn, reg_cache)
+            reg,curr_instance = get_registration(id, conn, reg_cache, config)
             instance = log_observation_start(id, conn, curr_instance)
             reg_cache[id] = (reg, instance)
             lock.acquire()
