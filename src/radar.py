@@ -52,29 +52,30 @@ def getplanes(lock, run, config):
         try:
             lines = c_socket.recv(4096)
             for line in lines.strip().split('\n'):
-                logging.debug('got line:' + line.strip())
-                parts = [x.strip() for x in line.split(',')]
-                if parts[0] == 'MSG' and parts[4] != '000000':
-                    id = parts[4]
-                    lock.acquire()
-                    if id in planes:
-                        plane = planes[id]
-                    else:
-                        plane = Plane(id, datetime.now())
-                        registration_queue.append(id)
-                        run['session_count'] += 1
-                        planes[id] = plane
+				if len(line.strip()) > 0:
+					logging.debug('got line:' + line.strip())
+					parts = [x.strip() for x in line.split(',')]
+					if parts[0] == 'MSG' and parts[4] != '000000':
+						id = parts[4]
+						lock.acquire()
+						if id in planes:
+							plane = planes[id]
+						else:
+							plane = Plane(id, datetime.now())
+							registration_queue.append(id)
+							run['session_count'] += 1
+							planes[id] = plane
 
-                    plane.update(parts)
-                    removeplanes()
-                    lock.release()
-                elif parts[0] == 'STA':
-                    id = parts[4]
-                    status = parts[10]
-                    if status == 'RM':
-                        plane = planes[id]
-                        plane.active = False
-                        logging.debug('set id: ' + id + ' inactive due to dump1090 remove')
+						plane.update(parts)
+						removeplanes()
+						lock.release()
+					elif parts[0] == 'STA':
+						id = parts[4]
+						status = parts[10]
+						if status == 'RM':
+							plane = planes[id]
+							plane.active = False
+							logging.debug('set id: ' + id + ' inactive due to dump1090 remove')
             inactive_queue.append(id)
 
         except:
