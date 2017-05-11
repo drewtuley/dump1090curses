@@ -310,6 +310,7 @@ def main(screen):
     curses.start_color()
     curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLACK)
     curses.init_pair(2, curses.COLOR_YELLOW, curses.COLOR_BLACK)
+    prev_state = curses.curs_set(0)
 
     screen.refresh()
 
@@ -334,6 +335,7 @@ def main(screen):
             logging.debug('kill requested by user')
 
     time.sleep(2)
+    curses.curs_set(prev_state)
 
 
 # usage: radar.py [screen rows]
