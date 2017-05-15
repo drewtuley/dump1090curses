@@ -4,6 +4,7 @@ import socket
 import signal
 import time
 import sys
+from datetime import datetime
 
 
 if len(sys.argv) > 1:
@@ -26,7 +27,7 @@ with open(o_file, 'a') as fd:
                 if len(buf) < 1:
                     print('Possible buffer underrun - close/reopen')
                     break
-                print('Writing {0} bytes to {1}'.format(str(len(buf)), o_file))
+                print('{2}: Writing {0} bytes to {1}'.format(str(len(buf)), o_file, str(datetime.now())[:19]))
                 fd.writelines('{0} {1}\n'.format(time.time(), buf.strip()))
                 fd.flush()
             except KeyboardInterrupt:
