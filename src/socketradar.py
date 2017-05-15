@@ -25,7 +25,7 @@ with open(o_file, 'a') as fd:
                 c_socket.settimeout(1.0)
                 connected = True
             except socket.error, ex:
-                print('{0}: Failed to connected : {1}'.format(str(datetime.now())[:19], ex))
+                print('{0}: Failed to connect : {1}'.format(str(datetime.now())[:19], ex))
                 time.sleep(1)
 
         while True:
