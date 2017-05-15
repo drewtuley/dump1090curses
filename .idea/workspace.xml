@@ -1,11 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="18ef8e20-eb1b-49bf-8772-b1f143e8a942" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/dump1090curses.iml" afterPath="$PROJECT_DIR$/.idea/dump1090curses.iml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/misc.xml" afterPath="$PROJECT_DIR$/.idea/misc.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-    </list>
+    <list default="true" id="18ef8e20-eb1b-49bf-8772-b1f143e8a942" name="Default" comment="" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -22,52 +18,11 @@
       <file leaf-file-name="socketradar.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/socketradar.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="135">
-              <caret line="21" column="0" lean-forward="false" selection-start-line="21" selection-start-column="0" selection-end-line="21" selection-end-column="0" />
+            <state relative-caret-position="255">
+              <caret line="17" column="0" lean-forward="true" selection-start-line="17" selection-start-column="0" selection-end-line="17" selection-end-column="0" />
               <folding>
                 <element signature="e#19#32#0" expanded="true" />
               </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="radar.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/radar.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="4110">
-              <caret line="287" column="16" lean-forward="false" selection-start-line="287" selection-start-column="16" selection-end-line="287" selection-end-column="16" />
-              <folding>
-                <element signature="e#561#574#0" expanded="true" />
-                <marker date="1494677256000" expanded="true" signature="4741:4823" ph="update obser... " />
-                <marker date="1494677256000" expanded="true" signature="4935:5024" ph="insert into registration... " />
-                <marker date="1494677256000" expanded="true" signature="4960:5024" ph="select &quot;miss... " />
-                <marker date="1494677256000" expanded="true" signature="5239:5359" ph="insert into observation... " />
-                <marker date="1494677256000" expanded="true" signature="5263:5359" ph="select &quot;miss... " />
-                <marker date="1494677256000" expanded="true" signature="5830:5967" ph="update obser... " />
-                <marker date="1494677256000" expanded="true" signature="6382:6450" ph="select regis... registration" />
-                <marker date="1494677256000" expanded="true" signature="7921:7943" ph="select * fro... location" />
-                <marker date="1494677256000" expanded="true" signature="8142:8319" ph="select r.ica... registration" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="plane.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/plane.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="0">
-              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="dump1090curses.props" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/dump1090curses.props">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="0">
-              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-              <folding />
             </state>
           </provider>
         </entry>
@@ -344,15 +299,16 @@
     <frame x="20" y="52" width="1400" height="767" extended-state="0" />
     <editor active="true" />
     <layout>
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.26857144" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
-      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.329602" sideWeight="0.51557285" order="7" side_tool="true" content_ui="tabs" />
-      <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3298109" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.32808024" sideWeight="0.48442715" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.32808024" sideWeight="0.51857144" order="7" side_tool="true" content_ui="tabs" />
+      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.32808024" sideWeight="0.48142856" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
-      <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.26857144" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3298109" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Data View" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
@@ -444,15 +400,6 @@
           <caret line="287" column="16" lean-forward="false" selection-start-line="287" selection-start-column="16" selection-end-line="287" selection-end-column="16" />
           <folding>
             <element signature="e#561#574#0" expanded="true" />
-            <marker date="1494677256000" expanded="true" signature="4741:4823" ph="update obser... " />
-            <marker date="1494677256000" expanded="true" signature="4935:5024" ph="insert into registration... " />
-            <marker date="1494677256000" expanded="true" signature="4960:5024" ph="select &quot;miss... " />
-            <marker date="1494677256000" expanded="true" signature="5239:5359" ph="insert into observation... " />
-            <marker date="1494677256000" expanded="true" signature="5263:5359" ph="select &quot;miss... " />
-            <marker date="1494677256000" expanded="true" signature="5830:5967" ph="update obser... " />
-            <marker date="1494677256000" expanded="true" signature="6382:6450" ph="select regis... registration" />
-            <marker date="1494677256000" expanded="true" signature="7921:7943" ph="select * fro... location" />
-            <marker date="1494677256000" expanded="true" signature="8142:8319" ph="select r.ica... registration" />
           </folding>
         </state>
       </provider>
@@ -481,15 +428,6 @@
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
             <element signature="e#561#574#0" expanded="true" />
-            <marker date="1494677256000" expanded="true" signature="4741:4823" ph="update obser... " />
-            <marker date="1494677256000" expanded="true" signature="4935:5024" ph="insert into registration... " />
-            <marker date="1494677256000" expanded="true" signature="4960:5024" ph="select &quot;miss... " />
-            <marker date="1494677256000" expanded="true" signature="5239:5359" ph="insert into observation... " />
-            <marker date="1494677256000" expanded="true" signature="5263:5359" ph="select &quot;miss... " />
-            <marker date="1494677256000" expanded="true" signature="5830:5967" ph="update obser... " />
-            <marker date="1494677256000" expanded="true" signature="6382:6450" ph="select regis... registration" />
-            <marker date="1494677256000" expanded="true" signature="7921:7943" ph="select * fro... location" />
-            <marker date="1494677256000" expanded="true" signature="8142:8319" ph="select r.ica... registration" />
           </folding>
         </state>
       </provider>
@@ -580,15 +518,6 @@
           <caret line="12" column="5" lean-forward="false" selection-start-line="12" selection-start-column="5" selection-end-line="12" selection-end-column="5" />
           <folding>
             <element signature="e#561#574#0" expanded="true" />
-            <marker date="1494677256000" expanded="true" signature="4741:4823" ph="update obser... " />
-            <marker date="1494677256000" expanded="true" signature="4935:5024" ph="insert into registration... " />
-            <marker date="1494677256000" expanded="true" signature="4960:5024" ph="select &quot;miss... " />
-            <marker date="1494677256000" expanded="true" signature="5239:5359" ph="insert into observation... " />
-            <marker date="1494677256000" expanded="true" signature="5263:5359" ph="select &quot;miss... " />
-            <marker date="1494677256000" expanded="true" signature="5830:5967" ph="update obser... " />
-            <marker date="1494677256000" expanded="true" signature="6382:6450" ph="select regis... registration" />
-            <marker date="1494677256000" expanded="true" signature="7921:7943" ph="select * fro... location" />
-            <marker date="1494677256000" expanded="true" signature="8142:8319" ph="select r.ica... registration" />
           </folding>
         </state>
       </provider>
@@ -665,15 +594,6 @@
           <caret line="287" column="16" lean-forward="false" selection-start-line="287" selection-start-column="16" selection-end-line="287" selection-end-column="16" />
           <folding>
             <element signature="e#561#574#0" expanded="true" />
-            <marker date="1494677256000" expanded="true" signature="4741:4823" ph="update obser... " />
-            <marker date="1494677256000" expanded="true" signature="4935:5024" ph="insert into registration... " />
-            <marker date="1494677256000" expanded="true" signature="4960:5024" ph="select &quot;miss... " />
-            <marker date="1494677256000" expanded="true" signature="5239:5359" ph="insert into observation... " />
-            <marker date="1494677256000" expanded="true" signature="5263:5359" ph="select &quot;miss... " />
-            <marker date="1494677256000" expanded="true" signature="5830:5967" ph="update obser... " />
-            <marker date="1494677256000" expanded="true" signature="6382:6450" ph="select regis... registration" />
-            <marker date="1494677256000" expanded="true" signature="7921:7943" ph="select * fro... location" />
-            <marker date="1494677256000" expanded="true" signature="8142:8319" ph="select r.ica... registration" />
           </folding>
         </state>
       </provider>
@@ -684,15 +604,6 @@
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
             <element signature="e#561#574#0" expanded="true" />
-            <marker date="1494677256000" expanded="true" signature="4741:4823" ph="update obser... " />
-            <marker date="1494677256000" expanded="true" signature="4935:5024" ph="insert into registration... " />
-            <marker date="1494677256000" expanded="true" signature="4960:5024" ph="select &quot;miss... " />
-            <marker date="1494677256000" expanded="true" signature="5239:5359" ph="insert into observation... " />
-            <marker date="1494677256000" expanded="true" signature="5263:5359" ph="select &quot;miss... " />
-            <marker date="1494677256000" expanded="true" signature="5830:5967" ph="update obser... " />
-            <marker date="1494677256000" expanded="true" signature="6382:6450" ph="select regis... registration" />
-            <marker date="1494677256000" expanded="true" signature="7921:7943" ph="select * fro... location" />
-            <marker date="1494677256000" expanded="true" signature="8142:8319" ph="select r.ica... registration" />
           </folding>
         </state>
       </provider>
@@ -783,15 +694,6 @@
           <caret line="12" column="5" lean-forward="false" selection-start-line="12" selection-start-column="5" selection-end-line="12" selection-end-column="5" />
           <folding>
             <element signature="e#561#574#0" expanded="true" />
-            <marker date="1494677256000" expanded="true" signature="4741:4823" ph="update obser... " />
-            <marker date="1494677256000" expanded="true" signature="4935:5024" ph="insert into registration... " />
-            <marker date="1494677256000" expanded="true" signature="4960:5024" ph="select &quot;miss... " />
-            <marker date="1494677256000" expanded="true" signature="5239:5359" ph="insert into observation... " />
-            <marker date="1494677256000" expanded="true" signature="5263:5359" ph="select &quot;miss... " />
-            <marker date="1494677256000" expanded="true" signature="5830:5967" ph="update obser... " />
-            <marker date="1494677256000" expanded="true" signature="6382:6450" ph="select regis... registration" />
-            <marker date="1494677256000" expanded="true" signature="7921:7943" ph="select * fro... location" />
-            <marker date="1494677256000" expanded="true" signature="8142:8319" ph="select r.ica... registration" />
           </folding>
         </state>
       </provider>
@@ -854,8 +756,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/socketradar.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="135">
-          <caret line="21" column="0" lean-forward="false" selection-start-line="21" selection-start-column="0" selection-end-line="21" selection-end-column="0" />
+        <state relative-caret-position="255">
+          <caret line="17" column="0" lean-forward="true" selection-start-line="17" selection-start-column="0" selection-end-line="17" selection-end-column="0" />
           <folding>
             <element signature="e#19#32#0" expanded="true" />
           </folding>
@@ -868,15 +770,6 @@
           <caret line="287" column="16" lean-forward="false" selection-start-line="287" selection-start-column="16" selection-end-line="287" selection-end-column="16" />
           <folding>
             <element signature="e#561#574#0" expanded="true" />
-            <marker date="1494677256000" expanded="true" signature="4741:4823" ph="update obser... " />
-            <marker date="1494677256000" expanded="true" signature="4935:5024" ph="insert into registration... " />
-            <marker date="1494677256000" expanded="true" signature="4960:5024" ph="select &quot;miss... " />
-            <marker date="1494677256000" expanded="true" signature="5239:5359" ph="insert into observation... " />
-            <marker date="1494677256000" expanded="true" signature="5263:5359" ph="select &quot;miss... " />
-            <marker date="1494677256000" expanded="true" signature="5830:5967" ph="update obser... " />
-            <marker date="1494677256000" expanded="true" signature="6382:6450" ph="select regis... registration" />
-            <marker date="1494677256000" expanded="true" signature="7921:7943" ph="select * fro... location" />
-            <marker date="1494677256000" expanded="true" signature="8142:8319" ph="select r.ica... registration" />
           </folding>
         </state>
       </provider>
