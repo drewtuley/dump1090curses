@@ -16,5 +16,9 @@ scrapelog=scrape_
 port=30003
 timeout=1.0
 
+[dump1090_test_server]
+port=40003
+timeout=1.0
+
 [fr24]
 api=https://www.flightradar24.com/v1/search/web/find?limit=16&query={}
