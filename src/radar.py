@@ -42,16 +42,34 @@ def removeplanes():
             inactive_queue.append(id)
 
 
-def getplanes(lock, run, config):
-    c_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    c_socket.connect(('localhost', int(config.get('dump1090', 'port'))))
-    c_socket.settimeout(float(config.get('dump1090', 'timeout')))
+def mark_all_inactive():
+    for id in planes:
+        plane = planes[id]
+	plane.active = False
 
+
+def getplanes(lock, run, config):
+
+    connected = False
     while run['run']:
         try:
+            while not connected:
+                try:
+                    c_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    c_socket.connect(('localhost', int(config.get('dump1090', 'port'))))
+                    c_socket.settimeout(float(config.get('dump1090', 'timeout')))
+                    connected = True
+                except socket.error, err:
+                    logging.debug('Failed to connect - err {}'.format(err))
+                    time.sleep(1.0)
+            
             lines = c_socket.recv(4096)
             for line in lines.strip().split('\n'):
-                if len(line.strip()) > 0:
+                if len(line.strip()) <1 :
+                    connected = False
+                    c_socket.close()
+                    break
+                else:
                     logging.debug('got line:' + line.strip())
                     parts = [x.strip() for x in line.split(',')]
                     if parts[0] == 'MSG' and parts[4] != '000000':
@@ -69,7 +87,12 @@ def getplanes(lock, run, config):
                         removeplanes()
                         lock.release()
                     elif parts[0] == 'MSG' and parts[4] == '000000' and int(parts[1]) == 7:
-                        removeplanes()
+                        lock.acquire()
+			# grungy way to clear all planes
+			logging.debug('Clear all active queue')
+			inactive_queue = []
+			mark_all_inactive()
+			lock.release()
                     elif parts[0] == 'STA':
                         id = parts[4]
                         status = parts[10]
@@ -270,6 +293,8 @@ def get_registrations(lock, runstate, config):
     reg_cache = warm_reg_cache(conn)
 
     while runstate['run']:
+	if len(registration_queue) >0 or len(inactive_queue) > 0:
+		logging.debug('RegQ: {} InactiveQ: {}'.format(len(registration_queue), len(inactive_queue)))
         regs = copy.copy(registration_queue)
         for id in regs:
             reg, curr_instance = get_registration(id, conn, reg_cache, config)
