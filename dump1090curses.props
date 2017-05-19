@@ -13,10 +13,12 @@ logname=plane_
 scrapelog=scrape_
 
 [dump1090]
+host=localhost
 port=30003
 timeout=1.0
 
 [dump1090_test_server]
+host=localhost
 port=40003
 timeout=1.0
 
