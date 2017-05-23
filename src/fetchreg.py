@@ -24,4 +24,8 @@ response = requests.get(geturl)
 json = response.json()
 logging.debug(json)
 if 'results' in json:
-    logging.debug(json['results'][0]['id'])
+    try:
+        logging.debug('{}={}'.format(str(id),json['results'][0]['id']))
+        logging.debug('insert into registration select "{}", "{}", "{}";'.format(str(id), json['results'][0]['id'], str(datetime.now())))
+    except:
+        pass
