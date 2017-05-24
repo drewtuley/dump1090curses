@@ -13,7 +13,7 @@ import urllib3.contrib.pyopenssl
 if __name__ == "__main__":
     config=ConfigParser.SafeConfigParser()
     config.read('dump1090curses.props')
-    RADAR24URL = 'https://www.flightradar24.com/v1/search/web/find?limit=16&query={}'
+    RADAR24URL = config.get('fr24','api')
 
     urllib3.contrib.pyopenssl.inject_into_urllib3()
     dt=str(datetime.now())[:10]
