@@ -1,14 +1,14 @@
 #!/usr/bin/python
 
-import socket
-import signal
-import time
-import sys
-import os
-from datetime import datetime
 import json
-import requests
+import os
+import signal
+import socket
+import sys
+import time
+from datetime import datetime
 
+import requests
 
 slack_url = 'https://hooks.slack.com/services/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'
 msg_url = 'Seen a new plane: <https://www.radarbox24.com/data/mode-s/{icao}|{reg}> (#{count})'
@@ -16,7 +16,7 @@ regsvr_url = 'http://b2d2e41e.eu.ngrok.io/search?icao_code={icao_code}'
 
 
 def get_reg_from_regserver(icao_code):
-    url = regsvr_url.format(icao_code = icao_code)
+    url = regsvr_url.format(icao_code=icao_code)
     reg = None
     try:
         r = requests.get(url)
@@ -30,18 +30,19 @@ def get_reg_from_regserver(icao_code):
 
 
 def post_to_slack(msg):
-    payload = {"channel": "#dump1090", 
-                "username": "dump1090.listener",
+    payload = {"channel": "#dump1090",
+               "username": "dump1090.listener",
                "text": msg, "icon_emoji": ":airplane:"}
     try:
         requests.post(slack_url, json.dumps(payload))
     except Exception, ex:
         print('{0}: Failed to post to slack: {1}'.format(str(datetime.now())[:19], ex))
-        
+
 
 def term_handler(signum, frame):
     post_to_slack('user requested shutdown')
     exit(1)
+
 
 if len(sys.argv) == 1:
     print('Usage: {0} <output file>'.format(sys.argv[0]))
@@ -85,11 +86,10 @@ else:
                 except KeyboardInterrupt:
                     print('{0}: user reqeusted shutdown'.format(str(datetime.now())[:19]))
                     exit(1)
-                except socket.error ,v:
-                    #print('Exception {0}'.format(v))
+                except socket.error, v:
+                    # print('Exception {0}'.format(v))
                     pass
-            try:            
+            try:
                 c_socket.close()
             except socket.error, ex:
                 print('{0}: Failed to close socket: {1}'.format(str(datetime.now())[:19], ex))
-                
