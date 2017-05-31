@@ -11,7 +11,7 @@ import requests
 
 
 slack_url = 'https://hooks.slack.com/services/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'
-msg_url = 'Seen a new plane: {icao} <https://www.avdelphi.com/airframe.html?icao={icao}|click here>'
+msg_url = 'Seen a new plane: <https://www.radarbox24.com/data/mode-s/{icao}|{icao}> (#{count})'
 
 def post_to_slack(msg):
     payload = {"channel": "#dump1090", 
@@ -23,6 +23,9 @@ def post_to_slack(msg):
         print('{0}: Failed to post to slack: {1}'.format(str(datetime.now())[:19], ex))
         
 
+def term_handler(signum, frame):
+    post_to_slack('user requested shutdown')
+    exit(1)
 
 if len(sys.argv) == 1:
     print('Usage: {0} <output file>'.format(sys.argv[0]))
@@ -33,6 +36,7 @@ else:
 
     with open(o_file, 'a') as fd:
         signal.signal(signal.SIGINT, signal.default_int_handler)
+        signal.signal(signal.SIGTERM, term_handler)
 
         while True:
             connected = False
@@ -59,9 +63,10 @@ else:
                         parts = line.split(',')
                         if parts[4] != '000000' and parts[4] not in seen_planes:
                             seen_planes.append(parts[4])
-                            post_to_slack(msg_url.format(icao=parts[4]))
+                            post_to_slack(msg_url.format(icao=parts[4], count=len(seen_planes)))
                     fd.flush()
                 except KeyboardInterrupt:
+                    print('{0}: user reqeusted shutdown'.format(str(datetime.now())[:19]))
                     exit(1)
                 except socket.error ,v:
                     #print('Exception {0}'.format(v))
