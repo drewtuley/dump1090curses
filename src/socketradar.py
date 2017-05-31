@@ -11,7 +11,23 @@ import requests
 
 
 slack_url = 'https://hooks.slack.com/services/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'
-msg_url = 'Seen a new plane: <https://www.radarbox24.com/data/mode-s/{icao}|{icao}> (#{count})'
+msg_url = 'Seen a new plane: <https://www.radarbox24.com/data/mode-s/{icao}|{reg}> (#{count})'
+regsvr_url = 'http://b2d2e41e.eu.ngrok.io/search?icao_code={icao_code}'
+
+
+def get_reg_from_regserver(icao_code):
+    url = regsvr_url.format(icao_code = icao_code)
+    reg = None
+    try:
+        r = requests.get(url)
+        if r.status_code == 200:
+            if 'registration' in r.json():
+                reg = r.json()['registration']
+    except Exception, ex:
+        print('{0}: Failed to get reg from regserver: {1}'.format(str(datetime.now())[:19], ex))
+
+    return reg
+
 
 def post_to_slack(msg):
     payload = {"channel": "#dump1090", 
@@ -63,7 +79,8 @@ else:
                         parts = line.split(',')
                         if parts[4] != '000000' and parts[4] not in seen_planes:
                             seen_planes.append(parts[4])
-                            post_to_slack(msg_url.format(icao=parts[4], count=len(seen_planes)))
+                            reg = get_reg_from_regserver(parts[4])
+                            post_to_slack(msg_url.format(icao=parts[4], reg=reg, count=len(seen_planes)))
                     fd.flush()
                 except KeyboardInterrupt:
                     print('{0}: user reqeusted shutdown'.format(str(datetime.now())[:19]))
