@@ -10,7 +10,7 @@ import urllib3.contrib.pyopenssl
 if __name__ == "__main__":
     config = ConfigParser.SafeConfigParser()
     config.read('dump1090curses.props')
-    RADAR24URL = config.get('fr24', 'api')
+    radar24_url = config.get('fr24', 'api')
 
     urllib3.contrib.pyopenssl.inject_into_urllib3()
     dt = str(datetime.now())[:10]
@@ -27,7 +27,7 @@ if __name__ == "__main__":
             with open(update_filename, 'rt') as f:
                 for line in f:
                     icao = line.strip()
-                    geturl = RADAR24URL.format(str(icao))
+                    geturl = radar24_url.format(str(icao))
                     logging.debug('lookup ' + str(icao) + ' on FR24 via:' + geturl)
                     response = requests.get(geturl)
                     json = response.json()

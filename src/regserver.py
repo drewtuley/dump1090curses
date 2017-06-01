@@ -1,10 +1,10 @@
 import ConfigParser
 import json
 import sqlite3
-import urllib3.contrib.pyopenssl
-import requests
 from datetime import datetime
 
+import requests
+import urllib3.contrib.pyopenssl
 from flask import Flask
 from flask import request
 
@@ -38,7 +38,7 @@ def search():
             cursor = conn.execute(sql)
             for row in cursor.fetchall():
                 code, reg, = row
-                app.reg_cache[code] = reg   
+                app.reg_cache[code] = reg
         app.logger.info('Loaded {} regs into cache'.format(len(app.reg_cache)))
     if search_icao_code in app.reg_cache:
         reg = app.reg_cache[search_icao_code]
@@ -63,13 +63,14 @@ def search():
                 response = requests.get(geturl)
                 retjson = response.json()
                 app.logger.debug(retjson)
-                if 'results' in retjson and len(retjson['results']) >0:
+                if 'results' in retjson and len(retjson['results']) > 0:
                     try:
                         reg = retjson['results'][0]['id']
                         app.reg_cache[search_icao_code] = reg
                         ret = {'registration': reg}
 
-                        sql = 'insert into registration select "{icao}","{reg}","{dt}" where not exists (select * from registration where icao_code="{icao}")'.format(icao = str(search_icao_code), reg = reg, dt = str(datetime.now()))
+                        sql = 'insert into registration select "{icao}","{reg}","{dt}" where not exists (select * from registration where icao_code="{icao}")'.format(
+                            icao=str(search_icao_code), reg=reg, dt=str(datetime.now()))
                         app.logger.debug(sql)
                         conn.execute(sql)
                     except Exception, ex:
@@ -93,6 +94,5 @@ if __name__ == '__main__':
     fr24_url = config.get('fr24', 'api')
     app.set_fr24_url(fr24_url)
     urllib3.contrib.pyopenssl.inject_into_urllib3()
-
 
     app.run(debug=True)
