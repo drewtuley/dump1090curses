@@ -7,12 +7,11 @@ import socket
 import sys
 import time
 from datetime import datetime
+import ConfigParser
 
 import requests
 
-slack_url = 'https://hooks.slack.com/services/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'
 msg_url = 'Seen a new plane: <https://www.radarbox24.com/data/mode-s/{icao}|{reg}> (#{count})'
-regsvr_url = 'http://b2d2e41e.eu.ngrok.io/search?icao_code={icao_code}'
 
 
 def get_reg_from_regserver(icao_code):
@@ -51,6 +50,16 @@ else:
     o_file = sys.argv[1]
     seen_planes = []
 
+    config = ConfigParser.SafeConfigParser()
+    config.read('dump1090curses.props')
+
+    dump1090_host = config.get('dump1090','host')
+    dump1090_port  = int(config.get('dump1090','port'))
+    dump1090_timeout  = float(config.get('dump1090','timeout'))
+
+    slack_url = config.get('slack','url')
+    regsvr_url = config.get('regserver','url')
+
     with open(o_file, 'a') as fd:
         signal.signal(signal.SIGINT, signal.default_int_handler)
         signal.signal(signal.SIGTERM, term_handler)
@@ -60,8 +69,8 @@ else:
             while not connected:
                 try:
                     c_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                    c_socket.connect(('raspberrypi', 30003))
-                    c_socket.settimeout(1.0)
+                    c_socket.connect((dump1090_host, dump1090_port))
+                    c_socket.settimeout(dump1090_timeout)
                     connected = True
                 except socket.error, ex:
                     print('{0}: Failed to connect : {1}'.format(str(datetime.now())[:19], ex))
