@@ -26,7 +26,7 @@ timeout=1.0
 api=https://www.flightradar24.com/v1/search/web/find?limit=16&query={}
 
 [slack]
-url=https://hooks.slack.com/services/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
+url=https://hooks.slack.com/services/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
 
 [regserver]
-base_url=http://3d8ef010.eu.ngrok.io
+base_url=http://aa45d6e1.eu.ngrok.io

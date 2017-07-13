@@ -93,7 +93,7 @@ else:
                         print('{0}: Possible buffer underrun - close/reopen'.format(str(datetime.now())[:19]))
                         break
                     print('{2}: Writing {0} bytes to {1}'.format(str(len(buf)), o_file, str(datetime.now())[:19]))
-                    tm_day_mins = (datetime.now().hour*60)+datetime.now().minute
+                    tm_day_mins = datetime.now().day*24*60+(datetime.now().hour*60)+(datetime.now().minute)
 
                     for line in buf.strip().split('\n'):
                         fd.writelines('{0} {1}\n'.format(time.time(), line))
