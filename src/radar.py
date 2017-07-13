@@ -172,7 +172,8 @@ def close_database(conn):
 
 
 def update_registration(reg, id, conn):
-    sql = 'insert into registration select "' + id + '", "' + reg + '","' + str(datetime.now()) + '"'
+    sql = 'insert into registration select "{icao}","{reg}","{dt}" where not exists (select * from registration where icao_code="{icao}")'.format(
+            icao=str(id), reg=str(reg), dt=str(datetime.now()))
     logging.debug('Update db with:' + sql)
     upd = conn.execute(sql)
     conn.commit()
