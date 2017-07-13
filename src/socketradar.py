@@ -12,12 +12,15 @@ import ConfigParser
 import requests
 
 msg_url = 'Seen a new plane: <https://www.radarbox24.com/data/mode-s/{icao}|{reg}> (#{count})'
+repeat_msg_url = 'Seen <https://www.radarbox24.com/data/mode-s/{icao}|{reg}> again'
 
 
 def get_reg_from_regserver(icao_code):
-    url = regsvr_url.format(icao_code=icao_code)
+    url = regsvr_url+'/search?icao_code={icao_code}'.format(icao_code=icao_code)
+    print('ask regserver for {} @ {}'.format(icao_code, url))
     reg = None
     try:
+        print(url)
         r = requests.get(url)
         if r.status_code == 200:
             if 'registration' in r.json():
@@ -48,7 +51,7 @@ if len(sys.argv) == 1:
     exit(1)
 else:
     o_file = sys.argv[1]
-    seen_planes = []
+    seen_planes = {}
 
     config = ConfigParser.SafeConfigParser()
     config.read('dump1090curses.props')
@@ -58,8 +61,9 @@ else:
     dump1090_timeout  = float(config.get('dump1090','timeout'))
 
     slack_url = config.get('slack','url')
-    regsvr_url = config.get('regserver','url')
+    regsvr_url = config.get('regserver','base_url')
 
+    prev_connected = False
     with open(o_file, 'a') as fd:
         signal.signal(signal.SIGINT, signal.default_int_handler)
         signal.signal(signal.SIGTERM, term_handler)
@@ -75,8 +79,13 @@ else:
                 except socket.error, ex:
                     print('{0}: Failed to connect : {1}'.format(str(datetime.now())[:19], ex))
                     time.sleep(1)
+            if prev_connected:
+                re='(re)'
+            else:
+                re=''
+            post_to_slack('socketradar {}connected on {}'.format(re, os.uname()[1]))
 
-            post_to_slack('socketradar connected on {}'.format(os.uname()[1]))
+            prev_connected = True
             while True:
                 try:
                     buf = c_socket.recv(4096)
@@ -84,13 +93,22 @@ else:
                         print('{0}: Possible buffer underrun - close/reopen'.format(str(datetime.now())[:19]))
                         break
                     print('{2}: Writing {0} bytes to {1}'.format(str(len(buf)), o_file, str(datetime.now())[:19]))
+                    tm_day_mins = (datetime.now().hour*60)+datetime.now().minute
+
                     for line in buf.strip().split('\n'):
                         fd.writelines('{0} {1}\n'.format(time.time(), line))
                         parts = line.split(',')
-                        if parts[4] != '000000' and parts[4] not in seen_planes:
-                            seen_planes.append(parts[4])
-                            reg = get_reg_from_regserver(parts[4])
-                            post_to_slack(msg_url.format(icao=parts[4], reg=reg, count=len(seen_planes)))
+                        if len(parts) > 4:
+                            icao = parts[4]
+                            if icao != '000000':
+                                if icao not in seen_planes:
+                                    seen_planes[icao] = tm_day_mins
+                                    reg = get_reg_from_regserver(icao)
+                                    post_to_slack(msg_url.format(icao=icao, reg=reg, count=len(seen_planes)))
+                                elif seen_planes[icao]+60 < tm_day_mins:
+                                    seen_planes[icao] = tm_day_mins
+                                    reg = get_reg_from_regserver(icao)
+                                    post_to_slack(repeat_msg_url.format(icao=icao, reg=reg))
                     fd.flush()
                 except KeyboardInterrupt:
                     print('{0}: user reqeusted shutdown'.format(str(datetime.now())[:19]))
