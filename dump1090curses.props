@@ -13,7 +13,7 @@ logname=plane_
 scrapelog=scrape_
 
 [dump1090]
-host=raspberrypi
+host=uninvited-guest
 port=30003
 timeout=1.0
 
@@ -29,4 +29,4 @@ api=https://www.flightradar24.com/v1/search/web/find?limit=16&query={}
 url=https://hooks.slack.com/services/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
 
 [regserver]
-base_url=http://aa45d6e1.eu.ngrok.io
+base_url=http://d441c272.eu.ngrok.io

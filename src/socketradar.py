@@ -45,12 +45,20 @@ def term_handler(signum, frame):
     post_to_slack('user requested shutdown')
     exit(1)
 
+def write_line(basefile, line):
+    parts = line.split(',')
+    if len(parts) == 22:
+        dt = parts[6].replace('/','')
+        ofile = '{}_{}.txt'.format(basefile, str(dt))
+        with open(ofile, 'a') as fd:
+            fd.writelines('{0} {1}\n'.format(time.time(), line))
+            fd.flush()
 
 if len(sys.argv) == 1:
     print('Usage: {0} <output file>'.format(sys.argv[0]))
     exit(1)
 else:
-    o_file = sys.argv[1]
+    o_file_base = sys.argv[1]
     seen_planes = {}
 
     config = ConfigParser.SafeConfigParser()
@@ -64,59 +72,57 @@ else:
     regsvr_url = config.get('regserver','base_url')
 
     prev_connected = False
-    with open(o_file, 'a') as fd:
-        signal.signal(signal.SIGINT, signal.default_int_handler)
-        signal.signal(signal.SIGTERM, term_handler)
+    signal.signal(signal.SIGINT, signal.default_int_handler)
+    signal.signal(signal.SIGTERM, term_handler)
 
-        while True:
-            connected = False
-            while not connected:
-                try:
-                    c_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                    c_socket.connect((dump1090_host, dump1090_port))
-                    c_socket.settimeout(dump1090_timeout)
-                    connected = True
-                except socket.error, ex:
-                    print('{0}: Failed to connect : {1}'.format(str(datetime.now())[:19], ex))
-                    time.sleep(1)
-            if prev_connected:
-                re='(re)'
-            else:
-                re=''
-            post_to_slack('socketradar {}connected on {}'.format(re, os.uname()[1]))
-
-            prev_connected = True
-            while True:
-                try:
-                    buf = c_socket.recv(4096)
-                    if len(buf) < 1:
-                        print('{0}: Possible buffer underrun - close/reopen'.format(str(datetime.now())[:19]))
-                        break
-                    print('{2}: Writing {0} bytes to {1}'.format(str(len(buf)), o_file, str(datetime.now())[:19]))
-                    tm_day_mins = datetime.now().day*24*60+(datetime.now().hour*60)+(datetime.now().minute)
-
-                    for line in buf.strip().split('\n'):
-                        fd.writelines('{0} {1}\n'.format(time.time(), line))
-                        parts = line.split(',')
-                        if len(parts) > 4:
-                            icao = parts[4]
-                            if icao != '000000':
-                                if icao not in seen_planes:
-                                    seen_planes[icao] = tm_day_mins
-                                    reg = get_reg_from_regserver(icao)
-                                    post_to_slack(msg_url.format(icao=icao, reg=reg, count=len(seen_planes)))
-                                elif seen_planes[icao]+60 < tm_day_mins:
-                                    seen_planes[icao] = tm_day_mins
-                                    reg = get_reg_from_regserver(icao)
-                                    post_to_slack(repeat_msg_url.format(icao=icao, reg=reg))
-                    fd.flush()
-                except KeyboardInterrupt:
-                    print('{0}: user reqeusted shutdown'.format(str(datetime.now())[:19]))
-                    exit(1)
-                except socket.error, v:
-                    # print('Exception {0}'.format(v))
-                    pass
+    while True:
+        connected = False
+        while not connected:
             try:
-                c_socket.close()
+                c_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                c_socket.connect((dump1090_host, dump1090_port))
+                c_socket.settimeout(dump1090_timeout)
+                connected = True
             except socket.error, ex:
-                print('{0}: Failed to close socket: {1}'.format(str(datetime.now())[:19], ex))
+                print('{0}: Failed to connect : {1}'.format(str(datetime.now())[:19], ex))
+                time.sleep(1)
+        if prev_connected:
+            re='(re)'
+        else:
+            re=''
+        post_to_slack('socketradar {}connected on {}'.format(re, os.uname()[1]))
+
+        prev_connected = True
+        while True:
+            try:
+                buf = c_socket.recv(4096)
+                if len(buf) < 1:
+                    print('{0}: Possible buffer underrun - close/reopen'.format(str(datetime.now())[:19]))
+                    break
+                print('{2}: Writing {0} bytes to {1}'.format(str(len(buf)), o_file_base, str(datetime.now())[:19]))
+                tm_day_mins = datetime.now().day*24*60+(datetime.now().hour*60)+(datetime.now().minute)
+
+                for line in buf.strip().split('\n'):
+                    write_line(o_file_base, line)
+                    parts = line.split(',')
+                    if len(parts) > 4:
+                        icao = parts[4]
+                        if icao != '000000':
+                            if icao not in seen_planes:
+                                seen_planes[icao] = tm_day_mins
+                                reg = get_reg_from_regserver(icao)
+                                post_to_slack(msg_url.format(icao=icao, reg=reg, count=len(seen_planes)))
+                            elif seen_planes[icao]+60 < tm_day_mins:
+                                seen_planes[icao] = tm_day_mins
+                                reg = get_reg_from_regserver(icao)
+                                post_to_slack(repeat_msg_url.format(icao=icao, reg=reg))
+            except KeyboardInterrupt:
+                print('{0}: user reqeusted shutdown'.format(str(datetime.now())[:19]))
+                exit(1)
+            except socket.error, v:
+                # print('Exception {0}'.format(v))
+                pass
+        try:
+            c_socket.close()
+        except socket.error, ex:
+            print('{0}: Failed to close socket: {1}'.format(str(datetime.now())[:19], ex))
