@@ -130,7 +130,7 @@ def showplanes(win, lock, run):
                 else:
                     break
 
-        now = str(datetime.now())
+        now = str(datetime.now())[:19]
         current = 0
         for id in planes:
             if planes[id].active:
