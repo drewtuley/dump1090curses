@@ -8,20 +8,22 @@
 # MSG,7,111,11111,40649F,111111,2015/04/15,08:19:35.880,2015/04/15,08:19:35.869,,25725,,,,,,,,,,0
 
 
+import ConfigParser
+import copy
 import curses
-from datetime import datetime
-from plane import Plane
+import logging
 import socket
+import sqlite3
+import sys
 import thread
 import threading
 import time
-import sys
-import copy
-import logging
+from datetime import datetime
+
 import requests
-import sqlite3
-import ConfigParser
 import urllib3.contrib.pyopenssl
+
+from plane import Plane
 
 planes = {}
 registration_queue = []
@@ -45,11 +47,10 @@ def removeplanes():
 def mark_all_inactive():
     for id in planes:
         plane = planes[id]
-	plane.active = False
+        plane.active = False
 
 
 def getplanes(lock, run, config):
-
     connected = False
     while run['run']:
         try:
@@ -62,10 +63,10 @@ def getplanes(lock, run, config):
                 except socket.error, err:
                     logging.debug('Failed to connect - err {}'.format(err))
                     time.sleep(1.0)
-            
+
             lines = c_socket.recv(4096)
             for line in lines.strip().split('\n'):
-                if len(line.strip()) <1 :
+                if len(line.strip()) < 1:
                     connected = False
                     c_socket.close()
                     break
@@ -88,11 +89,11 @@ def getplanes(lock, run, config):
                         lock.release()
                     elif parts[0] == 'MSG' and parts[4] == '000000' and int(parts[1]) == 7:
                         lock.acquire()
-			# grungy way to clear all planes
-			logging.debug('Clear all active queue')
-			inactive_queue = []
-			mark_all_inactive()
-			lock.release()
+                        # grungy way to clear all planes
+                        logging.debug('Clear all active queue')
+                        inactive_queue = []
+                        mark_all_inactive()
+                        lock.release()
                     elif parts[0] == 'STA':
                         id = parts[4]
                         status = parts[10]
@@ -173,7 +174,7 @@ def close_database(conn):
 
 def update_registration(reg, id, conn):
     sql = 'insert into registration select "{icao}","{reg}","{dt}" where not exists (select * from registration where icao_code="{icao}")'.format(
-            icao=str(id), reg=str(reg), dt=str(datetime.now()))
+        icao=str(id), reg=str(reg), dt=str(datetime.now()))
     logging.debug('Update db with:' + sql)
     upd = conn.execute(sql)
     conn.commit()
@@ -294,8 +295,8 @@ def get_registrations(lock, runstate, config):
     reg_cache = warm_reg_cache(conn)
 
     while runstate['run']:
-	if len(registration_queue) >0 or len(inactive_queue) > 0:
-		logging.debug('RegQ: {} InactiveQ: {}'.format(len(registration_queue), len(inactive_queue)))
+        if len(registration_queue) > 0 or len(inactive_queue) > 0:
+            logging.debug('RegQ: {} InactiveQ: {}'.format(len(registration_queue), len(inactive_queue)))
         regs = copy.copy(registration_queue)
         for id in regs:
             reg, curr_instance = get_registration(id, conn, reg_cache, config)
