@@ -69,9 +69,9 @@ def search():
                         equip = None
                         for result in retjson['results']:
                             if 'detail' in result and 'equip' in result['detail']:
-                            equip = result['detail']['equip']
-                            if equip is not None:
-                                break
+                                equip = result['detail']['equip']
+                                if equip is not None:
+                                    break
                         app.reg_cache[search_icao_code] = reg
                         ret = {'registration': reg, 'equip': equip}
 
