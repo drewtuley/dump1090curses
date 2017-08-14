@@ -113,8 +113,12 @@ else:
                         icao = parts[4]
                         if icao != '000000':
                             if icao not in seen_planes:
-                                seen_planes[icao] = tm_day_mins
                                 reg, equip = get_reg_from_regserver(icao)
+                                if reg is not None:
+                                    # only store in cache if we have a value
+                                    seen_planes[icao] = tm_day_mins
+                                else:
+                                   reg = icao
                                 post_to_slack(msg_url.format(icao=icao, reg=reg, equip=equip, count=len(seen_planes)))
                             elif seen_planes[icao]+60 < tm_day_mins:
                                 seen_planes[icao] = tm_day_mins
