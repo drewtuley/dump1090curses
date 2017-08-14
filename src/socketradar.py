@@ -11,24 +11,26 @@ from datetime import datetime
 
 import requests
 
-msg_url = 'Seen a new plane: <https://www.radarbox24.com/data/mode-s/{icao}|{reg}> (#{count})'
-repeat_msg_url = 'Seen <https://www.radarbox24.com/data/mode-s/{icao}|{reg}> again'
+msg_url = 'Seen a new plane: <https://www.radarbox24.com/data/mode-s/{icao}|{reg}> [{equip}] (#{count})'
+repeat_msg_url = 'Seen <https://www.radarbox24.com/data/mode-s/{icao}|{reg}> [{equip}] again'
 
 
 def get_reg_from_regserver(icao_code):
     url = regsvr_url + '/search?icao_code={icao_code}'.format(icao_code=icao_code)
     print('ask regserver for {} @ {}'.format(icao_code, url))
     reg = None
+    equip = None
     try:
         print(url)
         r = requests.get(url)
         if r.status_code == 200:
             if 'registration' in r.json():
                 reg = r.json()['registration']
+                equip = r.json()['equip']
     except Exception, ex:
         print('{0}: Failed to get reg from regserver: {1}'.format(str(datetime.now())[:19], ex))
 
-    return reg
+    return reg, equip
 
 
 def post_to_slack(msg):
@@ -112,12 +114,12 @@ else:
                         if icao != '000000':
                             if icao not in seen_planes:
                                 seen_planes[icao] = tm_day_mins
-                                reg = get_reg_from_regserver(icao)
-                                post_to_slack(msg_url.format(icao=icao, reg=reg, count=len(seen_planes)))
-                            elif seen_planes[icao] + 60 < tm_day_mins:
+                                reg, equip = get_reg_from_regserver(icao)
+                                post_to_slack(msg_url.format(icao=icao, reg=reg, equip=equip, count=len(seen_planes)))
+                            elif seen_planes[icao]+60 < tm_day_mins:
                                 seen_planes[icao] = tm_day_mins
-                                reg = get_reg_from_regserver(icao)
-                                post_to_slack(repeat_msg_url.format(icao=icao, reg=reg))
+                                reg, equip = get_reg_from_regserver(icao)
+                                post_to_slack(repeat_msg_url.format(icao=icao, reg=reg, equip=equip))
             except KeyboardInterrupt:
                 print('{0}: user reqeusted shutdown'.format(str(datetime.now())[:19]))
                 exit(1)
