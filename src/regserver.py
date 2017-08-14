@@ -33,28 +33,28 @@ def search():
         # get all regs      
         app.reg_cache = {}
         app.logger.info('Warming empty cache')
-        sql = 'select icao_code, registration from registration;'
+        sql = 'select icao_code, registration, equip from registration;'
         with sqlite3.connect(app.db_filename) as conn:
             cursor = conn.execute(sql)
             for row in cursor.fetchall():
-                code, reg, = row
-                app.reg_cache[code] = reg
+                code, reg, equip, = row
+                app.reg_cache[code] = (reg, equip)
         app.logger.info('Loaded {} regs into cache'.format(len(app.reg_cache)))
     if search_icao_code in app.reg_cache:
-        reg = app.reg_cache[search_icao_code]
+        reg, equip = app.reg_cache[search_icao_code]
         app.logger.debug('Cache hit for {}={}'.format(search_icao_code, reg))
-        ret = {'registration': reg}
+        ret = {'registration': reg, 'equip': equip}
     else:
-        sql = 'select registration from registration where icao_code = "{}";'.format(search_icao_code)
+        sql = 'select registration, equip from registration where icao_code = "{}";'.format(search_icao_code)
         app.logger.debug('sql = {}'.format(sql))
         with sqlite3.connect(app.db_filename) as conn:
             cursor = conn.execute(sql)
             for row in cursor.fetchall():
-                reg, = row
+                reg,equip, = row
                 app.logger.debug('reg={}'.format(reg))
-                ret = {'registration': reg}
+                ret = {'registration': reg, 'equip': equip}
                 # update the cache
-                app.reg_cache[search_icao_code] = reg
+                app.reg_cache[search_icao_code] = (reg, equip)
 
             if len(ret) == 0:
                 app.logger.debug('not in cache or db')
@@ -66,11 +66,17 @@ def search():
                 if 'results' in retjson and len(retjson['results']) > 0:
                     try:
                         reg = retjson['results'][0]['id']
+                        equip = None
+                        for result in retjson['results']:
+                            if 'detail' in result and 'equip' in result['detail']:
+                            equip = result['detail']['equip']
+                            if equip is not None:
+                                break
                         app.reg_cache[search_icao_code] = reg
-                        ret = {'registration': reg}
+                        ret = {'registration': reg, 'equip': equip}
 
-                        sql = 'insert into registration select "{icao}","{reg}","{dt}" where not exists (select * from registration where icao_code="{icao}")'.format(
-                            icao=str(search_icao_code), reg=reg, dt=str(datetime.now()))
+                        sql = 'insert into registration select "{icao}","{reg}","{dt}","{equip}" where not exists (select * from registration where icao_code="{icao}")'.format(
+                            icao=str(search_icao_code), reg=reg, dt=str(datetime.now()), equip=equip)
                         app.logger.debug(sql)
                         conn.execute(sql)
                     except Exception, ex:

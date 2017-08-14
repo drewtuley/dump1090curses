@@ -25,6 +25,7 @@ json = response.json()
 logging.debug(json)
 if 'results' in json:
     try:
+        print(json['results'][0]['detail']['equip'])
         logging.debug('{}={}'.format(str(id),json['results'][0]['id']))
         logging.debug('insert into registration select "{}", "{}", "{}";'.format(str(id), json['results'][0]['id'], str(datetime.now())))
     except:
