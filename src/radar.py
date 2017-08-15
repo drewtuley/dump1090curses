@@ -172,9 +172,9 @@ def close_database(conn):
     conn.close()
 
 
-def update_registration(reg, id, conn):
-    sql = 'insert into registration select "{icao}","{reg}","{dt}" where not exists (select * from registration where icao_code="{icao}")'.format(
-        icao=str(id), reg=str(reg), dt=str(datetime.now()))
+def update_registration(reg, id, equip, conn):
+    sql = 'insert into registration select "{icao}","{reg}","{dt}", "{equip"} where not exists (select * from registration where icao_code="{icao}")'.format(
+        icao=str(id), reg=str(reg), dt=str(datetime.now(), equip=str(equip)))
     logging.debug('Update db with:' + sql)
     upd = conn.execute(sql)
     conn.commit()
@@ -229,11 +229,11 @@ def get_registration(id, conn, reg_cache, config):
                 logging.info('Reg ' + registration[0] + ' in DB')
         if len(reg) == 0:
             # no reg in db, so try FR24 
-            reg = get_registration_from_fr24(id, config)
-            if len(reg) > 0 and reg != 'x':
+            reg, equip = get_registration_from_fr24(id, config)
+            if len(reg) > 0 and reg != '':
                 reg_cache[id] = reg
                 instance = 0
-                update_registration(reg, id, conn)
+                update_registration(reg, id, equip, conn)
 
     return (reg, instance)
 
@@ -246,19 +246,28 @@ def get_registration_from_fr24(id, config):
     url = config.get('fr24', 'api')
     geturl = url.format(str(id))
     logging.debug('lookup ' + str(id) + ' on FR24 via:' + geturl)
+    reg = ''
+    equip = ''
     try:
         response = requests.get(geturl)
         logging.debug(response.json()['results'])
         if response.status_code == 200:
             try:
-                return response.json()['results'][0]['id']
+                reg = response.json()['results'][0]['id']
+                for result in response.json()['results']:
+                    if 'detail' in result and 'equip' in result['detail']:
+                        equip = result['detail']['equip']
+                        if equip is not None:
+                            break
+                return reg, equip
             except KeyError:
-                return ''
+                return reg, equip
         else:
-            return ''
+            return reg, equip
     except:
-        return 'x'
+        return reg, equip
 
+    return reg, equip
 
 def get_locations(conn):
     """ Load my recognizeable locations from location table in db """
