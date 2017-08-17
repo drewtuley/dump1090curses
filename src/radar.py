@@ -173,8 +173,9 @@ def close_database(conn):
 
 
 def update_registration(reg, id, equip, conn):
-    sql = 'insert into registration select "{icao}","{reg}","{dt}", "{equip"} where not exists (select * from registration where icao_code="{icao}")'.format(
-        icao=str(id), reg=str(reg), dt=str(datetime.now(), equip=str(equip)))
+    logging.debug('reg: {reg} equip: {equip}'.format(reg=reg, equip=equip))
+    sql = 'insert into registration select "{icao}","{reg}","{dt}","{equip}" where not exists (select * from registration where icao_code="{icao}")'\
+        .format(icao=str(id), reg=str(reg), equip=str(equip), dt=str(datetime.now()))
     logging.debug('Update db with:' + sql)
     upd = conn.execute(sql)
     conn.commit()
@@ -229,7 +230,8 @@ def get_registration(id, conn, reg_cache, config):
                 logging.info('Reg ' + registration[0] + ' in DB')
         if len(reg) == 0:
             # no reg in db, so try FR24 
-            reg, equip = get_registration_from_fr24(id, config)
+            reg, equip, = get_registration_from_fr24(id, config)
+            logging.debug('fr24reg returned reg:{reg} equip:{equip}'.format(reg=reg, equip=equip))
             if len(reg) > 0 and reg != '':
                 reg_cache[id] = reg
                 instance = 0
