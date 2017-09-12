@@ -8,8 +8,9 @@ import socket
 import sys
 import time
 from datetime import datetime
-
 import requests
+import re
+
 
 msg_url = 'Seen a new plane: <https://www.radarbox24.com/data/mode-s/{icao}|{reg}> [{equip}] (#{count})'
 repeat_msg_url = 'Seen <https://www.radarbox24.com/data/mode-s/{icao}|{reg}> [{equip}] again'
@@ -31,6 +32,14 @@ def get_reg_from_regserver(icao_code):
         print('{0}: Failed to get reg from regserver: {1}'.format(str(datetime.now())[:19], ex))
 
     return reg, equip
+
+
+def get_my_ip(url):
+    r = requests.get(url)
+    if r.status_code == 200:
+        m=re.search('\d+[.]\d+[.]\d+[.]\d+', r.text)
+        if m != None:
+            return (m.group())
 
 
 def post_to_slack(msg):
@@ -74,6 +83,7 @@ else:
 
     slack_url = config.get('slack', 'url')
     regsvr_url = config.get('regserver', 'base_url')
+    myip_url = config.get('myip', 'url')
 
     prev_connected = False
     signal.signal(signal.SIGINT, signal.default_int_handler)
@@ -91,10 +101,11 @@ else:
                 print('{0}: Failed to connect : {1}'.format(str(datetime.now())[:19], ex))
                 time.sleep(1)
         if prev_connected:
-            re = '(re)'
+            repeat = '(re)'
         else:
-            re = ''
-        post_to_slack('socketradar {}connected on {}'.format(re, os.uname()[1]))
+            repeat = ''
+        myip = get_my_ip(myip_url)
+        post_to_slack('socketradar {0}connected on {1} ({2})'.format(repeat, os.uname()[1], myip))
 
         prev_connected = True
         while True:
