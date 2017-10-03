@@ -10,6 +10,8 @@ import time
 from datetime import datetime
 import requests
 import re
+from expiringdict import ExpiringDict
+
 
 
 msg_url = 'Seen a new plane: <https://www.radarbox24.com/data/mode-s/{icao}|{reg}> [{equip}] (#{count})'
@@ -57,6 +59,20 @@ def term_handler(signum, frame):
     exit(1)
 
 
+def usr_handler(signum, frame):
+    unknowns = False
+    for icao in seen_planes:
+        reg = seen_planes.get(icao)
+        if reg is None:
+            unknowns = True
+            post_to_slack('Unknown reg for: {}'.format(icao))
+
+    if not unknowns:
+        post_to_slack('no unknown regs seen')
+
+    return
+
+
 def write_line(basefile, line):
     parts = line.split(',')
     if len(parts) == 22:
@@ -72,7 +88,8 @@ if len(sys.argv) == 1:
     exit(1)
 else:
     o_file_base = sys.argv[1]
-    seen_planes = {}
+    seen_planes = ExpiringDict(max_len=1000, max_age_seconds=3600)
+
 
     config = ConfigParser.SafeConfigParser()
     config.read('dump1090curses.props')
@@ -88,6 +105,7 @@ else:
     prev_connected = False
     signal.signal(signal.SIGINT, signal.default_int_handler)
     signal.signal(signal.SIGTERM, term_handler)
+    signal.signal(signal.SIGUSR1, usr_handler)
 
     while True:
         connected = False
@@ -125,14 +143,10 @@ else:
                         if icao != '000000':
                             if icao not in seen_planes:
                                 reg, equip = get_reg_from_regserver(icao)
-                                seen_planes[icao] = tm_day_mins
+                                seen_planes[icao] = reg
                                 if reg is None:
                                    reg = icao
                                 post_to_slack(msg_url.format(icao=icao, reg=reg, equip=equip, count=len(seen_planes)))
-                            elif seen_planes[icao]+60 < tm_day_mins:
-                                seen_planes[icao] = tm_day_mins
-                                reg, equip = get_reg_from_regserver(icao)
-                                post_to_slack(repeat_msg_url.format(icao=icao, reg=reg, equip=equip))
             except KeyboardInterrupt:
                 print('{0}: user reqeusted shutdown'.format(str(datetime.now())[:19]))
                 exit(1)
