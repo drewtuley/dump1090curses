@@ -88,8 +88,8 @@ if len(sys.argv) == 1:
     exit(1)
 else:
     o_file_base = sys.argv[1]
-    seen_planes = ExpiringDict(max_len=1000, max_age_seconds=3600)
-
+    recently_seen = ExpiringDict(max_len=1000, max_age_seconds=3600)
+    seen_planes = {}
 
     config = ConfigParser.SafeConfigParser()
     config.read('dump1090curses.props')
@@ -144,9 +144,14 @@ else:
                             if icao not in seen_planes:
                                 reg, equip = get_reg_from_regserver(icao)
                                 seen_planes[icao] = reg
+                                recently_seen[icao] = reg
                                 if reg is None:
                                    reg = icao
                                 post_to_slack(msg_url.format(icao=icao, reg=reg, equip=equip, count=len(seen_planes)))
+                            elif icao not in recently_seen:
+                                reg, equip = get_reg_from_regserver(icao)
+                                recently_seen[icao] = reg
+                                post_to_slack(repeat_msg_url.format(icao=icao, reg=reg, equip=equip))
             except KeyboardInterrupt:
                 print('{0}: user reqeusted shutdown'.format(str(datetime.now())[:19]))
                 exit(1)
