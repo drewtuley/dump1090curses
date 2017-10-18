@@ -60,17 +60,27 @@ def term_handler(signum, frame):
 
 
 def usr_handler(signum, frame):
-    unknowns = False
+    unknowns = []
     for icao in seen_planes:
         reg = seen_planes.get(icao)
         if reg is None:
-            unknowns = True
-            post_to_slack('Unknown reg for: {}'.format(icao))
+            unknowns.append('Unknown reg for: {}'.format(icao))
 
     if not unknowns:
         post_to_slack('no unknown regs seen')
+    else:
+        post_to_slack('\n'.join(unknowns))
 
     return
+
+
+def reload_unknowns():
+    post_to_slack('reloading any unknown registrations')
+    for icao in seen_planes:
+        reg = seen_planes.get(icao)
+        if reg is None:
+            reg, equip = get_reg_from_regserver(icao)
+            seen_planes[icao] = reg
 
 
 def write_line(basefile, line):
@@ -89,6 +99,7 @@ if len(sys.argv) == 1:
 else:
     o_file_base = sys.argv[1]
     recently_seen = ExpiringDict(max_len=1000, max_age_seconds=3600)
+    recheck_unknowns = ExpiringDict(max_len=1, max_age_seconds=3600)
     seen_planes = {}
 
     config = ConfigParser.SafeConfigParser()
@@ -106,6 +117,8 @@ else:
     signal.signal(signal.SIGINT, signal.default_int_handler)
     signal.signal(signal.SIGTERM, term_handler)
     signal.signal(signal.SIGUSR1, usr_handler)
+
+    recheck_unknowns['wait'] = True
 
     while True:
         connected = False
@@ -127,6 +140,9 @@ else:
 
         prev_connected = True
         while True:
+            if 'wait' not in recheck_unknowns:
+                reload_unknowns()
+                recheck_unknowns['wait'] = True
             try:
                 buf = c_socket.recv(4096)
                 if len(buf) < 1:
