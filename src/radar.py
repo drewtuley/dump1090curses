@@ -271,6 +271,7 @@ def get_registration_from_fr24(id, config):
 
     return reg, equip
 
+
 def get_locations(conn):
     """ Load my recognizeable locations from location table in db """
 
@@ -282,6 +283,19 @@ def get_locations(conn):
         locations[place] = (lat, long)
 
     return locations
+
+
+def get_planes_of_interest(conn):
+    """ Load my recognizeable planes from plane_of_interest table in db """
+
+    planes = []
+    crsr = conn.cursor()
+    crsr.execute('select callsign from plane_of_interest')
+    for row in crsr.fetchall():
+        callsign, = row
+        planes.append(callsign)
+
+    return planes
 
 
 def warm_reg_cache(conn):
@@ -301,7 +315,12 @@ def get_registrations(lock, runstate, config):
     conn = open_database(config)
     locations_from_db = get_locations(conn)
     if len(locations_from_db) > 0:
+        logging.info('Loaded {} reference locations into cache'.format(len(locations_from_db)))
         Plane.locations = locations_from_db
+    planes_of_interest = get_planes_of_interest(conn)
+    if len(planes_of_interest) > 0:
+        logging.info('Loaded {} planes of interest into cache'.format(len(planes_of_interest)))
+        Plane.planes_of_interest = planes_of_interest
 
     reg_cache = warm_reg_cache(conn)
 
