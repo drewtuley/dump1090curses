@@ -9,8 +9,8 @@ class Plane:
     """A simple SBC Plane class"""
     columns = {0:('ICAO', 7), 1:('Callsign', 11), 2:('Squawk', 7), 3:('Alt', 7), 
         4:('VSpeed', 9), 5:('Track', 7), 6:('Speed(kts)', 12), 7:('Lat', 10), 
-        8:('Long', 10), 9:('Nearest Location', 25), 10:('Dist from ant',14), 11:('Eventdate', 20), 12:('>15s', 6), 
-        13:('Reg', 6)}
+        8:('Long', 10), 9:('Nearest Location', 25), 10:('Dist from ant',14), 11:('Evtdt', 12), 12:('>15s', 6), 
+        13:('Reg', 8), 14:('Type', 5)}
     # these locations are of interest to me - insert your own - simple 'Name':(digital_lat, digital_long)
     antenna_location = (53.9714887,-1.5415742)
     locations = {'LBA':(53.8736961, -1.6732249), 'Leeds':(53.797365, -1.5580089), 
@@ -48,6 +48,7 @@ class Plane:
         self.eventdate = now	
         self.appeardate = now
         self.active = True
+        self.equip = '?'
 	     
     
     @classmethod
@@ -111,7 +112,7 @@ class Plane:
                 if self.from_antenna > -0.0:
                     win.addstr(row, col, '{0:3.1f}nm'.format(self.from_antenna), colour)                
             elif idx == 11:
-                win.addstr(row, col, str(self.eventdate)[11:], colour)
+                win.addstr(row, col, str(self.eventdate)[11:19], colour)
             elif idx == 12:
                 if (datetime.now()-self.eventdate).total_seconds() > 15:
                     win.addstr(row, col, ' *', colour)
@@ -120,6 +121,9 @@ class Plane:
                     win.addstr(row, col, self.registration, curses.A_REVERSE)
                 else:
                     win.addstr(row, col, self.registration, colour)
+            elif idx == 14:
+                win.addstr(row, col, self.equip, colour)
+
             col += Plane.columns[idx][1]
 
 
