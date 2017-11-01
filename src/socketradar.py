@@ -16,6 +16,7 @@ from expiringdict import ExpiringDict
 
 msg_url = 'Seen a new plane: <https://www.radarbox24.com/data/mode-s/{icao}|{reg}> [{equip}] (#{count})'
 repeat_msg_url = 'Seen <https://www.radarbox24.com/data/mode-s/{icao}|{reg}> [{equip}] again'
+unknown_url = 'unknown <https://www.radarbox24.com/data/mode-s/{icao}|{icao}>' 
 
 
 def get_reg_from_regserver(icao_code):
@@ -64,7 +65,7 @@ def usr_handler(signum, frame):
     for icao in seen_planes:
         reg = seen_planes.get(icao)
         if reg is None:
-            unknowns.append('Unknown reg for: {}'.format(icao))
+            unknowns.append(unknown_url.format(icao=icao))
 
     if not unknowns:
         post_to_slack('no unknown regs seen')
@@ -76,11 +77,16 @@ def usr_handler(signum, frame):
 
 def reload_unknowns():
     post_to_slack('reloading any unknown registrations')
+    reloads = 0
     for icao in seen_planes:
         reg = seen_planes.get(icao)
         if reg is None:
             reg, equip = get_reg_from_regserver(icao)
-            seen_planes[icao] = reg
+            if reg is not None:
+                seen_planes[icao] = reg
+                reloads += 1
+
+    post_to_slack('reloaded {0} regs'.format(reloads))
 
 
 def write_line(basefile, line):
