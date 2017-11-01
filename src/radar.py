@@ -211,20 +211,22 @@ def log_observation_end(id, instance, conn):
 def get_registration(id, conn, reg_cache, config):
     reg = ''
     instance = 0
+    equip = ''
 
     if id in reg_cache.keys():
         reg = reg_cache[id][0] + '*'
-        instance = reg_cache[id][1]
+        equip = reg_cache[id][1]
+        instance = reg_cache[id][2]
         logging.info('Registration {} instance {} in cache'.format(reg[:-1], instance))
     else:
-        sql = 'select registration from registration where icao_code = "' + id + '"'
+        sql = 'select registration, equip from registration where icao_code = "' + id + '"'
         cursor = conn.cursor()
         cursor.execute(sql)
 
         for row in cursor.fetchall():
-            registration = row
+            registration, equip, = row
             if len(registration) > 0:
-                reg_cache[id] = registration[0]
+                reg_cache[id] = registration, equip, 0
                 instance = 0
                 reg = registration[0] + '*'
                 logging.info('Reg ' + registration[0] + ' in DB')
@@ -233,11 +235,11 @@ def get_registration(id, conn, reg_cache, config):
             reg, equip, = get_registration_from_fr24(id, config)
             logging.debug('fr24reg returned reg:{reg} equip:{equip}'.format(reg=reg, equip=equip))
             if len(reg) > 0 and reg != '':
-                reg_cache[id] = reg
+                reg_cache[id] = reg, equip, 0
                 instance = 0
                 update_registration(reg, id, equip, conn)
 
-    return (reg, instance)
+    return (reg, equip, instance)
 
 
 def get_registration_from_fr24(id, config):
@@ -271,6 +273,7 @@ def get_registration_from_fr24(id, config):
 
     return reg, equip
 
+
 def get_locations(conn):
     """ Load my recognizeable locations from location table in db """
 
@@ -284,14 +287,27 @@ def get_locations(conn):
     return locations
 
 
+def get_planes_of_interest(conn):
+    """ Load my recognizeable planes from plane_of_interest table in db """
+
+    planes = []
+    crsr = conn.cursor()
+    crsr.execute('select callsign from plane_of_interest')
+    for row in crsr.fetchall():
+        callsign, = row
+        planes.append(callsign)
+
+    return planes
+
+
 def warm_reg_cache(conn):
     crsr = conn.cursor()
-    crsr.execute('select r.icao_code, r.registration, max(o.instance) ' \
+    crsr.execute('select r.icao_code, r.registration, r.equip, max(o.instance) ' \
                  'from registration r, observation o where r.icao_code = o.icao_code group by r.icao_code, r.registration')
     cache = {}
     for row in crsr.fetchall():
-        icao, reg, instance, = row
-        cache[icao] = (reg, instance)
+        icao, reg, equip, instance, = row
+        cache[icao] = (reg, equip, instance)
 
     logging.info('Loaded {} registrations into cache'.format(len(cache)))
     return cache
@@ -301,7 +317,12 @@ def get_registrations(lock, runstate, config):
     conn = open_database(config)
     locations_from_db = get_locations(conn)
     if len(locations_from_db) > 0:
+        logging.info('Loaded {} reference locations into cache'.format(len(locations_from_db)))
         Plane.locations = locations_from_db
+    planes_of_interest = get_planes_of_interest(conn)
+    if len(planes_of_interest) > 0:
+        logging.info('Loaded {} planes of interest into cache'.format(len(planes_of_interest)))
+        Plane.planes_of_interest = planes_of_interest
 
     reg_cache = warm_reg_cache(conn)
 
@@ -310,12 +331,13 @@ def get_registrations(lock, runstate, config):
             logging.debug('RegQ: {} InactiveQ: {}'.format(len(registration_queue), len(inactive_queue)))
         regs = copy.copy(registration_queue)
         for id in regs:
-            reg, curr_instance = get_registration(id, conn, reg_cache, config)
+            reg, equip, curr_instance = get_registration(id, conn, reg_cache, config)
             instance = log_observation_start(id, conn, curr_instance)
             reg_cache[id] = (reg, instance)
             lock.acquire()
             planes[id].registration = reg
             planes[id].observe_instance = instance
+            planes[id].equip = equip
             registration_queue.remove(id)
             lock.release()
 
