@@ -228,8 +228,8 @@ def get_registration(id, conn, reg_cache, config):
             if len(registration) > 0:
                 reg_cache[id] = registration, equip, 0
                 instance = 0
-                reg = registration[0] + '*'
-                logging.info('Reg ' + registration[0] + ' in DB')
+                reg = registration + '*'
+                logging.info('Reg ' + registration + ' in DB')
         if len(reg) == 0:
             # no reg in db, so try FR24 
             reg, equip, = get_registration_from_fr24(id, config)
