@@ -1,9 +1,9 @@
+import ConfigParser
 import curses
 import curses.ascii
 import logging
-from datetime import datetime
-import ConfigParser
 import sqlite3
+from datetime import datetime
 
 
 class TextEdit(object):
@@ -36,7 +36,7 @@ class RegEdit(TextEdit):
 class YNEdit(TextEdit):
     def __init__(self):
         super(YNEdit, self).__init__(
-            lambda ch: curses.ascii.isalpha(ch) and chr(ch).upper() == 'Y' or chr(ch).upper() == 'N')
+            lambda ch: curses.ascii.isalpha(ch) and (chr(ch).upper() == 'Y' or chr(ch).upper() == 'N'))
 
     def transform(self, ch):
         return chr(ch).upper()
@@ -113,13 +113,27 @@ class EditBox(LabelBox):
 
 
 boxes = []
-mode = []
 
 
 def open_database(config):
     dbname = config.get('directories', 'data') + '/' + config.get('database', 'dbname')
     logging.info('Opening db ' + dbname)
     return sqlite3.connect(dbname)
+
+
+def get_next_edit_idx(boxes, curpos, dir):
+    pos = curpos + dir
+    while True:
+        if 0 <= pos < len(boxes):
+            if isinstance(boxes[pos], EditBox) and boxes[pos].isvisible():
+                return pos
+            else:
+                pos += dir
+        else:
+            if pos < 0:
+                pos = len(boxes) - 1
+            else:
+                pos = 0
 
 
 def find_next_edit(boxes, curpos):
@@ -181,7 +195,7 @@ def main(screen):
         ch = screen.getch()
         if ch == 27:
             break
-        if ch == curses.KEY_RIGHT or ch == curses.KEY_DOWN or ch == 9 or ch == 10:
+        if ch in [curses.KEY_RIGHT, curses.KEY_DOWN, 9, 10]:
             focus_idx = find_next_edit(boxes, focus_idx)
         elif ch == curses.KEY_LEFT or ch == curses.KEY_UP:
             focus_idx = find_prev_edit(boxes, focus_idx)
@@ -193,7 +207,7 @@ def main(screen):
     curses.curs_set(prev_state)
 
 
-def setVisibility(state, lst):
+def set_visibility(state, lst):
     for b in boxes:
         if b.name is not None and b.name in lst:
             b.setvisible(state)
@@ -207,16 +221,16 @@ def find_box(name):
     return None
 
 
-def set_values(hash):
-    for key in hash:
+def set_values(box_hash):
+    for key in box_hash:
         box = find_box(key)
         if box is not None:
-            box.value = hash[key]
+            box.value = box_hash[key]
 
 
-def get_values(lst):
+def get_values(box_list):
     rethash = {}
-    for key in lst:
+    for key in box_list:
         box = find_box(key)
         if box is not None:
             rethash[key] = box.value
@@ -236,7 +250,7 @@ def get_custom(name):
         return box.getcustom()
 
 
-def AfterReg(obj, conn):
+def after_reg(obj, conn):
     logging.debug('AfterReg called with {}'.format(obj))
     custom = get_custom('YN')
     if custom is not None and custom[1] != 'REG':
@@ -256,16 +270,16 @@ def AfterReg(obj, conn):
             logging.debug('found icao:{} type: {}'.format(icao_code, equip))
 
         if icao_code is None:
-            setVisibility(True, ['ADD', 'YN'])
+            set_visibility(True, ['ADD', 'YN'])
             set_custom('YN', ('ADD', 'REG'))
             set_values({'ICAOHEX': '', 'ICAOTYPE': ''})
         else:
-            setVisibility(True, ['UPDATE', 'YN'])
+            set_visibility(True, ['UPDATE', 'YN'])
             set_custom('YN', ('UPDATE', 'REG'))
             set_values({'ICAOHEX': icao_code, 'ICAOTYPE': equip})
 
 
-def AfterHex(obj, conn):
+def after_hex(obj, conn):
     logging.debug('AfterHex called with {}'.format(obj))
     custom = get_custom('YN')
     if custom is not None and custom[1] != 'ICAOHEX':
@@ -285,25 +299,24 @@ def AfterHex(obj, conn):
             logging.debug('found reg:{} type: {}'.format(registration, equip))
 
         if registration is None:
-            setVisibility(True, ['ADD', 'YN'])
+            set_visibility(True, ['ADD', 'YN'])
             set_custom('YN', ('ADD', 'ICAOHEX'))
             set_values({'REG': '', 'ICAOTYPE': '', 'YN': ''})
         else:
-            setVisibility(True, ['UPDATE', 'YN'])
+            set_visibility(True, ['UPDATE', 'YN'])
             set_custom('YN', ('UPDATE', 'ICAOHEX'))
             set_values({'REG': registration, 'ICAOTYPE': equip, 'YN': ''})
 
     else:
         logging.debug('set invisible')
-        setVisibility(False, ['ADD', 'UPDATE', 'YN'])
+        set_visibility(False, ['ADD', 'UPDATE', 'YN'])
         set_values({'REG': '', 'ICAOTYPE': '', 'YN': ''})
 
 
-def AfterYN(obj, conn):
+def after_yn(obj, conn):
     logging.debug('AfterReg called with {}'.format(obj))
     if obj.value == 'Y':
         if obj.custom is not None:
-            logging.debug('Do IT with mode'.format(obj.custom))
             mode = obj.custom
             logging.debug('{} db using {}'.format(mode[0], mode[1]))
             if mode[0] == 'ADD':
@@ -335,17 +348,17 @@ def init():
     boxes.append(LabelBox(2, 7, '============ ======', True))
 
     boxes.append(LabelBox(4, 3, 'ICAO Hex:', True))
-    boxes.append(EditBox(4, 24, '', True, 6, HexEdit(), name='ICAOHEX', post=AfterHex))
+    boxes.append(EditBox(4, 24, '', True, 6, HexEdit(), name='ICAOHEX', post=after_hex))
 
     boxes.append(LabelBox(6, 3, 'ICAO Type:', True))
     boxes.append(EditBox(6, 25, '', True, 5, AlphaNumUpper(), name='ICAOTYPE'))
 
     boxes.append(LabelBox(8, 3, 'Registration:', True))
-    boxes.append(EditBox(8, 21, '', True, 9, RegEdit(), name='REG', post=AfterReg))
+    boxes.append(EditBox(8, 21, '', True, 9, RegEdit(), name='REG', post=after_reg))
 
     boxes.append(LabelBox(11, 15, 'Add: (Y/N)', False, name='ADD'))
     boxes.append(LabelBox(11, 15, 'Update: (Y/N)', False, name='UPDATE'))
-    boxes.append(EditBox(11, 29, '', False, 1, YNEdit(), name='YN', post=AfterYN))
+    boxes.append(EditBox(11, 29, '', False, 1, YNEdit(), name='YN', post=after_yn))
 
     logging.debug(boxes)
 
