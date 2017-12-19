@@ -113,6 +113,8 @@ class EditBox(LabelBox):
 
 
 boxes = []
+FWD = 1
+REV = -1
 
 
 def open_database(config):
@@ -136,30 +138,6 @@ def get_next_edit_idx(boxes, curpos, dir):
                 pos = 0
 
 
-def find_next_edit(boxes, curpos):
-    pos = curpos + 1
-    while True:
-        if pos < len(boxes):
-            if isinstance(boxes[pos], EditBox) and boxes[pos].isvisible():
-                return pos
-            else:
-                pos += 1
-        else:
-            pos = 0
-
-
-def find_prev_edit(boxes, curpos):
-    pos = curpos - 1
-    while True:
-        if pos >= 0:
-            if isinstance(boxes[pos], EditBox) and boxes[pos].isvisible():
-                return pos
-            else:
-                pos -= 1
-        else:
-            pos = len(boxes) - 1
-
-
 def main(screen):
     curses.start_color()
     curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLACK)
@@ -176,7 +154,7 @@ def main(screen):
 
     conn = open_database(config)
 
-    focus_idx = find_next_edit(boxes, -1)
+    focus_idx = get_next_edit_idx(boxes, -1, FWD)
     ch = 0
     while True:
         # win.addstr(1,1,'{:4s}'.format(str(ch)), curses.color_pair(1))
@@ -196,9 +174,9 @@ def main(screen):
         if ch == 27:
             break
         if ch in [curses.KEY_RIGHT, curses.KEY_DOWN, 9, 10]:
-            focus_idx = find_next_edit(boxes, focus_idx)
+            focus_idx = get_next_edit_idx(boxes, focus_idx, FWD)
         elif ch == curses.KEY_LEFT or ch == curses.KEY_UP:
-            focus_idx = find_prev_edit(boxes, focus_idx)
+            focus_idx = get_next_edit_idx(boxes, focus_idx, REV)
         else:
             boxes[focus_idx].edit(ch)
             if boxes[focus_idx].postfunc is not None:
