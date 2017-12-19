@@ -312,8 +312,6 @@ def after_yn(obj, conn):
             upd = conn.execute(real_sql)
             conn.commit()
             logging.debug('update result=' + str(upd.description))
-
-
     else:
         logging.debug('abort')
 
