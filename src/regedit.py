@@ -148,7 +148,7 @@ def main(screen):
 
     screen.refresh()
 
-    win = curses.newwin(32, 155, 0, 0)
+    win = curses.newwin(curses.LINES, curses.COLS, 0, 0)
     win.bkgd(curses.color_pair(1))
     win.box()
 
@@ -157,7 +157,8 @@ def main(screen):
     focus_idx = get_next_edit_idx(boxes, -1, FWD)
     ch = 0
     while True:
-        # win.addstr(1,1,'{:4s}'.format(str(ch)), curses.color_pair(1))
+        #win.addstr(1,1,'{:4s}'.format(str(curses.LINES)), curses.color_pair(1))
+        #win.addstr(2,1,'{:4s}'.format(str(curses.COLS)), curses.color_pair(1))
 
         for box in boxes:
             if not box.isvisible():
