@@ -29,7 +29,7 @@ api=https://www.flightradar24.com/v1/search/web/find?limit=16&query={}
 url=https://hooks.slack.com/services/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
 
 [regserver]
-base_url=http://1be777de.eu.ngrok.io
+base_url=http://1b6f6843.eu.ngrok.io
 
 [myip]
 url=http://ip4.me

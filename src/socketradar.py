@@ -78,6 +78,7 @@ def usr_handler(signum, frame):
 def reload_unknowns():
     post_to_slack('reloading any unknown registrations')
     reloads = 0
+    still_unknown = []
     for icao in seen_planes:
         reg = seen_planes.get(icao)
         if reg is None:
@@ -85,8 +86,20 @@ def reload_unknowns():
             if reg is not None:
                 seen_planes[icao] = reg
                 reloads += 1
+            else:
+                still_unknown.append(unknown_url.format(icao=icao))
 
     post_to_slack('reloaded {0} regs'.format(reloads))
+
+    if still_unknown:
+        post_to_slack('\n'.join(still_unknown))
+
+
+def is_valid_icao(icao_code):
+    if len(icao_code) == 6:
+        return re.match('[0-9A-F]{6}', icao_code.upper()) is not None
+    else:
+        return False
 
 
 def write_line(basefile, line):
@@ -150,7 +163,7 @@ else:
                 reload_unknowns()
                 recheck_unknowns['wait'] = True
             try:
-                buf = c_socket.recv(4096)
+                buf = c_socket.recv(16384)
                 if len(buf) < 1:
                     print('{0}: Possible buffer underrun - close/reopen'.format(str(datetime.now())[:19]))
                     break
@@ -162,7 +175,7 @@ else:
                     parts = line.split(',')
                     if len(parts) > 4:
                         icao = parts[4]
-                        if icao != '000000':
+                        if icao != '000000' and is_valid_icao(icao):
                             if icao not in seen_planes:
                                 reg, equip = get_reg_from_regserver(icao)
                                 seen_planes[icao] = reg
