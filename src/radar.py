@@ -57,7 +57,7 @@ def getplanes(lock, run, config):
             while not connected:
                 try:
                     c_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                    c_socket.connect(('localhost', int(config.get('dump1090', 'port'))))
+                    c_socket.connect((config.get('dump1090','host'), int(config.get('dump1090', 'port'))))
                     c_socket.settimeout(float(config.get('dump1090', 'timeout')))
                     connected = True
                 except socket.error, err:
