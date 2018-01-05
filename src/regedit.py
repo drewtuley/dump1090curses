@@ -4,6 +4,25 @@ import curses.ascii
 import logging
 import sqlite3
 from datetime import datetime
+import sys
+
+
+class OptionEdit(object):
+    def __init__(self):
+        self.type=None
+
+    def setData(self, dataObject):
+        self.dataObject = dataObject
+
+    def getData(self):
+        return self.dataObject
+
+
+class Option(object):
+    def __init__(self, value, visible, selected = False):
+        self.value = value
+        self.visible = visible
+        self.selected = selected
 
 
 class TextEdit(object):
@@ -51,10 +70,10 @@ class HexEdit(TextEdit):
 
 
 class LabelBox(object):
-    def __init__(self, row, col, value='', visible=True, **kwargs):
+    def __init__(self, row, col, text='', visible=True, **kwargs):
         self.row = row
         self.col = col
-        self.value = value
+        self.text = text
         self.visible = visible
         if 'name' in kwargs:
             self.name = kwargs['name']
@@ -66,14 +85,13 @@ class LabelBox(object):
         else:
             self.postfunc = None
 
-        self.custom = None
 
     def draw(self, win, color):
-        val = '{value}'.format(value=self.value)
-        win.addstr(self.row, self.col, val, color)
+        text = '{text}'.format(text=self.text)
+        win.addstr(self.row, self.col, text, color)
 
     def undraw(self, win):
-        win.addstr(self.row, self.col, ' ' * len(self.value))
+        win.addstr(self.row, self.col, ' ' * len(self.text))
 
     def isvisible(self):
         return self.visible
@@ -81,45 +99,205 @@ class LabelBox(object):
     def setvisible(self, visible):
         self.visible = visible
 
-    def setcustom(self, custom):
-        logging.debug('setting custom value to {}'.format(custom))
-        self.custom = custom
-
-    def getcustom(self):
-        return self.custom
+    def update(self):
+        return None
 
 
 class EditBox(LabelBox):
-    def __init__(self, row, col, value='', visible=True, maxwidth=0, editType=TextEdit(), **kwargs):
-        super(EditBox, self).__init__(row, col, value, visible, **kwargs)
+    def __init__(self, row, col, visible=True, maxwidth=0, editType=OptionEdit(), **kwargs):
+        super(EditBox, self).__init__(row, col, None, visible, **kwargs)
         self.maxwidth = maxwidth
         self.editType = editType
 
+        if 'data' in kwargs:
+            self.data = kwargs['data']
+        else:
+            self.data = None
+        if 'datakey' in kwargs:
+            self.datakey = kwargs['datakey']
+        else:
+            self.datakey = None
+
     def draw(self, win, color):
-        val = '[{value:{width}s}]'.format(value=self.value, width=self.maxwidth)
+        text = self.data[self.datakey]
+        val = '[{text:{width}s}]'.format(text=text, width=self.maxwidth)
         win.addstr(self.row, self.col, val, color)
 
     def undraw(self, win):
         win.addstr(self.row, self.col, ' ' * (self.maxwidth + 2))
 
-    def set_focus(self, win):
-        win.move(self.row, self.col + len(self.value) + 1)
+    def set_focus(self, win, color):
+        curses.curs_set(1)
+        text = self.data[self.datakey]
+        win.move(self.row, self.col + len(text) + 1)
 
     def edit(self, ch):
-        if ch == curses.KEY_BACKSPACE and len(self.value) > 0:
-            self.value = self.value[:-1]
-        elif self.editType.valid(ch) and len(self.value) < self.maxwidth:
-            self.value = self.value + self.editType.transform(ch)
+        if ch in [curses.KEY_RIGHT, curses.KEY_DOWN, 9, 10]:
+            return FWD
+        elif ch == curses.KEY_LEFT or ch == curses.KEY_UP:
+            return REV
+        text = self.data[self.datakey]
+        logging.debug('preedit {}'.format(text))
+        if ch == curses.KEY_BACKSPACE and len(text) > 0:
+            text = text[:-1]
+        elif self.editType.valid(ch) and len(text) < self.maxwidth:
+            text = text + self.editType.transform(ch)
+        self.data[self.datakey] = text
+        logging.debug('postedit {}'.format(text))
+        return ACTION
+
+    def getData(self):
+        return self.data
+
+    def update(self):
+        value = self.data[self.datakey]
+        logging.debug('Update {} using {}'.format(self, value))
+        return None
+
+
+class OptionBox(LabelBox):
+    def __init__(self, row, col, visible=True, maxwidth=0, editType=TextEdit(), **kwargs):
+        super(OptionBox, self).__init__(row, col, None, visible, **kwargs)
+        self.editType = editType
+        self.optionList  = kwargs['options']
+
+        self.data = kwargs['data']
+       
+        self.selected_option = None 
+        idx = 0
+        self.maxwidth = 1
+        for opt in self.optionList:
+            if opt.selected and self.selected_option is None:
+                self.selected_option = idx
+            idx += 1
+            self.maxwidth += len(opt.value) +1
+        if self.selected_option is None:
+            self.selection_option = 0
+            optionList[i].selected = True
+
+
+    def draw(self, win, color):
+        win.addstr(self.row, self.col-(self.maxwidth+2), ' ' * (self.maxwidth + 2))
+        self.do_draw(win, color, False)
+
+    def undraw(self, win):
+        logging.debug('undraw: {} chrs'.format(self.maxwidth +2))
+        win.addstr(self.row, self.col, ' ' * (self.maxwidth + 2))
+
+    def do_draw(self, win, color, with_focus):
+        width = 1
+        for option in self.optionList:
+            if option.visible:
+                width += len(option.value)+1
+
+        col=self.col - width
+        win.addstr(self.row, col, '[', color)
+        col += 1
+        for option in self.optionList:
+            if option.visible:
+                actual_color = color
+                if with_focus and option.selected :
+                    actual_color |=  curses.A_REVERSE
+                win.addstr(self.row, col, option.value, actual_color)
+                col += len(option.value)
+                win.addstr(self.row, col, '/', color)
+                col += 1
+        win.addstr(self.row, col-1, ']', color)
+        
+
+    def select_next_option(self, direction):
+        found = False
+        next_option = self.selected_option
+        while not found:
+            next_option += direction
+            if next_option >= len(self.optionList):
+                next_option = 0
+            elif next_option < 0:
+                next_option = len(self.optionList)-1
+            if self.optionList[next_option].visible:
+                found = True
+
+        self.optionList[self.selected_option].selected = False
+        self.selected_option = next_option
+        self.optionList[self.selected_option].selected = True
+
+
+    def edit(self, ch):
+        logging.info('In OptionBox edit')
+        if ch  == curses.KEY_RIGHT:
+            self.select_next_option(FWD)
+            return None
+        elif ch == curses.KEY_LEFT:
+            self.select_next_option(REV)
+            return None
+        elif ch ==  curses.KEY_UP:
+            return REV
+        elif ch == curses.KEY_DOWN:
+            return FWD
+        elif ch == 10:
+            return ACTION
+
+
+    def set_focus(self, win, color):
+        self.do_draw(win, color, True)
+        curses.curs_set(0)
+
+
+    def get_selected_option(self):
+        return self.optionList[self.selected_option]
+
+    def getData(self):
+        return self.data
+
+    def set_selected_option(self, optionName):
+        ix = 0
+        for opt in self.optionList:
+            if opt.value == optionName:
+                opt.selected = True
+                self.selected_option = ix
+            else:    
+                opt.selected = False
+            ix += 1
+
+
+    def update(self):
+        logging.debug('Update {} with {}'.format(self, self.data))
+        if self.data['icaohex'] != '' and self.data['icaotype'] != '' and self.data['registration'] != '':
+            if 'source' not in self.data or self.data['source'] == '':
+                logging.debug('Enable Add')         
+                enable = ['Add']
+                selopt = 'Add'
+            else:
+                logging.debug('Enable Update/Delete')
+                enable = ['Update','Delete']
+                selopt = 'Update'
+            for opt in self.optionList:
+                if opt.value in enable:
+                    opt.visible = True
+
+        else:
+            ix = 0
+            for opt in self.optionList:
+                if opt.value != 'Clear':
+                    opt.visible = False
+                    opt.selected = False
+                else:
+                    self.selected_option = ix
+                    opt.selected = True
+                ix += 1
 
 
 boxes = []
 FWD = 1
 REV = -1
+ACTION = 100
 
 
-def open_database(config):
-    dbname = config.get('directories', 'data') + '/' + config.get('database', 'dbname')
-    logging.info('Opening db ' + dbname)
+def open_database(config, test):
+    test_prefix=''
+    if test: test_prefix='test_'
+    dbname = '{}/{}{}'.format(config.get('directories', 'data'), test_prefix, config.get('database', 'dbname'))
+    logging.info('Opening db: ' + dbname)
     return sqlite3.connect(dbname)
 
 
@@ -127,7 +305,7 @@ def get_next_edit_idx(boxes, curpos, dir):
     pos = curpos + dir
     while True:
         if 0 <= pos < len(boxes):
-            if isinstance(boxes[pos], EditBox) and boxes[pos].isvisible():
+            if (isinstance(boxes[pos], EditBox) or isinstance(boxes[pos], OptionBox)) and boxes[pos].isvisible():
                 return pos
             else:
                 pos += dir
@@ -138,7 +316,7 @@ def get_next_edit_idx(boxes, curpos, dir):
                 pos = 0
 
 
-def main(screen):
+def main(screen, test):
     curses.start_color()
     curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLACK)
     curses.init_pair(2, curses.COLOR_YELLOW, curses.COLOR_BLACK)
@@ -152,7 +330,7 @@ def main(screen):
     win.bkgd(curses.color_pair(1))
     win.box()
 
-    conn = open_database(config)
+    conn = open_database(config, test)
 
     focus_idx = get_next_edit_idx(boxes, -1, FWD)
     ch = 0
@@ -160,86 +338,40 @@ def main(screen):
         #win.addstr(1,1,'{:4s}'.format(str(curses.LINES)), curses.color_pair(1))
         #win.addstr(2,1,'{:4s}'.format(str(curses.COLS)), curses.color_pair(1))
 
+        logging.debug('Start update')
         for box in boxes:
+            box.update()
             if not box.isvisible():
                 box.undraw(win)
-
-        for box in boxes:
             if box.isvisible():
                 box.draw(win, curses.color_pair(1))
 
-        boxes[focus_idx].set_focus(win)
+
+        boxes[focus_idx].set_focus(win, curses.color_pair(1))
 
         win.refresh()
         ch = screen.getch()
         if ch == 27:
             break
-        if ch in [curses.KEY_RIGHT, curses.KEY_DOWN, 9, 10]:
-            focus_idx = get_next_edit_idx(boxes, focus_idx, FWD)
-        elif ch == curses.KEY_LEFT or ch == curses.KEY_UP:
-            focus_idx = get_next_edit_idx(boxes, focus_idx, REV)
-        else:
-            boxes[focus_idx].edit(ch)
-            if boxes[focus_idx].postfunc is not None:
-                boxes[focus_idx].postfunc(boxes[focus_idx], conn)
+        move_dir = boxes[focus_idx].edit(ch)
+        if move_dir in [FWD, REV]:
+            focus_idx = get_next_edit_idx(boxes, focus_idx, move_dir)
+        elif move_dir == ACTION and boxes[focus_idx].postfunc is not None:
+            move_dir = boxes[focus_idx].postfunc(boxes[focus_idx], conn)
+            if move_dir is not None: 
+                focus_idx = get_next_edit_idx(boxes, focus_idx, move_dir)
 
     curses.curs_set(prev_state)
 
 
-def set_visibility(state, lst):
-    for b in boxes:
-        if b.name is not None and b.name in lst:
-            b.setvisible(state)
-
-
-def find_box(name):
-    for b in boxes:
-        if b.name is not None and b.name == name:
-            return b
-
-    return None
-
-
-def set_values(box_hash):
-    for key in box_hash:
-        box = find_box(key)
-        if box is not None:
-            box.value = box_hash[key]
-
-
-def get_values(box_list):
-    rethash = {}
-    for key in box_list:
-        box = find_box(key)
-        if box is not None:
-            rethash[key] = box.value
-
-    return rethash
-
-
-def set_custom(name, custom):
-    box = find_box(name)
-    if box is not None:
-        box.setcustom(custom)
-
-
-def get_custom(name):
-    box = find_box(name)
-    if box is not None:
-        return box.getcustom()
-
 
 def after_reg(obj, conn):
     logging.debug('AfterReg called with {}'.format(obj))
-    custom = get_custom('YN')
-    if custom is not None and custom[1] != 'REG':
-        logging.debug('Free edit cos icaohex update')
-        return
-
-    if len(obj.value) > 4:
+    reg = obj.data[obj.datakey]
+    if len(reg) > 4:
         logging.debug('Access to db @ {}'.format(conn))
-        sql = 'select icao_code, equip from registration where registration ="' + obj.value + '"'
-        logging.debug('lookup {} using {}'.format(obj.value, sql))
+        sql = 'select icao_code, equip from registration where registration ="' + reg + '"'
+        logging.debug('lookup {} using {}'.format(reg, sql))
         cursor = conn.cursor()
         cursor.execute(sql)
 
@@ -247,28 +379,26 @@ def after_reg(obj, conn):
         for row in cursor.fetchall():
             icao_code, equip = row
             logging.debug('found icao:{} type: {}'.format(icao_code, equip))
+            data = obj.getData()
+            data['registration'] = reg
+            data['icaohex'] = icao_code
+            data['icaotype'] = equip
+            data['source'] = 'registration'
+            logging.debug('Data is now: {}'.format(data))
 
-        if icao_code is None:
-            set_visibility(True, ['ADD', 'YN'])
-            set_custom('YN', ('ADD', 'REG'))
-            set_values({'ICAOHEX': '', 'ICAOTYPE': ''})
-        else:
-            set_visibility(True, ['UPDATE', 'YN'])
-            set_custom('YN', ('UPDATE', 'REG'))
-            set_values({'ICAOHEX': icao_code, 'ICAOTYPE': equip})
+
+    if len(reg) == obj.maxwidth:
+        return FWD 
+    return None
 
 
 def after_hex(obj, conn):
     logging.debug('AfterHex called with {}'.format(obj))
-    custom = get_custom('YN')
-    if custom is not None and custom[1] != 'ICAOHEX':
-        logging.debug('Free edit cos reg update')
-        return
-
-    if len(obj.value) == 6:
+    hex = obj.data[obj.datakey]
+    if len(hex) == 6:
         logging.debug('Access to db @ {}'.format(conn))
-        sql = 'select registration, equip from registration where icao_code ="' + obj.value + '"'
-        logging.debug('lookup {} using {}'.format(obj.value, sql))
+        sql = 'select registration, equip from registration where icao_code ="' + hex + '"'
+        logging.debug('lookup {} using {}'.format(hex, sql))
         cursor = conn.cursor()
         cursor.execute(sql)
 
@@ -277,65 +407,91 @@ def after_hex(obj, conn):
             registration, equip = row
             logging.debug('found reg:{} type: {}'.format(registration, equip))
 
-        if registration is None:
-            set_visibility(True, ['ADD', 'YN'])
-            set_custom('YN', ('ADD', 'ICAOHEX'))
-            set_values({'REG': '', 'ICAOTYPE': '', 'YN': ''})
+        data = obj.getData()
+        logging.debug('Data is {}'.format(data))
+        if registration is not None:
+            data['icaohex'] = hex
+            data['icaotype'] = equip
+            data['registration'] = registration
+            data['source'] = 'icaohex'
+            logging.debug('Data is now: {}'.format(data))
         else:
-            set_visibility(True, ['UPDATE', 'YN'])
-            set_custom('YN', ('UPDATE', 'ICAOHEX'))
-            set_values({'REG': registration, 'ICAOTYPE': equip, 'YN': ''})
+            data['icaotype'] = ''
+            data['registration'] = ''
+            if 'source' in data: del data['source']
 
-    else:
-        logging.debug('set invisible')
-        set_visibility(False, ['ADD', 'UPDATE', 'YN'])
-        set_values({'REG': '', 'ICAOTYPE': '', 'YN': ''})
+        return FWD
+
+    return None
 
 
-def after_yn(obj, conn):
-    logging.debug('AfterReg called with {}'.format(obj))
-    if obj.value == 'Y':
-        if obj.custom is not None:
-            mode = obj.custom
-            logging.debug('{} db using {}'.format(mode[0], mode[1]))
-            if mode[0] == 'ADD':
-                sql = 'insert into registration (icao_code, registration, equip) select "{icao_code}","{registration}","{equip}";'
+
+
+def after_type(obj, conn):
+    logging.debug('AfterType called with {}'.format(obj))
+
+    icaotype = obj.data[obj.datakey]
+    if len(icaotype) == obj.maxwidth: return FWD
+
+    return None
+
+
+def clear_data(data):
+    data['icaohex'] = ''
+    data['icaotype'] = ''
+    data['registration'] = ''
+    if 'source' in data: del data['source']
+
+
+def after_option(obj, conn):
+    logging.debug('After Option called with {}'.format(obj))
+
+    selected = obj.get_selected_option()
+    logging.debug('selected {}:'.format(selected.value))
+    data = obj.getData()
+    if selected.value == 'Clear':
+        logging.debug('Data is {}'.format(data))
+        clear_data(data)
+        logging.debug('Data is now: {}'.format(data))
+    elif selected.value in ['Update','Add', 'Delete']:
+        logging.debug('Update/Add')
+        if selected.value == 'Add':
+            sql = 'insert into registration (icao_code, registration, equip) select "{icao_code}","{registration}","{equip}";'
+        elif selected.value == 'Update':
+            if data['source'] == 'registration':
+                sql = 'update registration set icao_code="{icao_code}", equip="{equip}" where registration="{registration}";'
             else:
-                if mode[1] == 'REG':
-                    sql = 'update registration set icao_code="{icao_code}", equip="{equip}" where registration="{registration}";'
-                else:
-                    sql = 'update registration set registration="{registration}", equip="{equip}" where icao_code="{icao_code}";'
-            values = get_values(['REG', 'ICAOTYPE', 'ICAOHEX'])
-            logging.debug('values = {}'.format(values))
-            real_sql = sql.format(icao_code=values['ICAOHEX'], registration=values['REG'], equip=values['ICAOTYPE'])
-            logging.debug('SQL = {}'.format(real_sql))
+                sql = 'update registration set registration="{registration}", equip="{equip}" where icao_code="{icao_code}";'
+        else:
+            sql = 'delete from registration where icao_code="{icao_code}";'
 
-            upd = conn.execute(real_sql)
-            conn.commit()
-            logging.debug('update result=' + str(upd.description))
-    else:
-        logging.debug('abort')
+        actual_sql = sql.format(icao_code=data['icaohex'], equip=data['icaotype'], registration=data['registration'])
+        logging.debug('act sql: {}'.format(actual_sql))
 
-    set_values({'ICAOHEX': '', 'REG': '', 'ICAOTYPE': '', 'YN': ''})
-    obj.setcustom(None)
+        upd = conn.execute(actual_sql)
+        conn.commit()
+        logging.debug('update result=' + str(upd.description))
+        clear_data(data)
+
+    return FWD
 
 
 def init():
+    dataObject = {'icaohex': '', 'icaotype': '', 'registration': ''}
+
     boxes.append(LabelBox(1, 7, 'Registration Editor', True))
     boxes.append(LabelBox(2, 7, '============ ======', True))
 
     boxes.append(LabelBox(4, 3, 'ICAO Hex:', True))
-    boxes.append(EditBox(4, 24, '', True, 6, HexEdit(), name='ICAOHEX', post=after_hex))
+    boxes.append(EditBox(4, 24, True, 6, HexEdit(), data=dataObject, datakey='icaohex', name='ICAOHEX', post=after_hex))
 
     boxes.append(LabelBox(6, 3, 'ICAO Type:', True))
-    boxes.append(EditBox(6, 25, '', True, 5, AlphaNumUpper(), name='ICAOTYPE'))
+    boxes.append(EditBox(6, 25, True, 5, AlphaNumUpper(), data=dataObject, datakey='icaotype', name='ICAOTYPE', post=after_type))
 
     boxes.append(LabelBox(8, 3, 'Registration:', True))
-    boxes.append(EditBox(8, 21, '', True, 9, RegEdit(), name='REG', post=after_reg))
+    boxes.append(EditBox(8, 21, True, 9, RegEdit(), data=dataObject, datakey='registration', name='REG', post=after_reg))
 
-    boxes.append(LabelBox(11, 15, 'Add: (Y/N)', False, name='ADD'))
-    boxes.append(LabelBox(11, 15, 'Update: (Y/N)', False, name='UPDATE'))
-    boxes.append(EditBox(11, 29, '', False, 1, YNEdit(), name='YN', post=after_yn))
+    boxes.append(OptionBox(10, 32, True, -1, OptionEdit(), data=dataObject, name='OPTIONS', options=[Option('Update',False), Option('Add',False), Option('Delete', False), Option('Clear',True, True)], post=after_option))
 
     logging.debug(boxes)
 
@@ -351,11 +507,16 @@ if __name__ == '__main__':
     logging.captureWarnings(True)
 
     logging.debug('start')
+    test = False
+    if len(sys.argv) == 2 and sys.argv[1] == '-t': 
+        test = True
+        logging.debug('in test mode')
+
     init()
 
     if len(boxes) > 0:
         try:
-            curses.wrapper(main)
+            curses.wrapper(main, test)
         except Exception as ex:
             print(ex)
             logging.error(ex)
