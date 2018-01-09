@@ -358,8 +358,10 @@ def main(screen, test):
 
 def after_reg(obj, conn):
     logging.debug('AfterReg called with {}'.format(obj))
+    icaohex = obj.data['icaohex']
     reg = obj.data[obj.datakey]
-    if len(reg) > 4:
+    # dont lookup via reg if ICAOhex is set
+    if len(reg) > 4 and len(icaohex) < 6:
         logging.debug('Access to db @ {}'.format(conn))
         sql = 'SELECT icao_code, equip FROM registration WHERE registration ="' + reg + '"'
         logging.debug('lookup {} using {}'.format(reg, sql))
