@@ -104,6 +104,8 @@ seen_planes = {}
 
 config = ConfigParser.SafeConfigParser()
 config.read('dump1090curses.props')
+config.read('dump1090curses.local.props')
+
 
 dump1090_host = config.get('dump1090', 'host')
 dump1090_port = int(config.get('dump1090', 'port'))

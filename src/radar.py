@@ -361,6 +361,8 @@ def main(screen):
     urllib3.contrib.pyopenssl.inject_into_urllib3()
     config = ConfigParser.SafeConfigParser()
     config.read('dump1090curses.props')
+    config.read('dump1090curses.local.props')
+
     dt = str(datetime.now())[:10]
 
     logging.basicConfig(format='%(asctime)s %(message)s',
