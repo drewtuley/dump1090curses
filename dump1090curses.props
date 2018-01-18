@@ -28,7 +28,7 @@ api=https://www.flightradar24.com/v1/search/web/find?limit=16&query={}
 [slack]
 url=https://hooks.slack.com/services/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
 channel=#dump1090
-slack_user=dump1090.listener2
+slack_user=dump1090.listener
 
 [regserver]
 base_url=http://1b6f6843.eu.ngrok.io
