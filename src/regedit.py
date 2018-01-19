@@ -445,7 +445,8 @@ def after_option(obj, conn):
     elif selected.value in ['Update', 'Add', 'Delete']:
         logging.debug('Update/Add')
         if selected.value == 'Add':
-            sql = 'INSERT INTO registration (icao_code, registration, equip) SELECT "{icao_code}","{registration}","{equip}";'
+            dt = str(datetime.now())
+            sql = 'INSERT INTO registration (icao_code, registration, equip, created) SELECT "{icao_code}","{registration}","{equip}","{dt}";'
         elif selected.value == 'Update':
             if data['source'] == 'registration':
                 sql = 'UPDATE registration SET icao_code="{icao_code}", equip="{equip}" WHERE registration="{registration}";'
@@ -454,7 +455,7 @@ def after_option(obj, conn):
         else:
             sql = 'DELETE FROM registration WHERE icao_code="{icao_code}";'
 
-        actual_sql = sql.format(icao_code=data['icaohex'], equip=data['icaotype'], registration=data['registration'])
+        actual_sql = sql.format(icao_code=data['icaohex'], equip=data['icaotype'], registration=data['registration'], dt=dt)
         logging.debug('act sql: {}'.format(actual_sql))
 
         upd = conn.execute(actual_sql)
