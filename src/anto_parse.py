@@ -7,6 +7,7 @@ for fl in sys.argv[1:]:
         reg = None
         icao_type  = None
         hex_code = None
+        tran_count = 0
         for l in fd:
             x = l.strip()
             if x.startswith('Reg:'):
@@ -28,10 +29,18 @@ for fl in sys.argv[1:]:
                 sql = '{0}{1}'.format(sql1,sql2) 
 
                 if sql is not None:
+                    if tran_count == 0:
+                        print('BEGIN TRANSACTION;')
+                    elif tran_count == 10:
+                        print('COMMIT TRANSACTION;')
+                        print('BEGIN TRANSACTION;')
+                        tran_count = 0
                     print(sql)
+                    tran_count += 1
                     reg = None
                     icao_type  = None
                     hex_code = None
 
-
+        if tran_count >0:
+            print('COMMIT TRANSACTION;')
 print('.exit')
