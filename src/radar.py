@@ -281,8 +281,8 @@ def get_locations(conn):
     crsr = conn.cursor()
     crsr.execute('select * from location')
     for row in crsr.fetchall():
-        place, lat, long, = row
-        locations[place] = (lat, long)
+        place, latitude, longitude, = row
+        locations[place] = (latitude, longitude)
 
     return locations
 
@@ -319,6 +319,10 @@ def get_registrations(lock, runstate, config):
     if len(locations_from_db) > 0:
         logging.info('Loaded {} reference locations into cache'.format(len(locations_from_db)))
         Plane.locations = locations_from_db
+        try:
+            Plane.antenna_location = locations_from_db['antenna']
+        except KeyError:
+            pass
     planes_of_interest = get_planes_of_interest(conn)
     if len(planes_of_interest) > 0:
         logging.info('Loaded {} planes of interest into cache'.format(len(planes_of_interest)))
