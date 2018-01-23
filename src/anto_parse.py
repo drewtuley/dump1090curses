@@ -23,6 +23,7 @@ with sqlite3.connect(db_filename) as conn:
 
     for fl in entries:
         if fl != 'processed':
+            logging.info('Processing {}'.format(fl))
             with open('antonakis/'+fl) as fd:
                 reg = None
                 icao_type  = None
@@ -37,7 +38,7 @@ with sqlite3.connect(db_filename) as conn:
                         icao_type=x.split(' ')[1].strip()
                     elif x.startswith('Hex'):
                         hex_code=x.split(' ')[1].strip()
-                    elif x.startswith('Status:') and 'Valid Registration' in x and reg is not None and icao_type is not None and hex_code is not None:
+                    elif (x.startswith('Status:') or x.startswith('New Status:')) and 'Valid Registration' in x and reg is not None and icao_type is not None and hex_code is not None:
                         sql1 = 'update registration set registration="{reg}", equip="{equip}" where icao_code="{icao}";'.format(reg=reg, equip=icao_type, icao=hex_code)
                         sql2 = 'insert into registration select "{icao}","{reg}","{dt}","{equip}" where not exists (select * from registration where icao_code="{icao}");'\
                                 .format(icao=hex_code, reg=reg, dt=str(datetime.now()), equip=icao_type)
