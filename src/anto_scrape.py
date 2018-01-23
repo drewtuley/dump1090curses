@@ -2,6 +2,19 @@ import requests
 import re
 import time
 from persistqueue import PDict
+from datetime import datetime
+import logging
+import ConfigParser
+
+config = ConfigParser.SafeConfigParser()
+config.read('dump1090curses.props')
+
+
+dt = str(datetime.now())[:10]
+logging.basicConfig(format='%(asctime)s %(message)s',
+                    filename=config.get('directories', 'log') + '/anto_scrape' + dt + '.log',
+                    level=logging.DEBUG)
+logging.captureWarnings(True)
 
 
 base_url = 'http://www.antonakis.co.uk/registers'
@@ -15,13 +28,13 @@ if 'keys' in antonakis:
 else:
     keys = []
 
-print('Holding {0} entries'.format(len(keys)))
+logging.info('Holding {0} entries'.format(len(keys)))
 
 r = requests.get(url)
 if r.status_code == 200:
     for reg in re.findall('["](?P<reg>[0-9]{8}.txt?)["]', r.text):
         if reg not in keys:
-            print('Setting {0} to false'.format(reg))
+            logging.info('Setting {0} to false'.format(reg))
             antonakis[reg] = False
             keys.append(reg)
 
@@ -32,7 +45,7 @@ antonakis['keys'] = keys
 for f in keys:
     if antonakis[f] is False:
         ofile='{0}/{1}'.format(dir, f)
-        print('Download {0} into {1}'.format(f, ofile))
+        logging.info('Download {0} into {1}'.format(f, ofile))
         url = '{0}/{1}/{2}'.format(base_url, register, f)
         r = requests.get(url)
         if r.status_code == 200:
@@ -43,8 +56,8 @@ for f in keys:
                     fd.flush()
                     antonakis[f] = True
                 except TypeError:
-                    print('failed to write {0}'.format(ofile))
+                    logging.error('failed to write {0}'.format(ofile))
         else:
-            print('Failed to download {0}'.format(url))
+            logging.error('Failed to download {0}'.format(url))
 
         time.sleep(10)
