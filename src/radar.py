@@ -28,6 +28,7 @@ from plane import Plane
 planes = {}
 registration_queue = []
 inactive_queue = []
+onoff = { True: 'On', False: 'Off' }
 
 cols = 155
 rows = 28
@@ -118,8 +119,9 @@ def showplanes(win, lock, run):
         # lock.acquire()
         cached = 0
 
+        pos_filter = run['pos_filter']
         for id in sorted(planes, key=planes.__getitem__):
-            if planes[id].active:
+            if planes[id].active and (not pos_filter or planes[id].from_antenna > 0.0):
                 if row < rows - 1:
                     planes[id].showincurses(win, row)
                     if planes[id].from_antenna > max_distance:
@@ -147,9 +149,8 @@ def showplanes(win, lock, run):
 
         try:
             win.addstr(rows - 1, 1,
-                       'Current:{}  Total (session):{}  Max (session):{}  Reg Cache:{}%  Max Distance:{:3.1f}nm'.format(
-                           str(current), str(run['session_count']), str(run['session_max']), str(int(coverage)),
-                           max_distance))
+               'Current:{current}  Total (session):{count}  Max (session):{max}  Reg Cache:{cache}%  Max Distance:{dist:3.1f}nm  NonPos Filter:{posfilter}'\
+                .format(current=str(current), count=str(run['session_count']), max=str(run['session_max']), cache=str(int(coverage)), posfilter=onoff[pos_filter], dist=max_distance))
             win.addstr(rows - 1, cols - 5 - len(now), now)
         except:
             pass
@@ -385,7 +386,7 @@ def main(screen):
     win.bkgd(curses.color_pair(1))
     win.box()
 
-    runstate = {'run': True, 'session_count': 0, 'session_max': 0}
+    runstate = {'run': True, 'session_count': 0, 'session_max': 0, 'pos_filter': False}
     lock = thread.allocate_lock()
     get = threading.Thread(target=getplanes, args=(lock, runstate, config))
     show = threading.Thread(target=showplanes, args=(win, lock, runstate))
@@ -397,9 +398,12 @@ def main(screen):
 
     while runstate['run']:
         ch = screen.getch()
-        if ch == 113:
+        if ch == ord('q'):
             runstate['run'] = False
             logging.debug('kill requested by user')
+        elif ch == ord('p'):
+            runstate['pos_filter'] = not runstate['pos_filter']
+        
 
     time.sleep(2)
     curses.curs_set(prev_state)
