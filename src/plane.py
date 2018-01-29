@@ -3,8 +3,10 @@ import math
 import sys
 import logging
 import curses
+from functools import total_ordering
 
 
+@total_ordering
 class Plane:
     """A simple SBC Plane class"""
     columns = {0:('ICAO', 7), 1:('Callsign', 11), 2:('Squawk', 7), 3:('Alt', 7), 
@@ -49,7 +51,18 @@ class Plane:
         self.appeardate = now
         self.active = True
         self.equip = '?'
-	     
+	    
+    def __lt__(self, other):
+        x = self.from_antenna
+        y = other.from_antenna
+        if x<=0:
+            x = 1000
+        if y<=0:
+            y = 1000
+        return x < y
+
+    def __eq__(self, other):
+        return self.from_antenna == other.from_antenna 
     
     @classmethod
     def log_observation_end(cls, id, instance):
@@ -58,8 +71,8 @@ class Plane:
         cls.conn.execute(sql)
         cls.conn.commit()
     
-    def __lt__(self, other):
-        return self.appeardate < other.appeardate
+    #def __lt__(self, other):
+    #    return self.appeardate < other.appeardate
 
     def show(self):
         print "Id=%s callsign=%s squawk=%04d alt=%s track=%s gs=%s lat=%s long=%s" % (self.id, self.callsign, int(self.squawk), self.altitude, self.track, self.gs, self.lat, self.long)

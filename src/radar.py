@@ -381,7 +381,7 @@ def main(screen):
 
     screen.refresh()
 
-    win = curses.newwin(rows, cols, 1, 1)
+    win = curses.newwin(rows, cols, 0, 0)
     win.bkgd(curses.color_pair(1))
     win.box()
 
@@ -407,7 +407,7 @@ def main(screen):
 
 # usage: radar.py [screen rows]
 if len(sys.argv) > 1:
-    rows = int(sys.argv[1]) - 4
+    rows = int(sys.argv[1]) - 1
 try:
     curses.wrapper(main)
 except:
