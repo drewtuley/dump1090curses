@@ -271,18 +271,19 @@ class OptionBox(LabelBox):
         else:
             ix = 0
             for opt in self.optionList:
-                if opt.value != 'Clear':
+                if opt.value not in ['Clear', 'Exit']:
                     opt.visible = False
                     opt.selected = False
-                else:
-                    self.selected_option = ix
-                    opt.selected = True
+                elif opt.value == 'Exit':
+                    #self.selected_option = ix
+                    opt.visible = True
                 ix += 1
 
 
 boxes = []
 FWD = 1
 REV = -1
+EXIT = 255
 ACTION = 100
 
 
@@ -351,7 +352,10 @@ def main(screen, test):
         elif move_dir == ACTION and boxes[focus_idx].postfunc is not None:
             move_dir = boxes[focus_idx].postfunc(boxes[focus_idx], conn)
             if move_dir is not None:
-                focus_idx = get_next_edit_idx(boxes, focus_idx, move_dir)
+                if move_dir == EXIT:
+                    break
+                else:
+                    focus_idx = get_next_edit_idx(boxes, focus_idx, move_dir)
 
     curses.curs_set(prev_state)
 
@@ -438,7 +442,9 @@ def after_option(obj, conn):
     selected = obj.get_selected_option()
     logging.debug('selected {}:'.format(selected.value))
     data = obj.getData()
-    if selected.value == 'Clear':
+    if selected.value == 'Exit':
+        return EXIT
+    elif selected.value == 'Clear':
         logging.debug('Data is {}'.format(data))
         clear_data(data)
         logging.debug('Data is now: {}'.format(data))
@@ -473,19 +479,19 @@ def init():
     boxes.append(LabelBox(2, 7, '============ ======', True))
 
     boxes.append(LabelBox(4, 3, 'ICAO Hex:', True))
-    boxes.append(EditBox(4, 24, True, 6, HexEdit(), data=data_object, datakey='icaohex', name='ICAOHEX', post=after_hex))
+    boxes.append(EditBox(4, 25, True, 6, HexEdit(), data=data_object, datakey='icaohex', name='ICAOHEX', post=after_hex))
 
     boxes.append(LabelBox(6, 3, 'ICAO Type:', True))
     boxes.append(
-        EditBox(6, 25, True, 5, AlphaNumUpper(), data=data_object, datakey='icaotype', name='ICAOTYPE', post=after_type))
+        EditBox(6, 26, True, 5, AlphaNumUpper(), data=data_object, datakey='icaotype', name='ICAOTYPE', post=after_type))
 
     boxes.append(LabelBox(8, 3, 'Registration:', True))
     boxes.append(
-        EditBox(8, 21, True, 9, RegEdit(), data=data_object, datakey='registration', name='REG', post=after_reg))
+        EditBox(8, 22, True, 9, RegEdit(), data=data_object, datakey='registration', name='REG', post=after_reg))
 
-    boxes.append(OptionBox(10, 32, True, -1, OptionEdit(), data=data_object, name='OPTIONS',
+    boxes.append(OptionBox(10, 33, True, -1, OptionEdit(), data=data_object, name='OPTIONS',
                            options=[Option('Update', False), Option('Add', False), Option('Delete', False),
-                                    Option('Clear', True, True)], post=after_option))
+                                    Option('Clear', True ), Option('Exit', True, True)], post=after_option))
 
     logging.debug(boxes)
 
