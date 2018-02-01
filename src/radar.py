@@ -127,8 +127,6 @@ def showplanes(win, lock, run):
                     if planes[id].from_antenna > max_distance:
                         max_distance = planes[id].from_antenna
 
-                    if planes[id].registration[-1:] == '*':
-                        cached += 1
                     row += 1
                 else:
                     break
@@ -138,6 +136,8 @@ def showplanes(win, lock, run):
         for id in planes:
             if planes[id].active:
                 current += 1
+            if planes[id].registration[-1:] == '*':
+                cached += 1
 
         if current > run['session_max']:
             run['session_max'] = len(planes)

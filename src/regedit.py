@@ -277,6 +277,7 @@ class OptionBox(LabelBox):
                 elif opt.value == 'Exit':
                     #self.selected_option = ix
                     opt.visible = True
+                    opt.selected = True
                 ix += 1
 
 
