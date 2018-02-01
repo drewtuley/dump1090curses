@@ -10,6 +10,7 @@ from datetime import datetime
 import requests
 import re
 from expiringdict import ExpiringDict
+import logging
 
 
 
@@ -20,18 +21,18 @@ unknown_url = 'unknown <https://www.radarbox24.com/data/mode-s/{icao}|{icao}>'
 
 def get_reg_from_regserver(icao_code):
     url = regsvr_url + '/search?icao_code={icao_code}'.format(icao_code=icao_code)
-    print('ask regserver for {} @ {}'.format(icao_code, url))
+    logging.info('ask regserver for {} @ {}'.format(icao_code, url))
     reg = None
     equip = None
     try:
-        print(url)
+        logging.info(url)
         r = requests.get(url)
         if r.status_code == 200:
             if 'registration' in r.json():
                 reg = r.json()['registration']
                 equip = r.json()['equip']
     except Exception, ex:
-        print('{0}: Failed to get reg from regserver: {1}'.format(str(datetime.now())[:19], ex))
+        logging.info('{0}: Failed to get reg from regserver: {1}'.format(str(datetime.now())[:19], ex))
 
     return reg, equip
 
@@ -51,7 +52,7 @@ def post_to_slack(msg):
     try:
         requests.post(slack_url, json.dumps(payload))
     except Exception, ex:
-        print('{0}: Failed to post to slack: {1}'.format(str(datetime.now())[:19], ex))
+        logging.info('{0}: Failed to post to slack: {1}'.format(str(datetime.now())[:19], ex))
 
 
 def reload_unknowns():
@@ -106,6 +107,13 @@ config = ConfigParser.SafeConfigParser()
 config.read('dump1090curses.props')
 config.read('dump1090curses.local.props')
 
+dt = str(datetime.now())[:10]
+logging.basicConfig(format='%(asctime)s %(message)s',
+                    filename=config.get('directories', 'log') + '/' + config.get('logging',
+                                                                                 'socketradar') + dt + '.log',
+                    level=logging.DEBUG)
+logging.captureWarnings(True)
+
 
 dump1090_host = config.get('dump1090', 'host')
 dump1090_port = int(config.get('dump1090', 'port'))
@@ -131,7 +139,7 @@ while True:
             c_socket.settimeout(dump1090_timeout)
             connected = True
         except socket.error, ex:
-            print('{0}: Failed to connect : {1}'.format(str(datetime.now())[:19], ex))
+            logging.info('{0}: Failed to connect : {1}'.format(str(datetime.now())[:19], ex))
             time.sleep(1)
     if prev_connected:
         repeat = '(re)'
@@ -148,9 +156,9 @@ while True:
         try:
             buf = c_socket.recv(16384)
             if len(buf) < 1:
-                print('{0}: Possible buffer underrun - close/reopen'.format(str(datetime.now())[:19]))
+                logging.info('{0}: Possible buffer underrun - close/reopen'.format(str(datetime.now())[:19]))
                 break
-            print('{2}: Writing {0} bytes to {1}'.format(str(len(buf)), o_file_base, str(datetime.now())[:19]))
+            #logging.info('{2}: Writing {0} bytes to {1}'.format(str(len(buf)), o_file_base, str(datetime.now())[:19]))
             tm_day_mins = datetime.now().day * 24 * 60 + (datetime.now().hour * 60) + (datetime.now().minute)
 
             for line in buf.strip().split('\n'):
@@ -171,12 +179,12 @@ while True:
                             recently_seen[icao] = reg
                             post_to_slack(repeat_msg_url.format(icao=icao, reg=reg, equip=equip))
         except KeyboardInterrupt:
-            print('{0}: user reqeusted shutdown'.format(str(datetime.now())[:19]))
+            logging.info('{0}: user reqeusted shutdown'.format(str(datetime.now())[:19]))
             exit(1)
         except socket.error, v:
-            # print('Exception {0}'.format(v))
+            # logging.info('Exception {0}'.format(v))
             pass
     try:
         c_socket.close()
     except socket.error, ex:
-        print('{0}: Failed to close socket: {1}'.format(str(datetime.now())[:19], ex))
+        logging.info('{0}: Failed to close socket: {1}'.format(str(datetime.now())[:19], ex))
