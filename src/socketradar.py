@@ -3,19 +3,17 @@
 import ConfigParser
 import json
 import os
+import re
+import requests
 import socket
 import sys
 import time
 from datetime import datetime
-import requests
-import re
 from expiringdict import ExpiringDict
-
-
 
 msg_url = 'Seen a new plane: <https://www.radarbox24.com/data/mode-s/{icao}|{reg}> [{equip}] (#{count})'
 repeat_msg_url = 'Seen <https://www.radarbox24.com/data/mode-s/{icao}|{reg}> [{equip}] again'
-unknown_url = 'unknown <https://www.radarbox24.com/data/mode-s/{icao}|{icao}>' 
+unknown_url = 'unknown <https://www.radarbox24.com/data/mode-s/{icao}|{icao}>'
 
 
 def get_reg_from_regserver(icao_code):
@@ -39,8 +37,8 @@ def get_reg_from_regserver(icao_code):
 def get_my_ip(url):
     r = requests.get(url)
     if r.status_code == 200:
-        m=re.search('\d+[.]\d+[.]\d+[.]\d+', r.text)
-        if m != None:
+        m = re.search('\d+[.]\d+[.]\d+[.]\d+', r.text)
+        if m is not None:
             return (m.group())
 
 
@@ -106,7 +104,6 @@ config = ConfigParser.SafeConfigParser()
 config.read('dump1090curses.props')
 config.read('dump1090curses.local.props')
 
-
 dump1090_host = config.get('dump1090', 'host')
 dump1090_port = int(config.get('dump1090', 'port'))
 dump1090_timeout = float(config.get('dump1090', 'timeout'))
@@ -164,7 +161,7 @@ while True:
                             seen_planes[icao] = reg
                             recently_seen[icao] = reg
                             if reg is None:
-                               reg = icao
+                                reg = icao
                             post_to_slack(msg_url.format(icao=icao, reg=reg, equip=equip, count=len(seen_planes)))
                         elif icao not in recently_seen:
                             reg, equip = get_reg_from_regserver(icao)

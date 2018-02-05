@@ -28,7 +28,7 @@ from plane import Plane
 planes = {}
 registration_queue = []
 inactive_queue = []
-onoff = { True: 'On', False: 'Off' }
+onoff = {True: 'On', False: 'Off'}
 
 cols = 155
 rows = 28
@@ -58,7 +58,7 @@ def getplanes(lock, run, config):
             while not connected:
                 try:
                     c_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                    c_socket.connect((config.get('dump1090','host'), int(config.get('dump1090', 'port'))))
+                    c_socket.connect((config.get('dump1090', 'host'), int(config.get('dump1090', 'port'))))
                     c_socket.settimeout(float(config.get('dump1090', 'timeout')))
                     connected = True
                 except socket.error, err:
@@ -149,8 +149,9 @@ def showplanes(win, lock, run):
 
         try:
             win.addstr(rows - 1, 1,
-               'Current:{current}  Total (session):{count}  Max (session):{max}  Reg Cache:{cache}%  Max Distance:{dist:3.1f}nm  NonPos Filter:{posfilter}'\
-                .format(current=str(current), count=str(run['session_count']), max=str(run['session_max']), cache=str(int(coverage)), posfilter=onoff[pos_filter], dist=max_distance))
+                       'Current:{current}  Total (session):{count}  Max (session):{max}  Reg Cache:{cache}%  Max Distance:{dist:3.1f}nm  NonPos Filter:{posfilter}' \
+                       .format(current=str(current), count=str(run['session_count']), max=str(run['session_max']),
+                               cache=str(int(coverage)), posfilter=onoff[pos_filter], dist=max_distance))
             win.addstr(rows - 1, cols - 5 - len(now), now)
         except:
             pass
@@ -175,7 +176,7 @@ def close_database(conn):
 
 def update_registration(reg, id, equip, conn):
     logging.debug('reg: {reg} equip: {equip}'.format(reg=reg, equip=equip))
-    sql = 'insert into registration select "{icao}","{reg}","{dt}","{equip}" where not exists (select * from registration where icao_code="{icao}")'\
+    sql = 'insert into registration select "{icao}","{reg}","{dt}","{equip}" where not exists (select * from registration where icao_code="{icao}")' \
         .format(icao=str(id), reg=str(reg), equip=str(equip), dt=str(datetime.now()))
     logging.debug('Update db with:' + sql)
     upd = conn.execute(sql)
@@ -403,7 +404,6 @@ def main(screen):
             logging.debug('kill requested by user')
         elif ch == ord('p'):
             runstate['pos_filter'] = not runstate['pos_filter']
-        
 
     time.sleep(2)
     curses.curs_set(prev_state)

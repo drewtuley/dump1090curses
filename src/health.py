@@ -3,21 +3,20 @@
 import ConfigParser
 import json
 import os
-from datetime import datetime
-import requests
 import re
+from datetime import datetime
 
-
+import requests
 
 msg_url = 'Seen a new plane: <https://www.radarbox24.com/data/mode-s/{icao}|{reg}> [{equip}] (#{count})'
 repeat_msg_url = 'Seen <https://www.radarbox24.com/data/mode-s/{icao}|{reg}> [{equip}] again'
-unknown_url = 'unknown <https://www.radarbox24.com/data/mode-s/{icao}|{icao}>' 
+unknown_url = 'unknown <https://www.radarbox24.com/data/mode-s/{icao}|{icao}>'
 
 
 def get_my_ip(url):
     r = requests.get(url)
     if r.status_code == 200:
-        m=re.search('\d+[.]\d+[.]\d+[.]\d+', r.text)
+        m = re.search('\d+[.]\d+[.]\d+[.]\d+', r.text)
         if m != None:
             return (m.group())
 
@@ -32,10 +31,8 @@ def post_to_slack(msg):
         print('{0}: Failed to post to slack: {1}'.format(str(datetime.now())[:19], ex))
 
 
-
 config = ConfigParser.SafeConfigParser()
 config.read('health.props')
-
 
 slack_url = config.get('slack', 'url')
 slack_channel = config.get('slack', 'channel')
@@ -47,4 +44,3 @@ ip = get_my_ip(myip_url)
 
 msg = '{} connected on {}'.format(os.uname()[1], ip)
 post_to_slack(msg)
-

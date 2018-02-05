@@ -10,6 +10,7 @@ import sys
 class OptionEdit(object):
     def __init__(self):
         self.type = None
+        self.dataObject = None
 
     def setData(self, dataObject):
         self.dataObject = dataObject
@@ -275,7 +276,7 @@ class OptionBox(LabelBox):
                     opt.visible = False
                     opt.selected = False
                 elif opt.value == 'Exit':
-                    #self.selected_option = ix
+                    # self.selected_option = ix
                     opt.visible = True
                     opt.selected = True
                 ix += 1
