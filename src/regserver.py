@@ -13,6 +13,7 @@ class RegServer(Flask):
     db_filename = None
     fr24_url = None
     reg_cache = {}
+    loc_cache = {}
 
     def set_db(self, filename):
         self.db_filename = filename
@@ -22,6 +23,21 @@ class RegServer(Flask):
 
 
 app = RegServer(__name__)
+
+
+@app.route('/places', methods=['GET'])
+def places():
+    if len(app.loc_cache) == 0:
+        app.loc_cache = {}
+        sql = 'select name, latitude, longitude from location;'
+        with sqlite3.connect(app.db_filename) as conn:
+            cursor = conn.execute(sql)
+            for row in cursor.fetchall():
+                name, latitude, longitude, = row
+                app.logger.debug('location {0}:{1},{2}'.format(name, latitude, longitude))
+                app.loc_cache[name] = (latitude, longitude)
+    return json.dumps(app.loc_cache)
+
 
 
 @app.route('/search', methods=['GET'])
