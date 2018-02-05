@@ -66,7 +66,7 @@ def search():
         with sqlite3.connect(app.db_filename) as conn:
             cursor = conn.execute(sql)
             for row in cursor.fetchall():
-                reg,equip, = row
+                reg, equip, = row
                 app.logger.debug('reg={}'.format(reg))
                 ret = {'registration': reg, 'equip': equip}
                 # update the cache
