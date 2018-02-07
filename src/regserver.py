@@ -17,6 +17,7 @@ class RegServer(Flask):
     fr24_url = None
     reg_cache = {}
     loc_cache = {}
+    logger = None
 
     def set_db(self, filename):
         self.db_filename = filename
@@ -27,6 +28,8 @@ class RegServer(Flask):
     def set_pyradar(self, pyradar):
         self.pyradar = pyradar
 
+    def set_logger(self, logger):
+        self.logger = logger
 
 app = RegServer(__name__)
 
@@ -49,21 +52,6 @@ def pois():
     for poi in pois:
         ret.append(poi.callsign)
     return json.dumps(ret)
-
-
-@app.route('/places', methods=['GET'])
-def places():
-    if len(app.loc_cache) == 0:
-        app.loc_cache = {}
-        sql = 'select name, latitude, longitude from location;'
-        with sqlite3.connect(app.db_filename) as conn:
-            cursor = conn.execute(sql)
-            for row in cursor.fetchall():
-                name, latitude, longitude, = row
-                app.logger.debug('location {0}:{1},{2}'.format(name, latitude, longitude))
-                app.loc_cache[name] = (latitude, longitude)
-    return json.dumps(app.loc_cache)
-
 
 
 @app.route('/search', methods=['GET'])
@@ -133,7 +121,9 @@ if __name__ == '__main__':
 
     pyradar = PyRadar()
     pyradar.set_config('dump1090curses.props', 'dump1090curses.local.props')
+    pyradar.set_logger(pyradar.config.get('directories','log') + '/regserver.log')
     app.set_pyradar(pyradar)
+    app.set_logger(pyradar.logger)
 
 
     app.run(debug=True)

@@ -1,8 +1,6 @@
 import ConfigParser
 import curses
 import curses.ascii
-import logging
-import sqlite3
 from datetime import datetime
 import sys
 
@@ -140,13 +138,13 @@ class EditBox(LabelBox):
         elif ch == curses.KEY_LEFT or ch == curses.KEY_UP:
             return REV
         text = self.data[self.datakey]
-        logging.debug('preedit {}'.format(text))
+        pyradar.logger.debug('preedit {}'.format(text))
         if ch == curses.KEY_BACKSPACE and len(text) > 0:
             text = text[:-1]
         elif self.editType.valid(ch) and len(text) < self.maxwidth:
             text = text + self.editType.transform(ch)
         self.data[self.datakey] = text
-        logging.debug('postedit {}'.format(text))
+        pyradar.logger.debug('postedit {}'.format(text))
         return ACTION
 
     def getData(self):
@@ -154,7 +152,7 @@ class EditBox(LabelBox):
 
     def update(self):
         value = self.data[self.datakey]
-        logging.debug('Update {} using {}'.format(self, value))
+        pyradar.logger.debug('Update {} using {}'.format(self, value))
         return None
 
 
@@ -183,7 +181,7 @@ class OptionBox(LabelBox):
         self.do_draw(win, color, False)
 
     def undraw(self, win):
-        logging.debug('undraw: {} chrs'.format(self.maxwidth + 2))
+        pyradar.logger.debug('undraw: {} chrs'.format(self.maxwidth + 2))
         win.addstr(self.row, self.col, ' ' * (self.maxwidth + 2))
 
     def do_draw(self, win, color, with_focus):
@@ -223,7 +221,7 @@ class OptionBox(LabelBox):
         self.optionList[self.selected_option].selected = True
 
     def edit(self, ch):
-        logging.info('In OptionBox edit')
+        pyradar.logger.info('In OptionBox edit')
         if ch == curses.KEY_RIGHT:
             self.select_next_option(FWD)
             return None
@@ -258,14 +256,14 @@ class OptionBox(LabelBox):
             ix += 1
 
     def update(self):
-        logging.debug('Update {} with {}'.format(self, self.data))
+        pyradar.logger.debug('Update {} with {}'.format(self, self.data))
         if self.data['icaohex'] != '' and self.data['icaotype'] != '' and self.data['registration'] != '':
             if 'source' not in self.data or self.data['source'] == '':
-                logging.debug('Enable Add')
+                pyradar.logger.debug('Enable Add')
                 enable = ['Add']
                 selopt = 'Add'
             else:
-                logging.debug('Enable Update/Delete')
+                pyradar.logger.debug('Enable Update/Delete')
                 enable = ['Update', 'Delete']
                 selopt = 'Update'
             for opt in self.optionList:
@@ -329,7 +327,7 @@ def main(screen, pyradar):
         # win.addstr(1,1,'{:4s}'.format(str(curses.LINES)), curses.color_pair(1))
         # win.addstr(2,1,'{:4s}'.format(str(curses.COLS)), curses.color_pair(1))
 
-        logging.debug('Start update')
+        pyradar.logger.debug('Start update')
         for box in boxes:
             box.update()
             if not box.isvisible():
@@ -358,22 +356,22 @@ def main(screen, pyradar):
 
 
 def after_reg(obj, session):
-    logging.debug('AfterReg called with {}'.format(obj))
+    pyradar.logger.debug('AfterReg called with {}'.format(obj))
     icaohex = obj.data['icaohex']
     reg = obj.data[obj.datakey]
     # dont lookup via reg if ICAOhex is set
     if len(reg) > 4 and len(icaohex) < 6:
         registration = session.query(Registration).filter_by(registration = reg).first()
-        logging.debug('lookup {} '.format(reg))
+        pyradar.logger.debug('lookup {} '.format(reg))
 
         if registration is not None:
-            logging.debug('found icao:{} type: {}'.format(registration.icao_code, registration.equip))
+            pyradar.logger.debug('found icao:{} type: {}'.format(registration.icao_code, registration.equip))
             data = obj.getData()
             data['registration'] = reg
             data['icaohex'] = registration.icao_code
             data['icaotype'] = registration.equip
             data['source'] = 'registration'
-            logging.debug('Data is now: {}'.format(data))
+            pyradar.logger.debug('Data is now: {}'.format(data))
 
     if len(reg) == obj.maxwidth:
         return FWD
@@ -381,22 +379,22 @@ def after_reg(obj, session):
 
 
 def after_hex(obj, session):
-    logging.debug('AfterHex called with {}'.format(obj))
+    pyradar.logger.debug('AfterHex called with {}'.format(obj))
     hex_code = obj.data[obj.datakey]
     if len(hex_code) == 6:
         registration = session.query(Registration).filter_by(icao_code = hex_code).first()
-        logging.debug('lookup {} '.format(hex_code ))
+        pyradar.logger.debug('lookup {} '.format(hex_code ))
         if registration is not None:
-            logging.debug('found reg:{} type: {}'.format(registration.registration, registration.equip))
+            pyradar.logger.debug('found reg:{} type: {}'.format(registration.registration, registration.equip))
 
         data = obj.getData()
-        logging.debug('Data is {}'.format(data))
+        pyradar.logger.debug('Data is {}'.format(data))
         if registration is not None:
             data['icaohex'] = hex_code
             data['icaotype'] = registration.equip
             data['registration'] = registration.registration
             data['source'] = 'icaohex'
-            logging.debug('Data is now: {}'.format(data))
+            pyradar.logger.debug('Data is now: {}'.format(data))
         else:
             data['icaotype'] = ''
             data['registration'] = ''
@@ -408,7 +406,7 @@ def after_hex(obj, session):
 
 
 def after_type(obj, session):
-    logging.debug('AfterType called with {}'.format(obj))
+    pyradar.logger.debug('AfterType called with {}'.format(obj))
 
     icaotype = obj.data[obj.datakey]
     if len(icaotype) == obj.maxwidth: return FWD
@@ -424,19 +422,19 @@ def clear_data(data):
 
 
 def after_option(obj, session):
-    logging.debug('After Option called with {}'.format(obj))
+    pyradar.logger.debug('After Option called with {}'.format(obj))
 
     selected = obj.get_selected_option()
-    logging.debug('selected {}:'.format(selected.value))
+    pyradar.logger.debug('selected {}:'.format(selected.value))
     data = obj.getData()
     if selected.value == 'Exit':
         return EXIT
     elif selected.value == 'Clear':
-        logging.debug('Data is {}'.format(data))
+        pyradar.logger.debug('Data is {}'.format(data))
         clear_data(data)
-        logging.debug('Data is now: {}'.format(data))
+        pyradar.logger.debug('Data is now: {}'.format(data))
     elif selected.value in ['Update', 'Add', 'Delete']:
-        logging.debug('Update/Add {}'.format(data))
+        pyradar.logger.debug('Update/Add {}'.format(data))
         dt = str(datetime.now())
         registration = Registration()
         if selected.value == 'Add':
@@ -479,20 +477,16 @@ def init():
                            options=[Option('Update', False), Option('Add', False), Option('Delete', False),
                                     Option('Clear', True ), Option('Exit', True, True)], post=after_option))
 
-    logging.debug(boxes)
+    pyradar.logger.debug(boxes)
 
 
 if __name__ == '__main__':
     pyradar = PyRadar()
     pyradar.set_config('dump1090curses.props', 'dump1090curses.local.props')
+    pyradar.set_logger(pyradar.config.get('directories', 'log') + '/regedit.log')
 
-    dt = str(datetime.now())[:10]
-    logging.basicConfig(format='%(asctime)s %(message)s',
-                        filename=pyradar.config.get('directories', 'log') + '/regedit_' + dt + '.log',
-                        level=logging.DEBUG)
-    logging.captureWarnings(True)
 
-    logging.debug('start')
+    pyradar.logger.debug('start')
 
     init()
 
@@ -501,6 +495,6 @@ if __name__ == '__main__':
             curses.wrapper(main, pyradar)
         except Exception as ex:
             print(ex)
-            logging.error(ex)
+            pyradar.logger.error(ex)
             exit(1)
-    logging.info('stop')
+    pyradar.logger.info('stop')

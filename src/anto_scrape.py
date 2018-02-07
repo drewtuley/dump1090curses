@@ -1,20 +1,24 @@
 import ConfigParser
-import logging
 import re
 import time
-from datetime import datetime
+import logging
+import logging.handlers
 
 import requests
 from persistqueue import PDict
 
+
 config = ConfigParser.SafeConfigParser()
 config.read('dump1090curses.props')
 
-dt = str(datetime.now())[:10]
-logging.basicConfig(format='%(asctime)s %(message)s',
-                    filename=config.get('directories', 'log') + '/anto_scrape' + dt + '.log',
-                    level=logging.DEBUG)
-logging.captureWarnings(True)
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+fname=config.get('directories', 'log') + '/anto_scrape.log'
+fh = logging.handlers.TimedRotatingFileHandler(fname, when='midnight', interval=1)
+fh.setLevel(logging.DEBUG)
+fmt = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+fh.setFormatter(fmt)
+logger.addHandler(fh)
 
 base_url = 'http://www.antonakis.co.uk/registers'
 register = 'unitedstatesofamerica'
@@ -27,13 +31,13 @@ if 'keys' in antonakis:
 else:
     keys = []
 
-logging.info('Holding {0} entries'.format(len(keys)))
+logger.info('Holding {0} entries'.format(len(keys)))
 
 r = requests.get(url)
 if r.status_code == 200:
     for reg in re.findall('["](?P<reg>[0-9]{8}.txt?)["]', r.text):
         if reg not in keys:
-            logging.info('Setting {0} to false'.format(reg))
+            logger.info('Setting {0} to false'.format(reg))
             antonakis[reg] = False
             keys.append(reg)
 
@@ -43,7 +47,7 @@ antonakis['keys'] = keys
 for f in keys:
     if antonakis[f] is False:
         ofile = '{0}/{1}'.format(antodir, f)
-        logging.info('Download {0} into {1}'.format(f, ofile))
+        logger.info('Download {0} into {1}'.format(f, ofile))
         url = '{0}/{1}/{2}'.format(base_url, register, f)
         r = requests.get(url)
         if r.status_code == 200:
@@ -54,8 +58,8 @@ for f in keys:
                     fd.flush()
                     antonakis[f] = True
                 except TypeError:
-                    logging.error('failed to write {0}'.format(ofile))
+                    logger.error('failed to write {0}'.format(ofile))
         else:
-            logging.error('Failed to download {0}'.format(url))
+            logger.error('Failed to download {0}'.format(url))
 
         time.sleep(10)

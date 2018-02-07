@@ -6,6 +6,8 @@ from sqlalchemy.orm import sessionmaker
 import ConfigParser
 from datetime import datetime
 import json
+import logging
+import logging.handlers
 
 
 Base = declarative_base()
@@ -63,6 +65,17 @@ class PyRadar:
         self.session = None
         self.database = None
         self.session = None
+        self.logger = None
+
+
+    def set_logger(self, filename):
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.DEBUG)
+        fh = logging.handlers.TimedRotatingFileHandler(filename, when='midnight', interval=1)
+        fh.setLevel(logging.DEBUG)
+        fmt = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+        fh.setFormatter(fmt)
+        self.logger.addHandler(fh)
 
 
     def set_config(self, *config_files):
@@ -72,6 +85,7 @@ class PyRadar:
 
         try:
             self.database = 'sqlite:///{dir}/{db}'.format(dir=self.config.get('directories', 'data'), db=self.config.get('database', 'dbname'))
+    
         except (ConfigParser.NoSectionError, ConfigParser.NoOptionError) as var:
             print(var)
 

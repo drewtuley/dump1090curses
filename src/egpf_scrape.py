@@ -1,4 +1,3 @@
-import logging
 import re
 import sys
 from datetime import datetime
@@ -16,13 +15,10 @@ run_date = datetime.now() - timedelta(days=1)
 
 pyradar = PyRadar()
 pyradar.set_config('dump1090curses.props','dump1090curses.local.props')
+logdir = pyradar.config.get('directories', 'log')
+pyradar.set_logger(logdir+'/egpf_scrape.log')
 
-
-dt = str(datetime.now())[:10]
-logging.basicConfig(format='%(asctime)s %(message)s',
-                    filename=pyradar.config.get('directories', 'log') + '/egpf_scrape' + dt + '.log',
-                    level=logging.DEBUG)
-logging.captureWarnings(True)
+pyradar.logger.info('EGPF Scrape: {} -> {}'.format(run_date,end_date))
 
 turl = 'http://www.egpf.info/{mon}{year}/{day}.html'
 
@@ -30,7 +26,7 @@ session = pyradar.get_db_session()
 while run_date > end_date:
     mon = run_date.strftime('%b').lower()
     url = turl.format(mon=mon, year=run_date.year, day=run_date.day)
-    logging.info(url)
+    pyradar.logger.info(url)
     r = requests.get(url)
     if r.status_code == 200:
         lines = r.text.split('\n')
@@ -46,7 +42,7 @@ while run_date > end_date:
                     if reg != '--------' and icao != '----':
                         exists = session.query(Registration).filter_by(icao_code = icao_hex).first()
                         if exists is None:
-                            logging.info('Adding {0} {1} {2}'.format(icao_hex, reg, icao))
+                            pyradar.logger.info('Adding {0} {1} {2}'.format(icao_hex, reg, icao))
                             newreg = Registration()
                             newreg.parse(icao_hex, reg, str(datetime.now()), icao)
                             session.add(newreg)
