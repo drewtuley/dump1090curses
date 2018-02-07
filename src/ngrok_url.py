@@ -10,5 +10,3 @@ if r.status_code == 200:
                 url = t['public_url']
 
 print(url)
-
-
