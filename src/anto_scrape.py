@@ -18,7 +18,7 @@ logging.captureWarnings(True)
 
 base_url = 'http://www.antonakis.co.uk/registers'
 register = 'unitedstatesofamerica'
-antodir = config.get('directories','data')+'antonakis/'
+antodir = config.get('directories','data')+'/antonakis/'
 url = '{0}/{1}/'.format(base_url, register)
 
 antonakis = PDict('data', 'antonakis')
