@@ -1,7 +1,7 @@
 /nbproject/private/
 /src/planes
 /src/plane.db
-/src/plane.pyc
+/src/*pyc
 /data/*
 /log
 /.idea

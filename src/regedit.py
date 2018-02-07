@@ -6,6 +6,9 @@ import sqlite3
 from datetime import datetime
 import sys
 
+from PyRadar import PyRadar
+from PyRadar import Registration
+
 
 class OptionEdit(object):
     def __init__(self):
@@ -289,14 +292,6 @@ EXIT = 255
 ACTION = 100
 
 
-def open_database(config, test):
-    test_prefix = ''
-    if test: test_prefix = 'test_'
-    dbname = '{}/{}{}'.format(config.get('directories', 'data'), test_prefix, config.get('database', 'dbname'))
-    logging.info('Opening db: ' + dbname)
-    return sqlite3.connect(dbname)
-
-
 def get_next_edit_idx(boxes, curpos, dir):
     pos = curpos + dir
     while True:
@@ -312,7 +307,7 @@ def get_next_edit_idx(boxes, curpos, dir):
                 pos = 0
 
 
-def main(screen, test):
+def main(screen, pyradar):
     curses.start_color()
     curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLACK)
     curses.init_pair(2, curses.COLOR_YELLOW, curses.COLOR_BLACK)
@@ -326,7 +321,7 @@ def main(screen, test):
     win.bkgd(curses.color_pair(1))
     win.box()
 
-    conn = open_database(config, test)
+    session = pyradar.get_db_session()
 
     focus_idx = get_next_edit_idx(boxes, -1, FWD)
 
@@ -352,7 +347,7 @@ def main(screen, test):
         if move_dir in [FWD, REV]:
             focus_idx = get_next_edit_idx(boxes, focus_idx, move_dir)
         elif move_dir == ACTION and boxes[focus_idx].postfunc is not None:
-            move_dir = boxes[focus_idx].postfunc(boxes[focus_idx], conn)
+            move_dir = boxes[focus_idx].postfunc(boxes[focus_idx], session)
             if move_dir is not None:
                 if move_dir == EXIT:
                     break
@@ -362,25 +357,21 @@ def main(screen, test):
     curses.curs_set(prev_state)
 
 
-def after_reg(obj, conn):
+def after_reg(obj, session):
     logging.debug('AfterReg called with {}'.format(obj))
     icaohex = obj.data['icaohex']
     reg = obj.data[obj.datakey]
     # dont lookup via reg if ICAOhex is set
     if len(reg) > 4 and len(icaohex) < 6:
-        logging.debug('Access to db @ {}'.format(conn))
-        sql = 'SELECT icao_code, equip FROM registration WHERE registration ="' + reg + '"'
-        logging.debug('lookup {} using {}'.format(reg, sql))
-        cursor = conn.cursor()
-        cursor.execute(sql)
+        registration = session.query(Registration).filter_by(registration = reg).first()
+        logging.debug('lookup {} '.format(reg))
 
-        for row in cursor.fetchall():
-            icao_code, equip = row
-            logging.debug('found icao:{} type: {}'.format(icao_code, equip))
+        if registration is not None:
+            logging.debug('found icao:{} type: {}'.format(registration.icao_code, registration.equip))
             data = obj.getData()
             data['registration'] = reg
-            data['icaohex'] = icao_code
-            data['icaotype'] = equip
+            data['icaohex'] = registration.icao_code
+            data['icaotype'] = registration.equip
             data['source'] = 'registration'
             logging.debug('Data is now: {}'.format(data))
 
@@ -389,27 +380,21 @@ def after_reg(obj, conn):
     return None
 
 
-def after_hex(obj, conn):
+def after_hex(obj, session):
     logging.debug('AfterHex called with {}'.format(obj))
-    hex = obj.data[obj.datakey]
-    if len(hex) == 6:
-        logging.debug('Access to db @ {}'.format(conn))
-        sql = 'SELECT registration, equip FROM registration WHERE icao_code ="' + hex + '"'
-        logging.debug('lookup {} using {}'.format(hex, sql))
-        cursor = conn.cursor()
-        cursor.execute(sql)
-
-        registration, equip = None, None
-        for row in cursor.fetchall():
-            registration, equip = row
-            logging.debug('found reg:{} type: {}'.format(registration, equip))
+    hex_code = obj.data[obj.datakey]
+    if len(hex_code) == 6:
+        registration = session.query(Registration).filter_by(icao_code = hex_code).first()
+        logging.debug('lookup {} '.format(hex_code ))
+        if registration is not None:
+            logging.debug('found reg:{} type: {}'.format(registration.registration, registration.equip))
 
         data = obj.getData()
         logging.debug('Data is {}'.format(data))
         if registration is not None:
-            data['icaohex'] = hex
-            data['icaotype'] = equip
-            data['registration'] = registration
+            data['icaohex'] = hex_code
+            data['icaotype'] = registration.equip
+            data['registration'] = registration.registration
             data['source'] = 'icaohex'
             logging.debug('Data is now: {}'.format(data))
         else:
@@ -422,7 +407,7 @@ def after_hex(obj, conn):
     return None
 
 
-def after_type(obj, conn):
+def after_type(obj, session):
     logging.debug('AfterType called with {}'.format(obj))
 
     icaotype = obj.data[obj.datakey]
@@ -438,7 +423,7 @@ def clear_data(data):
     if 'source' in data: del data['source']
 
 
-def after_option(obj, conn):
+def after_option(obj, session):
     logging.debug('After Option called with {}'.format(obj))
 
     selected = obj.get_selected_option()
@@ -451,24 +436,23 @@ def after_option(obj, conn):
         clear_data(data)
         logging.debug('Data is now: {}'.format(data))
     elif selected.value in ['Update', 'Add', 'Delete']:
-        logging.debug('Update/Add')
+        logging.debug('Update/Add {}'.format(data))
         dt = str(datetime.now())
+        registration = Registration()
         if selected.value == 'Add':
-            sql = 'INSERT INTO registration (icao_code, registration, equip, created) SELECT "{icao_code}","{registration}","{equip}","{dt}";'
+            registration.parse(data['icaohex'], data['registration'], dt, data['icaotype'])
+            session.add(registration)
         elif selected.value == 'Update':
             if data['source'] == 'registration':
-                sql = 'UPDATE registration SET icao_code="{icao_code}", equip="{equip}" WHERE registration="{registration}";'
+                session.query(Registration).filter_by(registration = data['registration']).\
+                    update({"icao_code" : data['icoahex'], "equip": data['icaotype']}, synchronize_session='evaluate')
             else:
-                sql = 'UPDATE registration SET registration="{registration}", equip="{equip}" WHERE icao_code="{icao_code}";'
+                session.query(Registration).filter_by(icao_code = data['icaohex']).\
+                    update({"registration": data['registration'], "equip": data['icaotype']}, synchronize_session='evaluate')
         else:
-            sql = 'DELETE FROM registration WHERE icao_code="{icao_code}";'
+            session.query(Registration).filter_by(icao_code = data['icaohex']).delete(synchronize_session='evaluate')
 
-        actual_sql = sql.format(icao_code=data['icaohex'], equip=data['icaotype'], registration=data['registration'], dt=dt)
-        logging.debug('act sql: {}'.format(actual_sql))
-
-        upd = conn.execute(actual_sql)
-        conn.commit()
-        logging.debug('update result=' + str(upd.description))
+        session.commit()
         clear_data(data)
 
     return FWD
@@ -499,26 +483,22 @@ def init():
 
 
 if __name__ == '__main__':
-    config = ConfigParser.SafeConfigParser()
-    config.read('dump1090curses.props')
+    pyradar = PyRadar()
+    pyradar.set_config('dump1090curses.props', 'dump1090curses.local.props')
 
     dt = str(datetime.now())[:10]
     logging.basicConfig(format='%(asctime)s %(message)s',
-                        filename=config.get('directories', 'log') + '/regedit_' + dt + '.log',
+                        filename=pyradar.config.get('directories', 'log') + '/regedit_' + dt + '.log',
                         level=logging.DEBUG)
     logging.captureWarnings(True)
 
     logging.debug('start')
-    test = False
-    if len(sys.argv) == 2 and sys.argv[1] == '-t':
-        test = True
-        logging.debug('in test mode')
 
     init()
 
     if len(boxes) > 0:
         try:
-            curses.wrapper(main, test)
+            curses.wrapper(main, pyradar)
         except Exception as ex:
             print(ex)
             logging.error(ex)
