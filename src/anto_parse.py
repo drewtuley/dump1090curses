@@ -14,14 +14,15 @@ logging.basicConfig(format='%(asctime)s %(message)s',
 logging.captureWarnings(True)
 
 db_filename = config.get('directories', 'data') + '/' + config.get('database', 'dbname')
+antodir = config.get('directories', 'data')+'/antonakis/'
 with sqlite3.connect(db_filename) as conn:
-    entries = os.listdir('antonakis')
+    entries = os.listdir(antodir)
     entries.sort()
 
     for fl in entries:
         if fl != 'processed':
             logging.info('Processing {}'.format(fl))
-            with open('antonakis/' + fl) as fd:
+            with open(antodir + fl) as fd:
                 reg = None
                 icao_type = None
                 hex_code = None
@@ -48,4 +49,4 @@ with sqlite3.connect(db_filename) as conn:
                         reg = None
                         icao_type = None
                         hex_code = None
-            os.rename('antonakis/' + fl, 'antonakis/processed/' + fl)
+            os.rename(antodir + fl, antodir+'/processed/' + fl)

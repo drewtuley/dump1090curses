@@ -18,7 +18,7 @@ logging.captureWarnings(True)
 
 base_url = 'http://www.antonakis.co.uk/registers'
 register = 'unitedstatesofamerica'
-dir = 'antonakis'
+antodir = config.get('directories','data')+'antonakis/'
 url = '{0}/{1}/'.format(base_url, register)
 
 antonakis = PDict('data', 'antonakis')
@@ -42,7 +42,7 @@ antonakis['keys'] = keys
 
 for f in keys:
     if antonakis[f] is False:
-        ofile = '{0}/{1}'.format(dir, f)
+        ofile = '{0}/{1}'.format(antodir, f)
         logging.info('Download {0} into {1}'.format(f, ofile))
         url = '{0}/{1}/{2}'.format(base_url, register, f)
         r = requests.get(url)
