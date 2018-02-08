@@ -161,8 +161,8 @@ def showplanes(win, lock, run):
 def get_reg_from_regserver(regsvr_url, icao_code):
     url = regsvr_url + '/search?icao_code={icao_code}'.format(icao_code=icao_code)
     logger.info('ask regserver for {} @ {}'.format(icao_code, url))
-    reg = None
-    equip = None
+    reg = ''
+    equip = ''
     try:
         logger.info(url)
         r = requests.get(url)
@@ -189,7 +189,7 @@ def get_registration(id, regsvr_url, reg_cache):
         logger.info('Registration {} instance {} in cache'.format(reg[:-1], instance))
     else:
         registration, equip, = get_reg_from_regserver(regsvr_url, id)
-        if len(registration) > 0:
+        if registration is not None and len(registration) > 0:
             reg_cache[id] = registration, equip, 0
             instance = 0
             reg = registration + '*'

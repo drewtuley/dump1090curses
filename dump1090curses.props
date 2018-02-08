@@ -6,7 +6,7 @@ log=log
 pid=run
 
 [database]
-dbname=new_planes.db
+dbname=planes.db
 
 [logging]
 logname=plane.log
@@ -31,7 +31,7 @@ channel=#dump1090
 slack_user=dump1090.listener
 
 [regserver]
-base_url=http://1b6f6843.eu.ngrok.io
+base_url=http://localhost:5000
 
 [myip]
 url=http://ip4.me

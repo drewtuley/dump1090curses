@@ -128,7 +128,7 @@ class Plane:
                 else:
                     win.addstr(row, col, self.registration, colour)
             elif idx == 14:
-                win.addstr(row, col, self.equip, colour)
+                win.addstr(row, col, str(self.equip), colour)
             elif idx == 15:
                 win.addstr(row, col, str(self.posmsgs), colour)
 
