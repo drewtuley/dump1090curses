@@ -12,7 +12,6 @@ import logging
 import logging.handlers
 from datetime import datetime
 from expiringdict import ExpiringDict
-import logging
 
 msg_url = 'Seen a new plane: <https://www.radarbox24.com/data/mode-s/{icao}|{reg}> [{equip}] (#{count})'
 repeat_msg_url = 'Seen <https://www.radarbox24.com/data/mode-s/{icao}|{reg}> [{equip}] again'
@@ -33,7 +32,7 @@ def get_reg_from_regserver(icao_code):
                 equip = r.json()['equip']
                 logger.info('regserver returned: reg:{} type:{}'.format(reg, equip))
     except Exception, ex:
-        logging.info('{0}: Failed to get reg from regserver: {1}'.format(str(datetime.now())[:19], ex))
+        logger.info('{0}: Failed to get reg from regserver: {1}'.format(str(datetime.now())[:19], ex))
 
     return reg, equip
 

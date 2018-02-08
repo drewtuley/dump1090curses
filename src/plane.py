@@ -10,10 +10,10 @@ from functools import total_ordering
 class Plane:
     """A simple SBC Plane class"""
     columns = {0: ('ICAO', 7), 1: ('Callsign', 11), 2: ('Squawk', 7), 3: ('Alt', 7),
-               4: ('VSpeed', 9), 5: ('Track', 7), 6: ('Speed(kts)', 12), 7: ('Lat', 10),
+               4: ('VSpeed', 9), 5: ('Track', 7), 6: ('Speed', 7), 7: ('Lat', 10),
                8: ('Long', 10), 9: ('Nearest Location', 25), 10: ('Dist from ant', 14), 11: ('Evtdt', 12),
                12: ('>15s', 6),
-               13: ('Reg', 9), 14: ('Type', 5)}
+               13: ('Reg', 9), 14: ('Type', 6), 15: ('#PMs', 4)}
     # these locations are of interest to me - insert your own - simple 'Name':(digital_lat, digital_long)
     antenna_location = (53.9714887, -1.5415742)
     locations = {'LBA': (53.8736961, -1.6732249), 'Leeds': (53.797365, -1.5580089),
@@ -25,8 +25,6 @@ class Plane:
                           'G-SACW']
 
     callsigns = {}
-    conn = None
-    dbname = None
 
     def __init__(self, id, now):
         self.id = id
@@ -53,6 +51,7 @@ class Plane:
         self.appeardate = now
         self.active = True
         self.equip = '?'
+        self.posmsgs = 0
 
     def __lt__(self, other):
         x = self.from_antenna
@@ -66,13 +65,6 @@ class Plane:
     def __eq__(self, other):
         return self.from_antenna == other.from_antenna
 
-    @classmethod
-    def log_observation_end(cls, id, instance):
-        sql = 'update observation set endtime = "' + str(
-            datetime.now()) + '" where icao_code = "' + id + '" and endtime is null and instance =' + str(instance)
-        logging.debug('ending observation with SQL:' + sql)
-        cls.conn.execute(sql)
-        cls.conn.commit()
 
     # def __lt__(self, other):
     #    return self.appeardate < other.appeardate
@@ -137,6 +129,8 @@ class Plane:
                     win.addstr(row, col, self.registration, colour)
             elif idx == 14:
                 win.addstr(row, col, self.equip, colour)
+            elif idx == 15:
+                win.addstr(row, col, str(self.posmsgs), colour)
 
             col += Plane.columns[idx][1]
 
@@ -178,6 +172,7 @@ class Plane:
 
         if can_update_nearest:
             self.update_nearest()
+            self.posmsgs += 1
 
     def update_nearest(self):
         nearest = 400

@@ -9,7 +9,7 @@ pid=run
 dbname=new_planes.db
 
 [logging]
-logname=plane_
+logname=plane.log
 scrapelog=scrape_
 
 [dump1090]
