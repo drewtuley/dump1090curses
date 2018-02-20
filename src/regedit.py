@@ -48,7 +48,7 @@ class AlphaNumUpper(TextEdit):
 
 class RegEdit(TextEdit):
     def __init__(self):
-        super(RegEdit, self).__init__(lambda ch: curses.ascii.isalpha(ch) or curses.ascii.isdigit(ch) or ch == ord('-'))
+        super(RegEdit, self).__init__(lambda ch: curses.ascii.isalpha(ch) or curses.ascii.isdigit(ch) or ch == ord('-') or ch == ord('+'))
 
     def transform(self, ch):
         return chr(ch).upper()
@@ -152,7 +152,6 @@ class EditBox(LabelBox):
 
     def update(self):
         value = self.data[self.datakey]
-        pyradar.logger.debug('Update {} using {}'.format(self, value))
         return None
 
 
@@ -272,15 +271,24 @@ class OptionBox(LabelBox):
 
         else:
             ix = 0
+            pyradar.logger.debug('current selected option is {}'.format(self.selected_option))
+            prev_selected = self.selected_option
+
             for opt in self.optionList:
                 if opt.value not in ['Clear', 'Exit']:
                     opt.visible = False
                     opt.selected = False
-                elif opt.value == 'Exit':
+                    if self.selected_option == ix:
+                        self.selected_option += 1
+                else:
                     # self.selected_option = ix
                     opt.visible = True
-                    opt.selected = True
+                    #opt.selected = True
+                pyradar.logger.debug('Opt: {} is visible {} selected {}'.format(opt.value, opt.visible, opt.selected))
                 ix += 1
+            if prev_selected != self.selected_option:
+                self.optionList[prev_selected].selected = False
+                self.optionList[self.selected_option].selected = True
 
 
 boxes = []
@@ -437,17 +445,17 @@ def after_option(obj, session):
         pyradar.logger.debug('Update/Add {}'.format(data))
         dt = str(datetime.now())
         registration = Registration()
-        if selected.value == 'Add':
+        if selected.value == 'Add' and len(data['icaohex']) > 0:
             registration.parse(data['icaohex'], data['registration'], dt, data['icaotype'])
             session.add(registration)
         elif selected.value == 'Update':
-            if data['source'] == 'registration':
+            if data['source'] == 'registration' and len(data['registration']) > 0:
                 session.query(Registration).filter_by(registration = data['registration']).\
                     update({"icao_code" : data['icoahex'], "equip": data['icaotype']}, synchronize_session='evaluate')
-            else:
+            elif len(data['icaohex']) > 0:
                 session.query(Registration).filter_by(icao_code = data['icaohex']).\
                     update({"registration": data['registration'], "equip": data['icaotype']}, synchronize_session='evaluate')
-        else:
+        elif len(data['icaohex']) > 0:
             session.query(Registration).filter_by(icao_code = data['icaohex']).delete(synchronize_session='evaluate')
 
         session.commit()
