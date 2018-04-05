@@ -8,10 +8,6 @@ from datetime import datetime
 
 import requests
 
-msg_url = 'Seen a new plane: <https://www.radarbox24.com/data/mode-s/{icao}|{reg}> [{equip}] (#{count})'
-repeat_msg_url = 'Seen <https://www.radarbox24.com/data/mode-s/{icao}|{reg}> [{equip}] again'
-unknown_url = 'unknown <https://www.radarbox24.com/data/mode-s/{icao}|{icao}>'
-
 
 def get_my_ip(url):
     r = requests.get(url)
@@ -43,4 +39,5 @@ myip_url = config.get('myip', 'url')
 ip = get_my_ip(myip_url)
 
 msg = '{} connected on {}'.format(os.uname()[1], ip)
+
 post_to_slack(msg)
