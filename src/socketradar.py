@@ -82,11 +82,11 @@ def is_valid_icao(icao_code):
         return False
 
 
-def write_line(basefile, line):
+def write_line(basefile, line, message_types_to_write):
     if basefile is None:
         return
     parts = line.split(',')
-    if len(parts) == 22:
+    if len(parts) == 22 and int(parts[1]) in message_types_to_write:
         dt = parts[6].replace('/', '')
         ofile = '{}_{}.txt'.format(basefile, str(dt))
         with open(ofile, 'a') as fd:
@@ -117,6 +117,12 @@ slack_user = config.get('slack', 'slack_user')
 
 regsvr_url = config.get('regserver', 'base_url')
 myip_url = config.get('myip', 'url')
+
+s_types_to_write = config.get('output','types_to_write')
+if s_types_to_write is None:
+    types_to_write = [1,2,3,4,5,6,7,8]
+else:
+    types_to_write = eval('['+s_types_to_write+']')
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -163,7 +169,7 @@ while True:
             tm_day_mins = datetime.now().day * 24 * 60 + (datetime.now().hour * 60) + (datetime.now().minute)
 
             for line in buf.strip().split('\n'):
-                write_line(o_file_base, line)
+                write_line(o_file_base, line, types_to_write)
                 parts = line.split(',')
                 if len(parts) > 4:
                     icao = parts[4]
