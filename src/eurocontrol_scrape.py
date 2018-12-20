@@ -28,9 +28,9 @@ if wb.sheet_loaded('export'):
     sht = wb.sheet_by_name('export')
     row = 3
     while row < sht.nrows:
-        icao = sht.cell_value(row, 2)
-        reg = sht.cell_value(row, 3)
-        icao_hex = sht.cell_value(row, 4)
+        icao = sht.cell_value(row, 2).strip()
+        reg = sht.cell_value(row, 3).strip()
+        icao_hex = sht.cell_value(row, 4).strip()
 
         exists = session.query(Registration).filter_by(icao_code = icao_hex).first()
         if exists is None:
