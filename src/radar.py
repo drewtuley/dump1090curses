@@ -53,13 +53,14 @@ def mark_all_inactive():
 def getplanes(lock, run, config):
     connected = False
     underrun = ''
+    logger.debug('Connected with config: {}'.format(config))
     while run['run']:
         try:
             while not connected:
                 try:
                     c_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                    c_socket.connect((config.get('dump1090', 'host'), int(config.get('dump1090', 'port'))))
-                    c_socket.settimeout(float(config.get('dump1090', 'timeout')))
+                    c_socket.connect((config['host'], config['port']))
+                    c_socket.settimeout(config['timeout'])
                     connected = True
                 except socket.error, err:
                     logger.debug('Failed to connect - err {}'.format(err))
@@ -78,7 +79,7 @@ def getplanes(lock, run, config):
                 if len(parts) < 22:
                     underrun = line
                     break
-                if parts[0] == 'MSG' and parts[4] != '000000':
+                if parts[0] in ('MSG', 'MLAT') and parts[4] != '000000':
                     id = parts[4]
                     lock.acquire()
                     if id in planes:
@@ -306,10 +307,14 @@ def main(screen):
 
     runstate = {'run': True, 'session_count': 0, 'session_max': 0, 'pos_filter': False}
     lock = thread.allocate_lock()
-    get = threading.Thread(target=getplanes, args=(lock, runstate, config))
+    norm_config={'host': config.get('dump1090', 'host'), 'port': int(config.get('dump1090','port')), 'timeout': float(config.get('dump1090', 'timeout')) }
+    get_norm = threading.Thread(target=getplanes, args=(lock, runstate, norm_config))
+    mlat_config={'host': config.get('dump1090', 'host'), 'port': int(config.get('dump1090','mlat_port')), 'timeout': float(config.get('dump1090', 'timeout')) }
+    get_mlat = threading.Thread(target=getplanes, args=(lock, runstate, mlat_config))
     show = threading.Thread(target=showplanes, args=(win, lock, runstate))
     registration = threading.Thread(target=get_registrations, args=(lock, runstate, regsvr_url))
-    get.start()
+    get_norm.start()
+    get_mlat.start()
     show.start()
     registration.start()
 

@@ -15,6 +15,7 @@ scrapelog=scrape_
 [dump1090]
 host=uninvited-guest
 port=30003
+mlat_port=30106
 timeout=1.0
 
 [dump1090_test_server]
