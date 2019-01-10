@@ -10,10 +10,10 @@ from functools import total_ordering
 class Plane:
     """A simple SBC Plane class"""
     columns = {0: ('ICAO', 7), 1: ('Callsign', 11), 2: ('Squawk', 7), 3: ('Alt', 7),
-               4: ('VSpeed', 9), 5: ('Track', 7), 6: ('Speed', 7), 7: ('Lat', 10),
-               8: ('Long', 10), 9: ('Nearest Location', 25), 10: ('Dist from ant', 14), 11: ('Evtdt', 12),
+               4: ('VSpeed', 9), 5: ('Track', 7), 6: ('Speed', 7), 7: ('Lat', 8),
+               8: ('Long', 8), 9: ('Nearest Location', 29), 10: ('Dist/ant', 9), 11: ('Evtdt', 12),
                12: ('>15s', 5),
-               13: ('Reg', 10), 14: ('Type', 6), 15: ('#PMs', 4)}
+               13: ('Reg', 10), 14: ('Type', 6), 15: ('#PMs', 5), 16: ('MLAT', 4)}
     # these locations are of interest to me - insert your own - simple 'Name':(digital_lat, digital_long)
     antenna_location = (53.9714887, -1.5415742)
     locations = {'LBA': (53.8736961, -1.6732249), 'Leeds': (53.797365, -1.5580089),
@@ -52,6 +52,7 @@ class Plane:
         self.active = True
         self.equip = '?'
         self.posmsgs = 0
+        self.mlat = ' '
 
     def __lt__(self, other):
         x = self.from_antenna
@@ -131,6 +132,8 @@ class Plane:
                 win.addstr(row, col, str(self.equip), colour)
             elif idx == 15:
                 win.addstr(row, col, str(self.posmsgs), colour)
+            elif idx == 16:
+                win.addstr(row, col, str(self.mlat), colour)
 
             col += Plane.columns[idx][1]
 
@@ -144,6 +147,11 @@ class Plane:
         if len(parts) >= 16:
             self.active = True  # reactivate if necessary
             can_update_nearest = False
+            if len(parts[0]) > 0:
+                if parts[0] == 'MLAT':
+                    self.mlat = '*'
+                else:
+                    self.mlat = ' '
             if len(parts[6]) > 0 and len(parts[7]) > 0:
                 try:
                     self.eventdate = datetime.strptime(parts[6] + " " + parts[7], "%Y/%m/%d %H:%M:%S.%f")
