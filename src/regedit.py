@@ -444,7 +444,7 @@ def after_option(obj, session):
     elif selected.value in ['Update', 'Add', 'Delete']:
         pyradar.logger.debug('Update/Add {}'.format(data))
         dt = str(datetime.now())
-        registration = Registration()
+        registration = Registration('regedit')
         if selected.value == 'Add' and len(data['icaohex']) > 0:
             registration.parse(data['icaohex'], data['registration'], dt, data['icaotype'])
             session.add(registration)

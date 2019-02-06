@@ -43,7 +43,7 @@ while run_date > end_date:
                         exists = session.query(Registration).filter_by(icao_code = icao_hex).first()
                         if exists is None:
                             pyradar.logger.info('Adding {0} {1} {2}'.format(icao_hex, reg, icao))
-                            newreg = Registration()
+                            newreg = Registration('egpf_scrape')
                             newreg.parse(icao_hex, reg, str(datetime.now()), icao)
                             session.add(newreg)
                             session.commit()

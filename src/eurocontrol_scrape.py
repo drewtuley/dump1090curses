@@ -35,7 +35,7 @@ if wb.sheet_loaded('export'):
         exists = session.query(Registration).filter_by(icao_code = icao_hex).first()
         if exists is None:
             pyradar.logger.info('Adding {0} {1} {2}'.format(icao_hex, reg, icao))
-            newreg = Registration()
+            newreg = Registration('eurocontrol_scrape')
             newreg.parse(icao_hex, reg, str(datetime.now()), icao)
             session.add(newreg)
             session.commit()

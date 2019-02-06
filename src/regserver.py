@@ -17,6 +17,7 @@ class RegServer(Flask):
     fr24_url = None
     reg_cache = {}
     loc_cache = {}
+    cache_warm = False
     logger = None
 
     def set_db(self, filename):
@@ -30,6 +31,9 @@ class RegServer(Flask):
 
     def set_logger(self, logger):
         self.logger = logger
+
+    def set_cache_warm(self, state):
+        self.cache_warm = state
 
 app = RegServer(__name__)
 
@@ -60,7 +64,8 @@ def search():
     app.logger.info('search for {}'.format(search_icao_code))
     ret = {}
     session = app.pyradar.get_db_session()
-    if len(app.reg_cache) == 0:
+    app.logger.info('Cache warm is set to {}'.format(app.cache_warm))
+    if len(app.reg_cache) == 0 and app.cache_warm is True:
         # get all regs      
         app.reg_cache = {}
         app.logger.info('Warming empty cache')
@@ -99,7 +104,7 @@ def search():
                     app.reg_cache[search_icao_code] = (reg, equip)
                     ret = {'registration': reg, 'equip': equip}
                     app.logger.debug(ret)
-                    new_reg = Registration()
+                    new_reg = Registration('regserver')
                     new_reg.parse(search_icao_code, reg, str(datetime.now()), equip)
                     app.logger.debug('Add new reg {}'.format(new_reg))
                     session.add(new_reg)
@@ -114,6 +119,9 @@ def search():
 if __name__ == '__main__':
     config = ConfigParser.SafeConfigParser()
     config.read('dump1090curses.props')
+    config.read('regserver.props')
+    app.set_cache_warm(config.get('regserver','cache_warm'))
+
 
     fr24_url = config.get('fr24', 'api')
     app.set_fr24_url(fr24_url)
@@ -124,6 +132,7 @@ if __name__ == '__main__':
     pyradar.set_logger(pyradar.config.get('directories','log') + '/regserver.log')
     app.set_pyradar(pyradar)
     app.set_logger(pyradar.logger)
+    app.logger.info('RegServer starting')
 
 
     app.run(debug=True)

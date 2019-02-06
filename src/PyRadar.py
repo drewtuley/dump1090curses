@@ -20,6 +20,10 @@ class Registration(Base):
     registration = Column(String, index=True)
     equip = Column(String)
     created = Column(DateTime)
+    source = Column(String)
+
+    def __init__(self, source):
+        self.source = source
 
     def parse(self, icao_code, registration, created, equip):
         self.icao_code = icao_code
