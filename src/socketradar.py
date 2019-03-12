@@ -23,16 +23,19 @@ def get_reg_from_regserver(icao_code):
     logger.info('ask regserver for {} @ {}'.format(icao_code, url))
     reg = None
     equip = None
-    try:
-        logger.info(url)
-        r = requests.get(url)
-        if r.status_code == 200:
-            if 'registration' in r.json():
-                reg = r.json()['registration']
-                equip = r.json()['equip']
-                logger.info('regserver returned: reg:{} type:{}'.format(reg, equip))
-    except Exception, ex:
-        logger.info('{0}: Failed to get reg from regserver: {1}'.format(str(datetime.now())[:19], ex))
+    retry = 5
+    while retry > 0 and reg is None and equip is None:
+        try:
+            logger.info(url)
+            r = requests.get(url)
+            if r.status_code == 200:
+                if 'registration' in r.json():
+                    reg = r.json()['registration']
+                    equip = r.json()['equip']
+                    logger.info('regserver returned: reg:{} type:{}'.format(reg, equip))
+        except Exception, ex:
+            logger.info('{0}: Failed to get reg from regserver: {1}'.format(str(datetime.now())[:19], ex))
+            retry -= 1
 
     return reg, equip
 
