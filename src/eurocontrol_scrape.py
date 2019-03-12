@@ -1,13 +1,20 @@
 import re
 import sys
 from datetime import datetime
-from datetime import timedelta
 from PyRadar import PyRadar
 from PyRadar import Registration
 
-import requests
 
 from xlrd import open_workbook
+
+
+def dashify(org_reg):
+    new_reg = org_reg
+    if re.match(r'^[GDIFCM][A-Z]{4}$', org_reg):
+        new_reg='{0}-{1}'.format(org_reg[0],org_reg[1:])
+    elif re.match(r'^(OE|OO|UR|HB|EI|LX|HA|TC|PH|ES|EC|T7|OY|9H|SE|LN)[A-Z]{3}$', org_reg):
+        new_reg='{0}-{1}'.format(org_reg[0:2],org_reg[2:])
+    return new_reg
 
 
 pyradar = PyRadar()
@@ -29,7 +36,7 @@ if wb.sheet_loaded('export'):
     row = 3
     while row < sht.nrows:
         icao = sht.cell_value(row, 2).strip()
-        reg = sht.cell_value(row, 3).strip()
+        reg = dashify(sht.cell_value(row, 3).strip())
         icao_hex = sht.cell_value(row, 4).strip()
 
         exists = session.query(Registration).filter_by(icao_code = icao_hex).first()
