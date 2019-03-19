@@ -63,6 +63,20 @@ class PlaneOfInterest(Base):
         return json.dumps(self.callsign)
 
 
+class ObservationLog(Base):
+    __tablename__ = 'observation_log'
+
+    icao_code = Column(String, primary_key = True)
+    event_time = Column(DateTime)
+
+    def log_event(self, icao_code, event_time):
+        self.icao_code = icao_code
+        if event_time is not None:
+            self.event_time = datetime.strptime(event_time, '%Y-%m-%d %H:%M:%S.%f')
+        else:
+            self.event_time = event_time
+
+
 class PyRadar:
     def __init__(self, **kwargs):
         self.config = None

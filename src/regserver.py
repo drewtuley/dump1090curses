@@ -11,6 +11,7 @@ from PyRadar import PyRadar
 from PyRadar import Location
 from PyRadar import PlaneOfInterest
 from PyRadar import Registration
+from PyRadar import ObservationLog
 
 
 class RegServer(Flask):
@@ -84,6 +85,12 @@ def search():
             ret = {'registration': reg.registration, 'equip': reg.equip}
             # update the cache
             app.reg_cache[search_icao_code] = (reg.registration, reg.equip)
+
+            log = ObservationLog()
+            log.log_event(search_icao_code, str(datetime.now()))
+            session.add(log)
+            session.commit()
+            
 
         else:
             app.logger.debug('not in cache or db')
