@@ -77,6 +77,18 @@ class ObservationLog(Base):
             self.event_time = event_time
 
 
+class ObservationDetail(Base):
+    __tablename__ = 'observation_detail'
+
+    icao_code = Column(String, primary_key = True)
+    registration = Column(String)
+    equip = Column(String)
+    event_time = Column(DateTime)
+
+    def __repr__(self):
+        return 'ICAO:{i:6} reg: {r:10} type: {t:10} event:{e}'.format(i=self.icao_code, r=self.registration, t=self.equip, e=self.event_time)
+
+
 class PyRadar:
     def __init__(self, **kwargs):
         self.config = None
