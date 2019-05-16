@@ -108,6 +108,8 @@ def search():
                             equip = result['detail']['equip']
                             if equip is not None:
                                 break
+                    if equip is None:
+                        equip = 'UNK'
                     app.reg_cache[search_icao_code] = (reg, equip)
                     ret = {'registration': reg, 'equip': equip}
                     app.logger.debug(ret)
