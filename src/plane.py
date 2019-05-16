@@ -152,7 +152,8 @@ class Plane:
                     self.mlat = '*'
                 else:
                     self.mlat = ' '
-            if len(parts[6]) > 0 and len(parts[7]) > 0:
+            if len(parts[6]) > 0 and len(parts[7]) > 0 and len(parts[0]) >0 and parts[0] != 'MLAT':
+                # don't use MLAT msgs to update event time - they're in UTC whereas the others are local
                 try:
                     self.eventdate = datetime.strptime(parts[6] + " " + parts[7], "%Y/%m/%d %H:%M:%S.%f")
                 except:
