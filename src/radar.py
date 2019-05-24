@@ -111,7 +111,7 @@ def getplanes(lock, run, config):
 
         except:
             pass
-    logger.debug('exit getplanes')
+    logger.info('exit getplanes')
 
 
 def showplanes(win, lock, run):
@@ -124,6 +124,7 @@ def showplanes(win, lock, run):
         # lock.acquire()
 
         pos_filter = run['pos_filter']
+        debug_logging = run['debug_logging']
         for id in sorted(planes, key=planes.__getitem__):
             if planes[id].active and (not pos_filter or planes[id].from_antenna > 0.0):
                 if row < rows - 1:
@@ -146,9 +147,9 @@ def showplanes(win, lock, run):
 
         try:
             win.addstr(rows - 1, 1,
-                       'Current:{current}  Total (session):{count}  Max (session):{max}  Max Distance:{dist:3.1f}nm  NonPos Filter:{posfilter}' \
+                       'Current:{current}  Total (session):{count}  Max (session):{max}  Max Distance:{dist:3.1f}nm  NonPos Filter:{posfilter} DebugLogging:{debug}' \
                        .format(current=str(current), count=str(run['session_count']), max=str(run['session_max']),
-                               posfilter=onoff[pos_filter], dist=max_distance))
+                               posfilter=onoff[pos_filter], dist=max_distance, debug=debug_logging))
             win.addstr(rows - 1, cols - 5 - len(now), now)
         except:
             pass
@@ -272,7 +273,7 @@ def get_registrations(lock, runstate, regsvr_url):
             lock.release()
 
         time.sleep(.0500)
-    logger.debug('exit get_registrations')
+    logger.info('exit get_registrations')
 
 
 def main(screen):
@@ -305,7 +306,7 @@ def main(screen):
     win.bkgd(curses.color_pair(1))
     win.box()
 
-    runstate = {'run': True, 'session_count': 0, 'session_max': 0, 'pos_filter': False}
+    runstate = {'run': True, 'session_count': 0, 'session_max': 0, 'pos_filter': False, 'debug_logging': logger.isEnabledFor(logging.DEBUG)}
     lock = thread.allocate_lock()
     norm_config={'host': config.get('dump1090', 'host'), 'port': int(config.get('dump1090','port')), 'timeout': float(config.get('dump1090', 'timeout')) }
     get_norm = threading.Thread(target=getplanes, args=(lock, runstate, norm_config))
@@ -325,6 +326,12 @@ def main(screen):
             logger.debug('kill requested by user')
         elif ch == ord('p'):
             runstate['pos_filter'] = not runstate['pos_filter']
+        elif ch == ord('d'):
+            if logger.isEnabledFor(logging.DEBUG):
+                logger.setLevel(logging.INFO)
+            else:
+                logger.setLevel(logging.DEBUG)
+            runstate['debug_logging'] = logger.isEnabledFor(logging.DEBUG)
 
     time.sleep(2)
     curses.curs_set(prev_state)
