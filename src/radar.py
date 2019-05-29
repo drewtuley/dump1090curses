@@ -40,7 +40,7 @@ def removeplanes():
         plane = planes[id]
         if (datetime.now() - plane.eventdate).total_seconds() > 30 and plane.active:
             plane.active = False
-            logger.debug('add plane id:' + id + ' to inactive queue')
+            logger.info('add plane id:' + id + ' to inactive queue')
             inactive_queue.append(id)
 
 
@@ -53,7 +53,7 @@ def mark_all_inactive():
 def getplanes(lock, run, config):
     connected = False
     underrun = ''
-    logger.debug('Connected with config: {}'.format(config))
+    logger.info('Connected with config: {}'.format(config))
     while run['run']:
         try:
             while not connected:
@@ -96,7 +96,7 @@ def getplanes(lock, run, config):
                 elif parts[0] == 'MSG' and parts[4] == '000000' and int(parts[1]) == 7:
                     lock.acquire()
                     # grungy way to clear all planes
-                    logger.debug('Clear all active queue')
+                    logger.info('Clear all active queue')
                     inactive_queue = []
                     mark_all_inactive()
                     lock.release()
@@ -106,7 +106,7 @@ def getplanes(lock, run, config):
                     if status == 'RM':
                         plane = planes[id]
                         plane.active = False
-                        logger.debug('set id: ' + id + ' inactive due to dump1090 remove')
+                        logger.info('set id: ' + id + ' inactive due to dump1090 remove')
             inactive_queue.append(id)
 
         except:
@@ -323,7 +323,7 @@ def main(screen):
         ch = screen.getch()
         if ch == ord('q'):
             runstate['run'] = False
-            logger.debug('kill requested by user')
+            logger.info('kill requested by user')
         elif ch == ord('p'):
             runstate['pos_filter'] = not runstate['pos_filter']
         elif ch == ord('d'):
