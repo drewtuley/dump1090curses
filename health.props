@@ -1,9 +1,0 @@
-[slack]
-url=https://hooks.slack.com/services/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
-channel=#raspberries
-slack_user=raspberry
-
-
-[myip]
-url=http://ip.changeip.com
-
