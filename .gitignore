@@ -8,5 +8,5 @@
 nohup.out
 xx
 dump1090curses.local.props
-health.props
+*.props
 antonakis/
