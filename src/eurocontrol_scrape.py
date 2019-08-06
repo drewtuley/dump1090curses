@@ -10,9 +10,9 @@ from xlrd import open_workbook
 
 def dashify(org_reg):
     new_reg = org_reg
-    if re.match(r'^[GDIFCM][A-Z]{4}$', org_reg):
+    if re.match(r'^[GDIFCM2][A-Z]{4}$', org_reg):
         new_reg='{0}-{1}'.format(org_reg[0],org_reg[1:])
-    elif re.match(r'^(OE|OO|UR|HB|EI|LX|HA|TC|PH|ES|EC|T7|OY|9H|SE|LN)[A-Z]{3}$', org_reg):
+    elif re.match(r'^(OE|OO|UR|HB|EI|LX|HA|TC|PH|ES|EC|T7|OY|9H|SE|LN|SP|LY)[A-Z]{3}$', org_reg):
         new_reg='{0}-{1}'.format(org_reg[0:2],org_reg[2:])
     return new_reg
 
