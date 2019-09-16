@@ -74,6 +74,9 @@ class Plane:
         print "Id=%s callsign=%s squawk=%04d alt=%s track=%s gs=%s lat=%s long=%s" % (
         self.id, self.callsign, int(self.squawk), self.altitude, self.track, self.gs, self.lat, self.long)
 
+    def __repr__(self):
+        return 'id: {id} c/s: {cs} reg: {reg} alt:{alt} track:{track} gs:{gs} lat:{lat} long:{long}'.format(id=self.id, cs=self.callsign, reg=self.registration, alt=self.altitude, track=self.track, gs=self.gs, lat=self.lat, long=self.long)
+
     @classmethod
     def showheader(cls, win):
         col = 0
