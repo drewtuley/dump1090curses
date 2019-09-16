@@ -80,7 +80,7 @@ def search():
         ret = {'registration': reg, 'equip': equip}
     else:
         reg = session.query(Registration).filter_by(icao_code = search_icao_code).first()
-        print(reg)
+        app.logger.debug('loaded reg {0} from DB for icao {1}'.format(reg, search_icao_code))
         if reg is not None:
             ret = {'registration': reg.registration, 'equip': reg.equip}
             # update the cache
