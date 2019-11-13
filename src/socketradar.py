@@ -136,7 +136,7 @@ else:
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 fname = '{}/{}'.format(config.get('directories', 'log'), config.get('logging','socketradar'))
-fh = logging.handlers.TimedRotatingFileHandler(fname, when='midnight', interval=1)
+fh = logging.handlers.TimedRotatingFileHandler(fname, when='midnight', interval=1, backupCount=5)
 fh.setLevel(logging.DEBUG)
 fmt = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
 fh.setFormatter(fmt)
