@@ -101,7 +101,7 @@ class PyRadar:
     def set_logger(self, filename):
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.DEBUG)
-        fh = logging.handlers.TimedRotatingFileHandler(filename, when='midnight', interval=1)
+        fh = logging.handlers.TimedRotatingFileHandler(filename, when='midnight', interval=1, backupCount=5)
         fh.setLevel(logging.DEBUG)
         fmt = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
         fh.setFormatter(fmt)
