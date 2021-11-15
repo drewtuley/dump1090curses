@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import ConfigParser
+import configparser
 import json
 import os
 import re
@@ -23,11 +23,11 @@ def post_to_slack(msg):
                "text": msg, "icon_emoji": ":airplane:"}
     try:
         requests.post(slack_url, json.dumps(payload))
-    except Exception, ex:
+    except Exception as ex:
         print('{0}: Failed to post to slack: {1}'.format(str(datetime.now())[:19], ex))
 
 
-config = ConfigParser.SafeConfigParser()
+config = configparser.ConfigParser()
 config.read('health.props')
 
 slack_url = config.get('slack', 'url')
