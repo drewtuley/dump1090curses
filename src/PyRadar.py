@@ -119,16 +119,19 @@ class PyRadar:
         except (ConfigParser.NoSectionError, ConfigParser.NoOptionError) as var:
             print(var)
 
+    def get_new_db_session(self, echo=False):
+        engine = create_engine(self.database, echo=echo)
+        Base.metadata.create_all(engine)
+
+        Session = sessionmaker(bind=engine)
+        self.session = Session()
+        return self.session
+
     def get_db_session(self, echo=False):
         if self.session is not None:
             return self.session
         else:
-            engine = create_engine(self.database, echo=echo)
-            Base.metadata.create_all(engine)
-
-            Session = sessionmaker(bind=engine)
-            self.session = Session()
-            return self.session
+            return self.get_new_db_session()
 
 
 if __name__ == '__main__':

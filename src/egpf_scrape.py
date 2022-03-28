@@ -8,7 +8,7 @@ from PyRadar import Registration
 import requests
 
 if len(sys.argv) == 2 and sys.argv[1] == 'all':
-    end_date = datetime.strptime('20170801', '%Y%m%d')
+    end_date = datetime.strptime('20191201', '%Y%m%d')
 else:
     end_date = datetime.now() - timedelta(days=1)
 run_date = datetime.now() - timedelta(days=1)

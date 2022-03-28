@@ -64,7 +64,7 @@ def search():
     search_icao_code = request.args.get('icao_code', '').upper()
     app.logger.info('search for {}'.format(search_icao_code))
     ret = {}
-    session = app.pyradar.get_db_session()
+    session = app.pyradar.get_new_db_session()
     app.logger.info('Cache warm is set to {}'.format(app.cache_warm))
     if len(app.reg_cache) == 0 and app.cache_warm is True:
         # get all regs      
@@ -77,7 +77,11 @@ def search():
     if search_icao_code in app.reg_cache:
         reg, equip = app.reg_cache[search_icao_code]
         app.logger.debug('Cache hit for {}={}'.format(search_icao_code, reg))
-        ret = {'registration': reg, 'equip': equip}
+        observation_log = list()
+        observations = session.query(ObservationLog.event_time).filter_by(icao_code = search_icao_code).all()
+        for obv in observations:
+            observation_log.append('{}'.format(obv[0]))
+        ret = {'registration': reg, 'equip': equip, 'observation_log': observation_log}
     else:
         reg = session.query(Registration).filter_by(icao_code = search_icao_code).first()
         app.logger.debug('loaded reg {0} from DB for icao {1}'.format(reg, search_icao_code))
@@ -144,4 +148,4 @@ if __name__ == '__main__':
     app.logger.info('RegServer starting')
 
 
-    app.run(debug=True, host='0.0.0.0')
+    app.run(debug=True, host='0.0.0.0',port='5001')

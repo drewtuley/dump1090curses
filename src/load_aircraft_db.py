@@ -24,7 +24,7 @@ with open(data_file) as fd:
                 reg = p[1].upper()
                 icao_type = p[2].upper()
                 if hex_code != 'ICAO' and reg != '00000000' and icao_type != '0000':
-                    sql = 'insert into registration select "{icao}","{reg}","{equip}","{dt}" where not exists (select * from registration where icao_code="{icao}");' \
+                    sql = 'insert into registration select "{icao}","{reg}","{equip}","{dt}","SunJunzi" where not exists (select * from registration where icao_code="{icao}");' \
                         .format(icao=hex_code, reg=reg, dt=str(datetime.now()), equip=icao_type)
                     logging.debug(sql)
                     conn.execute(sql)

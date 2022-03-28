@@ -197,7 +197,7 @@ class Plane:
             if distance < nearest:
                 nearest = distance
                 br = bearing(data[0], data[1], float(self.lat), float(self.long))
-                self.nearest = '{0:3.1f}'.format(distance) + 'nm ' + cardinal(br) + ' ' + loc
+                self.nearest = '{0:-5.1f}nm {1:3} {2}'.format(distance, cardinal(br), loc)
 
 
 def distance_on_sphere(lat1, long1, lat2, long2):

@@ -9,19 +9,19 @@ __date__ = "$06-May-2015 09:27:35$"
 
 import os
 import string
-import ConfigParser
+import configparser
 
 if __name__ == "__main__":
     home=os.getenv('HOME')
     if len(home) > 0:
         dump1090=home+'/git/dump1090curses'
         if not os.access(dump1090, os.X_OK):
-            print 'Error: Unable to access dump1090 dir'
+            print ('Error: Unable to access dump1090 dir')
             exit(1)
         
         os.chdir(dump1090)
         
-        config = ConfigParser.SafeConfigParser()
+        config = configparser.ConfigParser()
         config.read('dump1090curses.props')
         
         data=config.get('directories','data')
@@ -29,7 +29,7 @@ if __name__ == "__main__":
         db=data+'/'+config.get('database','dbname')
         
         if not os.access(data, os.R_OK):
-            print 'Warning: Unable to access data dir:'+data
+            print ('Warning: Unable to access data dir:'+data)
             os.mkdir(data)
             
         if not os.access(db, os.R_OK):    
@@ -45,13 +45,14 @@ if __name__ == "__main__":
             
         
         script='src/radar.py'
-	lines = 23
-	with os.popen('tput lines') as fd:
+        lines = 23
+        with os.popen('tput lines') as fd:
             for line in fd:
-		lines = (string.rstrip(line))
-	print 'opening with '+str(lines)+' lines'
+                lines = line.strip()
+
+        print ('opening with '+str(lines)+' lines')
         if os.access(script, os.X_OK):
             os.execl(script,'x',lines)
         else:
-            print 'Error: unable to execute '+script
+            print ('Error: unable to execute '+script)
             exit(1)

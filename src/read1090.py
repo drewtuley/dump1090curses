@@ -4,7 +4,7 @@ import socket
 import time
 import sys
 
-port = 30005
+port = 30106
 if len(sys.argv) > 1:
     port = int(sys.argv[1])
 c_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM);
