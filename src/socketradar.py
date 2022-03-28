@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import ConfigParser
+import configparser
 import json
 import os
 import re
@@ -39,7 +39,7 @@ def get_reg_from_regserver(icao_code):
             else:
                 logger.error('regserver returned status_code {}'.format(r.status_code))
                 retry -= 1 
-        except Exception, ex:
+        except Exception as ex:
             logger.info('{0}: Failed to get reg from regserver: {1}'.format(str(datetime.now())[:19], ex))
             retry -= 1
 
@@ -60,7 +60,7 @@ def post_to_slack(msg):
                "text": msg, "icon_emoji": ":airplane:"}
     try:
         requests.post(slack_url, json.dumps(payload))
-    except Exception, ex:
+    except Exception as ex:
         logger.error('{0}: Failed to post to slack: {1}'.format(str(datetime.now())[:19], ex))
 
 
@@ -112,7 +112,7 @@ recently_seen = ExpiringDict(max_len=1000, max_age_seconds=3600)
 recheck_unknowns = ExpiringDict(max_len=1, max_age_seconds=3600)
 seen_planes = {}
 
-config = ConfigParser.SafeConfigParser()
+config = configparser.ConfigParser()
 config.read('dump1090curses.props')
 config.read('dump1090curses.local.props')
 
@@ -154,7 +154,7 @@ while True:
             c_socket.connect((dump1090_host, dump1090_port))
             c_socket.settimeout(dump1090_timeout)
             connected = True
-        except socket.error, ex:
+        except socket.error as ex:
             logger.error('{0}: Failed to connect : {1}'.format(str(datetime.now())[:19], ex))
             time.sleep(1)
     if prev_connected:
@@ -170,7 +170,7 @@ while True:
             reload_unknowns()
             recheck_unknowns['wait'] = True
         try:
-            buf = c_socket.recv(16384)
+            buf = c_socket.recv(16384).decode('utf-8')
             if len(buf) < 1:
                 logger.info('{0}: Possible buffer underrun - close/reopen'.format(str(datetime.now())[:19]))
                 break
@@ -194,13 +194,15 @@ while True:
                             reg, equip = get_reg_from_regserver(icao)
                             recently_seen[icao] = reg
                             post_to_slack(repeat_msg_url.format(icao=icao, reg=reg, equip=equip))
+                    else:
+                        logger.error('{0}: invalid ICAO code <{1}>'.format(str(datetime.now())[:19], icao))
         except KeyboardInterrupt:
             logger.error('{0}: user reqeusted shutdown'.format(str(datetime.now())[:19]))
             exit(1)
-        except socket.error, v:
+        except socket.error as v:
             # logger.info('Exception {0}'.format(v))
             pass
     try:
         c_socket.close()
-    except socket.error, ex:
+    except socket.error as ex:
         logger.error('{0}: Failed to close socket: {1}'.format(str(datetime.now())[:19], ex))
