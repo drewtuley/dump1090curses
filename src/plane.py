@@ -5,6 +5,14 @@ import sys
 from datetime import datetime
 from functools import total_ordering
 
+STALE_DATA_SECONDS = 15
+
+FARTHER_THAN_THE_NEAREST_LOCATION = 400
+
+MAX_POSSIBLE_RANGE = 1000
+
+CACHE_EXPIRY = 30 * 60
+
 
 @total_ordering
 class Plane:
@@ -62,7 +70,7 @@ class Plane:
         self.registration = str(id)  # self.get_registration(id)
         if id in Plane.callsigns.keys():
             cachetime = Plane.callsigns[id][1]
-            if (datetime.now() - cachetime).total_seconds() > 30 * 60:
+            if (datetime.now() - cachetime).total_seconds() > CACHE_EXPIRY:
                 del Plane.callsigns[id]
                 self.callsign = "?"
             else:
@@ -88,16 +96,13 @@ class Plane:
         x = self.from_antenna
         y = other.from_antenna
         if x <= 0:
-            x = 1000
+            x = MAX_POSSIBLE_RANGE
         if y <= 0:
-            y = 1000
+            y = MAX_POSSIBLE_RANGE
         return x < y
 
     def __eq__(self, other):
         return self.from_antenna == other.from_antenna
-
-    # def __lt__(self, other):
-    #    return self.appeardate < other.appeardate
 
     def show(self):
         print(
@@ -133,58 +138,51 @@ class Plane:
             win.addstr(0, col, Plane.columns[id][0])
             col += Plane.columns[id][1]
 
-    def showincurses(self, win, row):
-        col = 0
-        if (datetime.now() - self.eventdate).total_seconds() > 15:
-            colour = curses.color_pair(2)
-        else:
-            colour = curses.color_pair(1)
-        for idx in Plane.columns:
-            if idx == 0:
-                win.addstr(row, col, self.id, colour)
-            elif idx == 1:
-                win.addstr(row, col, self.callsign, colour)
-            elif idx == 2:
-                win.addstr(row, col, "{0:04d}".format(int(self.squawk)), colour)
-            elif idx == 3:
-                win.addstr(row, col, str(self.altitude), colour)
-            elif idx == 4:
-                win.addstr(row, col, str(self.vspeed), colour)
-            elif idx == 5:
-                win.addstr(row, col, "{0:03d}".format(int(self.track)), colour)
-            elif idx == 6:
-                win.addstr(row, col, "{0:03d}".format(int(self.gs)), colour)
-            elif idx == 7:
-                try:
-                    win.addstr(row, col, "{0:2.2f}".format(float(self.lat)), colour)
-                except ValueError:
-                    pass
-            elif idx == 8:
-                try:
-                    win.addstr(row, col, "{0:2.2f}".format(float(self.long)), colour)
-                except ValueError:
-                    pass
-            elif idx == 9:
-                if self.nearest != "?":
-                    win.addstr(row, col, self.nearest, colour)
-            elif idx == 10:
-                if self.from_antenna > -0.0:
-                    win.addstr(row, col, "{0:3.1f}nm".format(self.from_antenna), colour)
-            elif idx == 11:
-                win.addstr(row, col, str(self.eventdate)[11:19], colour)
-            elif idx == 12:
-                if (datetime.now() - self.eventdate).total_seconds() > 15:
-                    win.addstr(row, col, " *", colour)
-            elif idx == 13:
-                if self.registration[:6] in Plane.planes_of_interest:
-                    win.addstr(row, col, self.registration, curses.A_REVERSE)
-                else:
-                    win.addstr(row, col, self.registration, colour)
-            elif idx == 14:
-                win.addstr(row, col, str(self.equip), colour)
-            elif idx == 15:
-                win.addstr(row, col, str(self.posmsgs), colour)
+    def _get_display_data(self):
+        """Extract display data from plane attributes"""
+        is_stale = (
+            datetime.now() - self.eventdate
+        ).total_seconds() > STALE_DATA_SECONDS
+        is_interesting = self.registration[:6] in Plane.planes_of_interest
 
+        data = {
+            0: self.id,
+            1: self.callsign,
+            2: "{0:04d}".format(int(self.squawk)),
+            3: str(self.altitude),
+            4: str(self.vspeed),
+            5: "{0:03d}".format(int(self.track)),
+            6: "{0:03d}".format(int(self.gs)),
+            7: "{0:2.2f}".format(float(self.lat)) if self.lat else "",
+            8: "{0:2.2f}".format(float(self.long)) if self.long else "",
+            9: self.nearest if self.nearest != "?" else "",
+            10: (
+                "{0:3.1f}nm".format(self.from_antenna)
+                if self.from_antenna > -0.0
+                else ""
+            ),
+            11: str(self.eventdate)[11:19],
+            12: " *" if is_stale else "",
+            13: self.registration,
+            14: str(self.equip),
+            15: str(self.posmsgs),
+        }
+
+        return data, is_stale, is_interesting
+
+    def showincurses(self, win, row):
+        """Display plane data in curses window"""
+        data, is_stale, is_interesting = self._get_display_data()
+        colour = curses.color_pair(2) if is_stale else curses.color_pair(1)
+
+        col = 0
+        for idx in Plane.columns:
+            if data[idx]:
+                attr = curses.A_REVERSE if idx == 13 and is_interesting else colour
+                try:
+                    win.addstr(row, col, data[idx], attr)
+                except ValueError:
+                    pass
             col += Plane.columns[idx][1]
 
     def update(self, parts):
@@ -194,9 +192,9 @@ class Plane:
         TODO: Would be more efficient to use the message type (parts[1]) to
         work out which elements are relevant
         """
+        can_update_nearest = False
         if len(parts) >= 16:
             self.active = True  # reactivate if necessary
-            can_update_nearest = False
             if len(parts[6]) > 0 and len(parts[7]) > 0 and len(parts[0]) > 0:
                 try:
                     self.eventdate = datetime.strptime(
@@ -234,7 +232,11 @@ class Plane:
             self.posmsgs += 1
 
     def update_nearest(self):
-        nearest = 400
+        """
+        Update this Plane with its nearest location from the predefined list
+        and also its distance from the antenna location
+        """
+        nearest: float = FARTHER_THAN_THE_NEAREST_LOCATION
 
         self.from_antenna = distance_on_sphere(
             float(self.lat),
@@ -242,8 +244,8 @@ class Plane:
             Plane.antenna_location[0],
             Plane.antenna_location[1],
         )
-        for loc in Plane.locations:
-            data = Plane.locations[loc]
+        for location in Plane.locations:
+            data = Plane.locations[location]
             distance = distance_on_sphere(
                 float(self.lat), float(self.long), (data[0]), (data[1])
             )
@@ -251,11 +253,11 @@ class Plane:
                 nearest = distance
                 br = bearing(data[0], data[1], float(self.lat), float(self.long))
                 self.nearest = "{0:-5.1f}nm {1:3} {2}".format(
-                    distance, cardinal(br), loc
+                    distance, cardinal(br), location
                 )
 
 
-def distance_on_sphere(lat1, long1, lat2, long2):
+def distance_on_sphere(lat1, long1, lat2, long2) -> float:
     """
     Courtesy of http://www.johndcook.com/blog/python_longitude_latitude/
     """
