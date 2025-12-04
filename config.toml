@@ -1,0 +1,23 @@
+[fr24]
+api = "https://www.flightradar24.com/v1/search/web/find?limit=16&query={}"
+
+[dump1090]
+host = "192.168.100.10"
+port = 30003
+timeout = 1.0
+
+[regserver]
+base_url = "http://honest-mistake:5000"
+
+[directories]
+data = "data"
+log = "log"
+pid = "run"
+
+[database]
+dbname = "planes.db"
+
+[logging]
+logname = "plane.log"
+scrapelog = "scrape_"
+

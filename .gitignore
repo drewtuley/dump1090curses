@@ -2,9 +2,11 @@
 /src/planes
 /src/plane.db
 /src/*pyc
+/src/__pycache__/
 /data/*
 /log
 /.idea
+/.venv
 nohup.out
 xx
 dump1090curses.local.props

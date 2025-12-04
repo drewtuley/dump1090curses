@@ -8,14 +8,13 @@
 # MSG,7,111,11111,40649F,111111,2015/04/15,08:19:35.880,2015/04/15,08:19:35.869,,25725,,,,,,,,,,0
 
 
-import ConfigParser
+import tomllib
 import copy
 import curses
 import logging
 import logging.handlers
 import socket
 import sys
-import thread
 import threading
 import time
 from datetime import datetime
@@ -53,21 +52,23 @@ def mark_all_inactive():
 def getplanes(lock, run, config):
     connected = False
     underrun = ''
-    logger.info('Connected with config: {}'.format(config))
+    logger.info('Connecting with config: {}'.format(config))
     while run['run']:
         try:
-            while not connected:
+            while not connected and run['run']:
                 try:
                     c_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                     c_socket.connect((config['host'], config['port']))
                     c_socket.settimeout(config['timeout'])
                     connected = True
-                except socket.error, err:
+                except socket.error as err:
                     logger.debug('Failed to connect - err {}'.format(err))
                     time.sleep(1.0)
-
-            lines = c_socket.recv(32768)
-            lines = underrun + lines
+            #logger.info("connected")
+            r_lines = c_socket.recv(32768)
+            #logger.debug(f"rawdata={r_lines}")
+            lines = underrun + r_lines.decode('utf-8')
+            #logger.debug(f"decoded={lines}")
             underrun = ''
             if len(lines) < 1:
                 connected = False
@@ -81,25 +82,23 @@ def getplanes(lock, run, config):
                     break
                 if parts[0] in ('MSG', 'MLAT') and parts[4] != '000000':
                     id = parts[4]
-                    lock.acquire()
-                    if id in planes:
-                        plane = planes[id]
-                    else:
-                        plane = Plane(id, datetime.now())
-                        registration_queue.append(id)
-                        run['session_count'] += 1
-                        planes[id] = plane
+                    with lock:
+                        if id in planes:
+                            plane = planes[id]
+                        else:
+                            plane = Plane(id, datetime.now())
+                            registration_queue.append(id)
+                            run['session_count'] += 1
+                            planes[id] = plane
 
-                    plane.update(parts)
-                    removeplanes()
-                    lock.release()
+                        plane.update(parts)
+                        removeplanes()
                 elif parts[0] == 'MSG' and parts[4] == '000000' and int(parts[1]) == 7:
-                    lock.acquire()
-                    # grungy way to clear all planes
-                    logger.info('Clear all active queue')
-                    inactive_queue = []
-                    mark_all_inactive()
-                    lock.release()
+                    with lock:
+                        # grungy way to clear all planes
+                        logger.info('Clear all active queue')
+                        inactive_queue = []
+                        mark_all_inactive()
                 elif parts[0] == 'STA':
                     id = parts[4]
                     status = parts[10]
@@ -173,7 +172,7 @@ def get_reg_from_regserver(regsvr_url, icao_code):
                 reg = r.json()['registration']
                 equip = r.json()['equip']
                 logger.info('regserver returned: reg:{} type:{}'.format(reg, equip))
-    except Exception, ex:
+    except Exception as ex:
         logger.info('{0}: Failed to get reg from regserver: {1}'.format(str(datetime.now())[:19], ex))
 
     return reg, equip
@@ -211,7 +210,7 @@ def get_locations(regsvr_url):
             for place in r.json():
                 data = r.json()[place]
                 locations[place] = (data[0], data[1])
-    except Exception, ex:
+    except Exception as ex:
         logger.error('Unable to get places from regserver: {}'.format(ex))
 
     return locations
@@ -227,7 +226,7 @@ def get_planes_of_interest(regsvr_url):
         r = requests.get(url)
         if r.status_code == 200:
             planes = r.json()
-    except Exception, ex:
+    except Exception as ex:
         logger.error('Unable to get planes from regserver: {}'.format(ex))
 
     return planes
@@ -236,6 +235,7 @@ def get_planes_of_interest(regsvr_url):
 
 def get_registrations(lock, runstate, regsvr_url):
     locations = get_locations(regsvr_url)
+    logger.info(f"Regs={locations}")
     if len(locations) > 0:
         logger.info('Loaded {} reference locations into cache'.format(len(locations)))
         Plane.locations = locations
@@ -244,13 +244,14 @@ def get_registrations(lock, runstate, regsvr_url):
         except KeyError:
             pass
 
+    logger.info("get POIS")
     planes_of_interest = get_planes_of_interest(regsvr_url)
     if len(planes_of_interest) > 0:
         logger.info('Loaded {} planes of interest into cache'.format(len(planes_of_interest)))
         Plane.planes_of_interest = planes_of_interest
 
     reg_cache = {}
-
+    logger.info("Start reg server proper")
     while runstate['run']:
         if len(registration_queue) > 0 or len(inactive_queue) > 0:
             logger.debug('RegQ: {} InactiveQ: {}'.format(len(registration_queue), len(inactive_queue)))
@@ -258,83 +259,78 @@ def get_registrations(lock, runstate, regsvr_url):
         for id in regs:
             reg, equip, curr_instance = get_registration(id, regsvr_url, reg_cache)
             reg_cache[id] = (reg, curr_instance)
-            lock.acquire()
-            planes[id].registration = reg
-            planes[id].observe_instance = curr_instance
-            planes[id].equip = equip
-            registration_queue.remove(id)
-            lock.release()
+            with lock:
+                planes[id].registration = reg
+                planes[id].observe_instance = curr_instance
+                planes[id].equip = equip
+                registration_queue.remove(id)
 
         inactives = copy.copy(inactive_queue)
         for id in inactives:
             instance = planes[id].observe_instance
-            lock.acquire()
-            inactive_queue.remove(id)
-            lock.release()
+            with lock:
+                inactive_queue.remove(id)
 
         time.sleep(.0500)
     logger.info('exit get_registrations')
 
 
 def main(screen):
-    config = ConfigParser.SafeConfigParser()
-    config.read('dump1090curses.props')
-    config.read('dump1090curses.local.props')
+    with open("config.toml", "rb") as fd:
+        config = tomllib.load(fd)
 
-    dt = str(datetime.now())[:10]
+        dt = str(datetime.now())[:10]
 
-    #logger = logging.getLogger(__name__)
-    logger.setLevel(logging.DEBUG)
-    fname = '{}/{}'.format(config.get('directories', 'log'), config.get('logging','logname'))
-    fh = logging.handlers.TimedRotatingFileHandler(fname, when='midnight', interval=1)
-    fh.setLevel(logging.DEBUG)
-    fmt = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
-    fh.setFormatter(fmt)
-    logger.addHandler(fh)
+        #logger = logging.getLogger(__name__)
+        logger.setLevel(logging.DEBUG)
+        fname = '{}/{}'.format(config['directories']['log'], config['logging']['logname'])
+        fh = logging.handlers.TimedRotatingFileHandler(fname, when='midnight', interval=1)
+        fh.setLevel(logging.DEBUG)
+        fmt = logging.Formatter('%(asctime)s %(levelname)s [%(funcName)s] %(message)s')
+        fh.setFormatter(fmt)
+        logger.addHandler(fh)
 
 
-    regsvr_url = config.get('regserver', 'base_url')
+        regsvr_url = config['regserver']['base_url']
 
-    curses.start_color()
-    curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLACK)
-    curses.init_pair(2, curses.COLOR_YELLOW, curses.COLOR_BLACK)
-    prev_state = curses.curs_set(0)
+        curses.start_color()
+        curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLACK)
+        curses.init_pair(2, curses.COLOR_YELLOW, curses.COLOR_BLACK)
+        prev_state = curses.curs_set(0)
 
-    screen.refresh()
+        screen.refresh()
 
-    win = curses.newwin(rows, cols, 0, 0)
-    win.bkgd(curses.color_pair(1))
-    win.box()
+        win = curses.newwin(rows, cols, 0, 0)
+        win.bkgd(curses.color_pair(1))
+        win.box()
 
-    runstate = {'run': True, 'session_count': 0, 'session_max': 0, 'pos_filter': False, 'debug_logging': logger.isEnabledFor(logging.DEBUG)}
-    lock = thread.allocate_lock()
-    norm_config={'host': config.get('dump1090', 'host'), 'port': int(config.get('dump1090','port')), 'timeout': float(config.get('dump1090', 'timeout')) }
-    get_norm = threading.Thread(target=getplanes, args=(lock, runstate, norm_config))
-    mlat_config={'host': config.get('dump1090', 'host'), 'port': int(config.get('dump1090','mlat_port')), 'timeout': float(config.get('dump1090', 'timeout')) }
-    get_mlat = threading.Thread(target=getplanes, args=(lock, runstate, mlat_config))
-    show = threading.Thread(target=showplanes, args=(win, lock, runstate))
-    registration = threading.Thread(target=get_registrations, args=(lock, runstate, regsvr_url))
-    get_norm.start()
-    get_mlat.start()
-    show.start()
-    registration.start()
+        runstate = {'run': True, 'session_count': 0, 'session_max': 0, 'pos_filter': False, 'debug_logging': logger.isEnabledFor(logging.DEBUG)}
+        lock = threading.Lock()
+        norm_config={'host': config['dump1090']['host'], 'port': int(config['dump1090']['port']), 'timeout': float(config['dump1090']['timeout']) }
+        get_norm = threading.Thread(target=getplanes, args=(lock, runstate, norm_config))
 
-    while runstate['run']:
-        ch = screen.getch()
-        if ch == ord('q'):
-            runstate['run'] = False
-            logger.info('kill requested by user')
-        elif ch == ord('p'):
-            runstate['pos_filter'] = not runstate['pos_filter']
-        elif ch == ord('d'):
-            if logger.isEnabledFor(logging.DEBUG):
-                logger.setLevel(logging.INFO)
-            else:
-                logger.setLevel(logging.DEBUG)
-            runstate['debug_logging'] = logger.isEnabledFor(logging.DEBUG)
+        show = threading.Thread(target=showplanes, args=(win, lock, runstate))
+        registration = threading.Thread(target=get_registrations, args=(lock, runstate, regsvr_url))
+        get_norm.start()
+        show.start()
+        registration.start()
 
-    time.sleep(2)
-    curses.curs_set(prev_state)
+        while runstate['run']:
+            ch = screen.getch()
+            if ch == ord('q'):
+                runstate['run'] = False
+                logger.info('kill requested by user')
+            elif ch == ord('p'):
+                runstate['pos_filter'] = not runstate['pos_filter']
+            elif ch == ord('d'):
+                if logger.isEnabledFor(logging.DEBUG):
+                    logger.setLevel(logging.INFO)
+                else:
+                    logger.setLevel(logging.DEBUG)
+                runstate['debug_logging'] = logger.isEnabledFor(logging.DEBUG)
+
+        time.sleep(2)
+        curses.curs_set(prev_state)
 
 
 # usage: radar.py [screen rows]
