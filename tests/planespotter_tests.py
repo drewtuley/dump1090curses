@@ -2,10 +2,12 @@ from nose.tools import *
 
 
 def setup():
-	print "setup()"
+    print("setup()")
+
 
 def teardown():
-	print "teardown()"
+    print("teardown()")
+
 
 def test_1():
-	print "test1"
+    print("test1")

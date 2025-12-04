@@ -3,7 +3,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-import ConfigParser
+import tomllib
 from datetime import datetime
 import json
 import logging
@@ -14,9 +14,9 @@ Base = declarative_base()
 
 
 class Registration(Base):
-    __tablename__ = 'registration'
+    __tablename__ = "registration"
 
-    icao_code = Column(String, primary_key = True)
+    icao_code = Column(String, primary_key=True)
     registration = Column(String, index=True)
     equip = Column(String)
     created = Column(DateTime)
@@ -29,19 +29,21 @@ class Registration(Base):
         self.icao_code = icao_code
         self.registration = registration
         if created is not None:
-            self.created = datetime.strptime(created, '%Y-%m-%d %H:%M:%S.%f')
+            self.created = datetime.strptime(created, "%Y-%m-%d %H:%M:%S.%f")
         else:
             self.created = datetime.now()
         self.equip = equip
 
     def __repr__(self):
-        return 'ICAO: {i} Reg: {r} Type: {e}'.format(i=self.icao_code, r=self.registration, e=self.equip)
+        return "ICAO: {i} Reg: {r} Type: {e}".format(
+            i=self.icao_code, r=self.registration, e=self.equip
+        )
 
 
 class Location(Base):
-    __tablename__ = 'location'
+    __tablename__ = "location"
 
-    name = Column(String, primary_key = True)
+    name = Column(String, primary_key=True)
     latitude = Column(Float)
     longitude = Column(Float)
 
@@ -52,9 +54,9 @@ class Location(Base):
 
 
 class PlaneOfInterest(Base):
-    __tablename__ = 'plane_of_interest'
+    __tablename__ = "plane_of_interest"
 
-    callsign = Column(String, primary_key = True)
+    callsign = Column(String, primary_key=True)
 
     def parse(self, callsign):
         self.callsign = callsign
@@ -64,29 +66,31 @@ class PlaneOfInterest(Base):
 
 
 class ObservationLog(Base):
-    __tablename__ = 'observation_log'
+    __tablename__ = "observation_log"
 
-    icao_code = Column(String, primary_key = True)
+    icao_code = Column(String, primary_key=True)
     event_time = Column(DateTime)
 
     def log_event(self, icao_code, event_time):
         self.icao_code = icao_code
         if event_time is not None:
-            self.event_time = datetime.strptime(event_time, '%Y-%m-%d %H:%M:%S.%f')
+            self.event_time = datetime.strptime(event_time, "%Y-%m-%d %H:%M:%S.%f")
         else:
             self.event_time = event_time
 
 
 class ObservationDetail(Base):
-    __tablename__ = 'observation_detail'
+    __tablename__ = "observation_detail"
 
-    icao_code = Column(String, primary_key = True)
+    icao_code = Column(String, primary_key=True)
     registration = Column(String)
     equip = Column(String)
     event_time = Column(DateTime)
 
     def __repr__(self):
-        return 'ICAO:{i:6} reg: {r:10} type: {t:10} event:{e}'.format(i=self.icao_code, r=self.registration, t=self.equip, e=self.event_time)
+        return "ICAO:{i:6} reg: {r:10} type: {t:10} event:{e}".format(
+            i=self.icao_code, r=self.registration, t=self.equip, e=self.event_time
+        )
 
 
 class PyRadar:
@@ -97,27 +101,25 @@ class PyRadar:
         self.session = None
         self.logger = None
 
-
     def set_logger(self, filename):
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.DEBUG)
-        fh = logging.handlers.TimedRotatingFileHandler(filename, when='midnight', interval=1, backupCount=5)
+        fh = logging.handlers.TimedRotatingFileHandler(
+            filename, when="midnight", interval=1, backupCount=5
+        )
         fh.setLevel(logging.DEBUG)
-        fmt = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+        fmt = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
         fh.setFormatter(fmt)
         self.logger.addHandler(fh)
 
+    def set_config(self, config_files):
+        with open(config_files, "rb") as cf:
+            self.config = tomllib.load(cf)
 
-    def set_config(self, *config_files):
-        self.config = ConfigParser.SafeConfigParser()
-        for file in config_files:
-            self.config.read(file)
-
-        try:
-            self.database = 'sqlite:///{dir}/{db}'.format(dir=self.config.get('directories', 'data'), db=self.config.get('database', 'dbname'))
-    
-        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError) as var:
-            print(var)
+            self.database = "sqlite:///{dir}/{db}".format(
+                dir=self.config["directories"]["data"],
+                db=self.config["database"]["dbname"],
+            )
 
     def get_new_db_session(self, echo=False):
         engine = create_engine(self.database, echo=echo)
@@ -134,24 +136,23 @@ class PyRadar:
             return self.get_new_db_session()
 
 
-if __name__ == '__main__':
-    print('Test')
+if __name__ == "__main__":
+    print("Test")
     pyradar = PyRadar()
-    pyradar.set_config('dump1090curses.props', 'dump1090curses.local.props')
+    pyradar.set_config("config.toml")
 
     session = pyradar.get_db_session(echo=True)
 
     reg = Registration()
-    reg.parse('112233','BLAH',datetime.now(), 'ALL')
+    reg.parse("112233", "BLAH", datetime.now(), "ALL")
     session.add(reg)
 
-
     loc = Location()
-    loc.parse('here',1.1,-1.1)
+    loc.parse("here", 1.1, -1.1)
     session.add(loc)
 
     poi = PlaneOfInterest()
-    poi.parse('G-OBMS')
+    poi.parse("G-OBMS")
     session.add(poi)
 
     session.commit()
