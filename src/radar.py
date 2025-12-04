@@ -28,8 +28,8 @@ registration_queue = []
 inactive_queue = []
 onoff = {True: "On", False: "Off"}
 
-cols = 155
-rows = 28
+COLS: int = 155
+ROWS: int = 28
 
 
 def removeplanes():
@@ -128,7 +128,7 @@ def showplanes(win, lock, run):
         debug_logging = run["debug_logging"]
         for id in sorted(planes, key=planes.__getitem__):
             if planes[id].active and (not pos_filter or planes[id].from_antenna > 0.0):
-                if row < rows - 1:
+                if row < ROWS - 1:
                     planes[id].showincurses(win, row)
                     if planes[id].from_antenna > max_distance:
                         max_distance = planes[id].from_antenna
@@ -148,7 +148,7 @@ def showplanes(win, lock, run):
 
         try:
             win.addstr(
-                rows - 1,
+                ROWS - 1,
                 1,
                 "Current:{current}  Total (session):{count}  Max (session):{max}  Max Distance:{dist:3.1f}nm  NonPos Filter:{posfilter} DebugLogging:{debug}".format(
                     current=str(current),
@@ -159,7 +159,7 @@ def showplanes(win, lock, run):
                     debug=debug_logging,
                 ),
             )
-            win.addstr(rows - 1, cols - 5 - len(now), now)
+            win.addstr(ROWS - 1, COLS - 5 - len(now), now)
         except:
             pass
 
@@ -301,9 +301,6 @@ def main(screen):
     with open("config.toml", "rb") as fd:
         config = tomllib.load(fd)
 
-        dt = str(datetime.now())[:10]
-
-        # logger = logging.getLogger(__name__)
         logger.setLevel(logging.DEBUG)
         fname = "{}/{}".format(
             config["directories"]["log"], config["logging"]["logname"]
@@ -325,7 +322,7 @@ def main(screen):
 
         screen.refresh()
 
-        win = curses.newwin(rows, cols, 0, 0)
+        win = curses.newwin(ROWS, COLS, 0, 0)
         win.bkgd(curses.color_pair(1))
         win.box()
 
@@ -375,7 +372,7 @@ def main(screen):
 # usage: radar.py [screen rows]
 logger = logging.getLogger(__name__)
 if len(sys.argv) > 1:
-    rows = int(sys.argv[1]) - 1
+    ROWS = int(sys.argv[1]) - 1
 try:
     curses.wrapper(main)
 except Exception as ex:
