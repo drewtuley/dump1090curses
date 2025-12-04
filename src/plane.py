@@ -13,9 +13,9 @@ class Plane:
                4: ('VSpeed', 9), 5: ('Track', 7), 6: ('Speed', 7), 7: ('Lat', 8),
                8: ('Long', 8), 9: ('Nearest Location', 29), 10: ('Dist/ant', 9), 11: ('Evtdt', 12),
                12: ('>15s', 5),
-               13: ('Reg', 10), 14: ('Type', 6), 15: ('#PMs', 5), 16: ('MLAT', 4)}
+               13: ('Reg', 10), 14: ('Type', 6), 15: ('#PMs', 5)}
     # these locations are of interest to me - insert your own - simple 'Name':(digital_lat, digital_long)
-    antenna_location = (53.9714887, -1.5415742)
+    antenna_location = (53.978614,-1.528686)
     locations = {'LBA': (53.8736961, -1.6732249), 'Leeds': (53.797365, -1.5580089),
                  'Harrogate': (53.9771475, -1.5430934), 'Skipton': (53.9552364, -2.0219937),
                  'Bradford': (53.7470237, -1.728551), 'Sheffield': (53.3957166, -1.4994562),
@@ -52,7 +52,6 @@ class Plane:
         self.active = True
         self.equip = '?'
         self.posmsgs = 0
-        self.mlat = ' '
 
     def __lt__(self, other):
         x = self.from_antenna
@@ -71,8 +70,8 @@ class Plane:
     #    return self.appeardate < other.appeardate
 
     def show(self):
-        print "Id=%s callsign=%s squawk=%04d alt=%s track=%s gs=%s lat=%s long=%s" % (
-        self.id, self.callsign, int(self.squawk), self.altitude, self.track, self.gs, self.lat, self.long)
+        print ("Id=%s callsign=%s squawk=%04d alt=%s track=%s gs=%s lat=%s long=%s" % (
+        self.id, self.callsign, int(self.squawk), self.altitude, self.track, self.gs, self.lat, self.long))
 
     def __repr__(self):
         return 'id: {id} c/s: {cs} reg: {reg} alt:{alt} track:{track} gs:{gs} lat:{lat} long:{long}'.format(id=self.id, cs=self.callsign, reg=self.registration, alt=self.altitude, track=self.track, gs=self.gs, lat=self.lat, long=self.long)
@@ -135,8 +134,6 @@ class Plane:
                 win.addstr(row, col, str(self.equip), colour)
             elif idx == 15:
                 win.addstr(row, col, str(self.posmsgs), colour)
-            elif idx == 16:
-                win.addstr(row, col, str(self.mlat), colour)
 
             col += Plane.columns[idx][1]
 
@@ -150,13 +147,7 @@ class Plane:
         if len(parts) >= 16:
             self.active = True  # reactivate if necessary
             can_update_nearest = False
-            if len(parts[0]) > 0:
-                if parts[0] == 'MLAT':
-                    self.mlat = '*'
-                else:
-                    self.mlat = ' '
-            if len(parts[6]) > 0 and len(parts[7]) > 0 and len(parts[0]) >0 and parts[0] != 'MLAT':
-                # don't use MLAT msgs to update event time - they're in UTC whereas the others are local
+            if len(parts[6]) > 0 and len(parts[7]) > 0 and len(parts[0]) >0:
                 try:
                     self.eventdate = datetime.strptime(parts[6] + " " + parts[7], "%Y/%m/%d %H:%M:%S.%f")
                 except:
@@ -237,7 +228,7 @@ def bearing(lat1, long1, lat2, long2):
 
 def cardinal(bearing):
     compass = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW', 'N']
-    return compass[int(bearing + 11) / 22]
+    return compass[int((bearing + 11) / 22)]
 
 
 if len(sys.argv) > 1 and sys.argv[1] == 'test':
@@ -247,26 +238,26 @@ if len(sys.argv) > 1 and sys.argv[1] == 'test':
     leeds = Plane.locations['Leeds']
     plane = (54.82433, -2.12970)
 
-    print '{0:3.2f}'.format(distance_on_sphere(leeds[0], leeds[1], plane[0], plane[1]))
-    print bearing(leeds[0], leeds[1], plane[0], plane[1])
+    print ('{0:3.2f}'.format(distance_on_sphere(leeds[0], leeds[1], plane[0], plane[1])))
+    print (bearing(leeds[0], leeds[1], plane[0], plane[1]))
 
     harrogate = Plane.locations['Harrogate']
-    print '{0:3.2f}'.format(distance_on_sphere(leeds[0], leeds[1], harrogate[0], harrogate[1]))
-    print bearing(leeds[0], leeds[1], harrogate[0], harrogate[1])
+    print ('{0:3.2f}'.format(distance_on_sphere(leeds[0], leeds[1], harrogate[0], harrogate[1])))
+    print (bearing(leeds[0], leeds[1], harrogate[0], harrogate[1]))
 
     for b in range(0, 360, 5):
-        print str(b) + " " + cardinal(b)
+        print (str(b) + " " + cardinal(b))
 
     for loc in Plane.locations:
-        print loc
+        print (loc)
 
     update = ['', '', '', '', '', '', '', '', '', '', '', '', '', '', '53.123456', '-1.5223123', '', '', '', '']
     testplane.update(update)
-    print testplane.nearest
+    print (testplane.nearest)
 
     Plane.callsigns['AABBCCDD'] = ('Hellcat', datetime.now())
     update = ['', '', '', '', '', '', '', '', '', '', 'Pussy', '', '', '', '53.123456', '-1.5223123', '', '', '', '']
     testplane2 = Plane('AABBCCDD', datetime.now())
-    print testplane2.callsign
+    print (testplane2.callsign)
     testplane2.update(update)
-    print testplane2.callsign
+    print (testplane2.callsign)

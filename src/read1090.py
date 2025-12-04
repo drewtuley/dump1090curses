@@ -22,8 +22,11 @@ if __name__ == '__main__':
             c_socket.close();
             break;
         else:
+            print(f"raw_data={data}")
+
             try:
                 decoded=data.decode('utf-8')
-            except:
+            except Exception as ex:
+                print(ex)
                 decoded=''
             print (decoded)
