@@ -13,7 +13,7 @@ def main(screen):
     win = curses.newwin(10, 80, 5, 5)
     win.bkgd(curses.color_pair(1))
     win.box()
-    win.addstr(2, 2, 'hi')
+    win.addstr(2, 2, "hi")
     win.refresh()
     x = 1
     while x < 10:
@@ -22,12 +22,11 @@ def main(screen):
         win.addstr(2, 2, str(x))
         win.refresh()
         x = x + 1
-	
+
     c = screen.getch()
+
 
 try:
     curses.wrapper(main)
 except KeyboardInterrupt:
-	exit()
-
-	
+    exit()

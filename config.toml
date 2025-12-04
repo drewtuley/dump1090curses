@@ -8,6 +8,7 @@ timeout = 1.0
 
 [regserver]
 base_url = "http://honest-mistake:5000"
+cache_warm = "False"
 
 [directories]
 data = "data"

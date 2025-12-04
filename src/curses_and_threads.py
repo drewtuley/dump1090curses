@@ -5,8 +5,8 @@ import time
 
 def worker(w, msg, run):
     val = 1
-    while run['run']:
-        w.addstr(1, 1, msg + ' ' + str(val))
+    while run["run"]:
+        w.addstr(1, 1, msg + " " + str(val))
         w.refresh()
         val += 1
         time.sleep(1)
@@ -15,12 +15,12 @@ def worker(w, msg, run):
 def runner(w, run):
     x = 1
     y = 1
-    while run['run']:
-        #w.addstr(y,x, '*')
+    while run["run"]:
+        # w.addstr(y,x, '*')
         w.addch(y, x, 42)
         w.refresh()
         time.sleep(0.1)
-        w.addstr(y,x, ' ')
+        w.addstr(y, x, " ")
         x += 1
         if x > 18:
             x = 1
@@ -45,14 +45,18 @@ def pong(w, run):
     y = 1
     dx = 1
     dy = 1
-    while run['run']:
-        #w.addstr(y,x, '*')
+    while run["run"]:
+        # w.addstr(y,x, '*')
         w.addch(y, x, 42)
         w.refresh()
         time.sleep(0.1)
-        w.addstr(y,x, ' ')
-        x, y, dx, dy, = move(x, y, dx, dy)
-
+        w.addstr(y, x, " ")
+        (
+            x,
+            y,
+            dx,
+            dy,
+        ) = move(x, y, dx, dy)
 
 
 def main(screen):
@@ -68,7 +72,7 @@ def main(screen):
     win.bkgd(curses.color_pair(3))
     win.box()
 
-    win.addstr(1, 1, 'hi')
+    win.addstr(1, 1, "hi")
     win.refresh()
 
     win1 = curses.newwin(10, 10, 1, 11)
@@ -87,25 +91,26 @@ def main(screen):
     win4.bkgd(curses.color_pair(3))
     win4.box()
 
-    state = {'run': True}
+    state = {"run": True}
     threads = [
-        threading.Thread(target=worker, args=(win1, 'win1', state)),
-        threading.Thread(target=worker, args=(win2, 'win2', state)),
+        threading.Thread(target=worker, args=(win1, "win1", state)),
+        threading.Thread(target=worker, args=(win2, "win2", state)),
         threading.Thread(target=runner, args=(win3, state)),
-        threading.Thread(target=pong, args=(win4, state))
+        threading.Thread(target=pong, args=(win4, state)),
     ]
     try:
         for t in threads:
             t.start()
     except:
-        win.addstr(2, 1, 'failed')
+        win.addstr(2, 1, "failed")
 
     c = screen.getch()
-    state['run'] = False
+    state["run"] = False
+
+
 try:
     curses.wrapper(main)
 except:
-    print 'hmmm'
+    print("hmmm")
 
-print 'stopping'
-
+print("stopping")
