@@ -2,6 +2,7 @@ import curses
 import logging
 import math
 import sys
+import time
 from datetime import datetime
 from functools import total_ordering
 
@@ -29,7 +30,7 @@ class Plane:
         7: ("Lat", 8),
         8: ("Long", 8),
         9: ("Nearest Location", 29),
-        10: ("Dist/ant", 9),
+        10: ("Dist/ant", 13),
         11: ("Evtdt", 12),
         12: (">15s", 5),
         13: ("Reg", 10),
@@ -84,17 +85,58 @@ class Plane:
         self.gs = 0
         self.lat = ""
         self.long = ""
-        self.nearest = "?"
-        self.from_antenna = -0.0
+        self._nearest = "?"
+        self._nearest_ts = 0
+        self._dist_from_antenna = -0.0
+        self._dist_from_antenna_ts = 0
+        self._dir_from_antenna = "???"
+        self._dir_from_antenna_ts = 0
         self.eventdate = now
         self.appeardate = now
         self.active = True
         self.equip = "?"
         self.posmsgs = 0
+        self.STALE_DISPLAY = 30
+
+
+    @property
+    def nearest(self):
+        if time.time() - self._nearest_ts > self.STALE_DISPLAY:
+            self._nearest = "?"
+        return self._nearest
+
+    @nearest.setter
+    def nearest(self, value):
+        self._nearest = value
+        self._nearest_ts = time.time()
+
+    @property
+    def dist_from_antenna(self):
+        if time.time() - self._dist_from_antenna_ts > self.STALE_DISPLAY:
+            self._dist_from_antenna = -0.0
+        return self._dist_from_antenna
+
+    @dist_from_antenna.setter
+    def dist_from_antenna(self, distance):
+        self._dist_from_antenna = distance
+        self._dist_from_antenna_ts = time.time()
+
+    @property
+    def dir_from_antenna(self):
+        if time.time() - self._dir_from_antenna_ts > (self.STALE_DISPLAY/2) and not self._dir_from_antenna.endswith("*"):
+            self._dir_from_antenna = self._dir_from_antenna+"*"
+        elif time.time() - self._dir_from_antenna_ts > self.STALE_DISPLAY:
+            self._dir_from_antenna = ""
+        return self._dir_from_antenna
+
+    @dir_from_antenna.setter
+    def dir_from_antenna(self, direction):
+        self._dir_from_antenna = direction
+        self._dir_from_antenna_ts = time.time()
 
     def __lt__(self, other):
-        x = self.from_antenna
-        y = other.from_antenna
+        x = self.dist_from_antenna
+        y = other.dist_from_antenna
         if x <= 0:
             x = MAX_POSSIBLE_RANGE
         if y <= 0:
@@ -102,7 +144,7 @@ class Plane:
         return x < y
 
     def __eq__(self, other):
-        return self.from_antenna == other.from_antenna
+        return self.dist_from_antenna == other.dist_from_antenna
 
     def show(self):
         print(
@@ -157,8 +199,10 @@ class Plane:
             8: "{0:2.2f}".format(float(self.long)) if self.long else "",
             9: self.nearest if self.nearest != "?" else "",
             10: (
-                "{0:3.1f}nm".format(self.from_antenna)
-                if self.from_antenna > -0.0
+                "{0:3.1f}nm {1:>4s}".format(
+                    self.dist_from_antenna, self.dir_from_antenna
+                )
+                if self.dist_from_antenna > -0.0
                 else ""
             ),
             11: str(self.eventdate)[11:19],
@@ -238,12 +282,19 @@ class Plane:
         """
         nearest: float = FARTHER_THAN_THE_NEAREST_LOCATION
 
-        self.from_antenna = distance_on_sphere(
-            float(self.lat),
-            float(self.long),
+        self.dist_from_antenna = distance_on_sphere(
+                float(self.lat),
+                float(self.long),
+                Plane.antenna_location[0],
+                Plane.antenna_location[1],
+            )
+        br1 = bearing(
             Plane.antenna_location[0],
             Plane.antenna_location[1],
+            float(self.lat),
+            float(self.long),
         )
+        self.dir_from_antenna = cardinal(br1)
         for location in Plane.locations:
             data = Plane.locations[location]
             distance = distance_on_sphere(
