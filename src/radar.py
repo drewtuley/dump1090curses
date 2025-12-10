@@ -83,15 +83,24 @@ def getplanes(lock, run, config):
                 if parts[0] in ("MSG", "MLAT") and parts[4] != "000000":
                     id = parts[4]
                     with lock:
-                        if id in planes:
-                            plane = planes[id]
+                        plane = None
+                        #logger.debug(f"have got {len(planes)} planes")
+                        try:
+                            if id in planes:
+                                #logger.debug("already have that plane")
+                                plane = planes[id]
+                            else:
+                                #logger.debug(f"adding new plane:{id} - {plane}")
+                                plane = Plane(id, datetime.now())
+                                registration_queue.append(id)
+                                run["session_count"] += 1
+                                planes[id] = plane
+                        except Exception as ex:
+                            logger.error(f"oops: {ex}")
+                        if plane is not None:
+                            plane.update(parts)
                         else:
-                            plane = Plane(id, datetime.now())
-                            registration_queue.append(id)
-                            run["session_count"] += 1
-                            planes[id] = plane
-
-                        plane.update(parts)
+                            logger.debug("plane doesnt exist for some reason")
                         removeplanes()
                 elif parts[0] == "MSG" and parts[4] == "000000" and int(parts[1]) == 7:
                     with lock:
@@ -127,11 +136,13 @@ def showplanes(win, lock, run):
         pos_filter = run["pos_filter"]
         debug_logging = run["debug_logging"]
         for id in sorted(planes, key=planes.__getitem__):
-            if planes[id].active and (not pos_filter or planes[id].from_antenna > 0.0):
+            if planes[id].active and (
+                not pos_filter or planes[id].dist_from_antenna > 0.0
+            ):
                 if row < ROWS - 1:
                     planes[id].showincurses(win, row)
-                    if planes[id].from_antenna > max_distance:
-                        max_distance = planes[id].from_antenna
+                    if planes[id].dist_from_antenna > max_distance:
+                        max_distance = planes[id].dist_from_antenna
 
                     row += 1
                 else:
