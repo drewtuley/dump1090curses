@@ -84,13 +84,13 @@ def getplanes(lock, run, config):
                     id = parts[4]
                     with lock:
                         plane = None
-                        logger.debug(f"have got {len(planes)} planes")
+                        #logger.debug(f"have got {len(planes)} planes")
                         try:
                             if id in planes:
-                                logger.debug("already have that plane")
+                                #logger.debug("already have that plane")
                                 plane = planes[id]
                             else:
-                                logger.debug(f"adding new plane:{id} - {plane}")
+                                #logger.debug(f"adding new plane:{id} - {plane}")
                                 plane = Plane(id, datetime.now())
                                 registration_queue.append(id)
                                 run["session_count"] += 1
