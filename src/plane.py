@@ -30,7 +30,7 @@ class Plane:
         7: ("Lat", 8),
         8: ("Long", 8),
         9: ("Nearest Location", 29),
-        10: ("Dist/ant", 13),
+        10: ("Dist/ant", 14),
         11: ("Evtdt", 12),
         12: (">15s", 5),
         13: ("Reg", 10),
@@ -83,8 +83,11 @@ class Plane:
         self.squawk = "0"
         self.track = 0
         self.gs = 0
-        self.lat = ""
-        self.long = ""
+        self._lat = ""
+        self._lat_ts = 0
+        self._long = ""
+        self._long_ts = 0
+
         self._nearest = "?"
         self._nearest_ts = 0
         self._dist_from_antenna = -0.0
@@ -98,6 +101,27 @@ class Plane:
         self.posmsgs = 0
         self.STALE_DISPLAY = 30
 
+    @property
+    def lat(self):
+        if time.time() - self._lat_ts > self.STALE_DISPLAY:
+            self._lat = ""
+        return self._lat
+
+    @lat.setter
+    def lat(self, value):
+        self._lat = value
+        self._lat_ts = time.time()
+
+    @property
+    def long(self):
+        if time.time() - self._long_ts > self.STALE_DISPLAY:
+            self._long = ""
+        return self._long
+
+    @long.setter
+    def long(self, value):
+        self._long = value
+        self._long_ts = time.time()
 
     @property
     def nearest(self):
@@ -123,8 +147,10 @@ class Plane:
 
     @property
     def dir_from_antenna(self):
-        if time.time() - self._dir_from_antenna_ts > (self.STALE_DISPLAY/2) and not self._dir_from_antenna.endswith("*"):
-            self._dir_from_antenna = self._dir_from_antenna+"*"
+        if time.time() - self._dir_from_antenna_ts > (
+            self.STALE_DISPLAY / 2
+        ) and not self._dir_from_antenna.endswith("*"):
+            self._dir_from_antenna = self._dir_from_antenna + "*"
         elif time.time() - self._dir_from_antenna_ts > self.STALE_DISPLAY:
             self._dir_from_antenna = ""
         return self._dir_from_antenna
@@ -283,11 +309,11 @@ class Plane:
         nearest: float = FARTHER_THAN_THE_NEAREST_LOCATION
 
         self.dist_from_antenna = distance_on_sphere(
-                float(self.lat),
-                float(self.long),
-                Plane.antenna_location[0],
-                Plane.antenna_location[1],
-            )
+            float(self.lat),
+            float(self.long),
+            Plane.antenna_location[0],
+            Plane.antenna_location[1],
+        )
         br1 = bearing(
             Plane.antenna_location[0],
             Plane.antenna_location[1],

@@ -25,28 +25,10 @@ from plane import Plane
 
 planes = {}
 registration_queue = []
-inactive_queue = []
 onoff = {True: "On", False: "Off"}
 
 COLS: int = 155
 ROWS: int = 28
-
-
-def removeplanes():
-    """Remove any plane with eventdate older than 30s"""
-
-    for id in planes:
-        plane = planes[id]
-        if (datetime.now() - plane.eventdate).total_seconds() > 30 and plane.active:
-            plane.active = False
-            logger.info("add plane id:" + id + " to inactive queue")
-            inactive_queue.append(id)
-
-
-def mark_all_inactive():
-    for id in planes:
-        plane = planes[id]
-        plane.active = False
 
 
 def getplanes(lock, run, config):
@@ -84,13 +66,13 @@ def getplanes(lock, run, config):
                     id = parts[4]
                     with lock:
                         plane = None
-                        #logger.debug(f"have got {len(planes)} planes")
+                        # logger.debug(f"have got {len(planes)} planes")
                         try:
                             if id in planes:
-                                #logger.debug("already have that plane")
+                                # logger.debug("already have that plane")
                                 plane = planes[id]
                             else:
-                                #logger.debug(f"adding new plane:{id} - {plane}")
+                                # logger.debug(f"adding new plane:{id} - {plane}")
                                 plane = Plane(id, datetime.now())
                                 registration_queue.append(id)
                                 run["session_count"] += 1
@@ -106,8 +88,6 @@ def getplanes(lock, run, config):
                     with lock:
                         # grungy way to clear all planes
                         logger.info("Clear all active queue")
-                        inactive_queue = []
-                        mark_all_inactive()
                 elif parts[0] == "STA":
                     id = parts[4]
                     status = parts[10]
@@ -117,7 +97,6 @@ def getplanes(lock, run, config):
                         logger.info(
                             "set id: " + id + " inactive due to dump1090 remove"
                         )
-            inactive_queue.append(id)
 
         except:
             pass
@@ -127,55 +106,68 @@ def getplanes(lock, run, config):
 def showplanes(win, lock, run):
     max_distance = 0
     while run["run"]:
-        time.sleep(0.200)
+        time.sleep(0.500)
         row = 2
         win.erase()
         Plane.showheader(win)
         # lock.acquire()
+        with lock:
+            pos_filter = run["pos_filter"]
+            debug_logging = run["debug_logging"]
+            # logger.debug(f"There are {len(planes)} planes in the list")
 
-        pos_filter = run["pos_filter"]
-        debug_logging = run["debug_logging"]
-        for id in sorted(planes, key=planes.__getitem__):
-            if planes[id].active and (
-                not pos_filter or planes[id].dist_from_antenna > 0.0
-            ):
-                if row < ROWS - 1:
-                    planes[id].showincurses(win, row)
-                    if planes[id].dist_from_antenna > max_distance:
-                        max_distance = planes[id].dist_from_antenna
+            stale_planes = []
+            for id in sorted(planes, key=planes.__getitem__):
+                this_plane = planes[id]
+                stale = (datetime.now() - this_plane.eventdate).total_seconds() > 30
+                if stale:
+                    stale_planes.append(id)
+                if (
+                    this_plane.active
+                    and (not pos_filter or this_plane.dist_from_antenna > 0.0)
+                    and not stale
+                ):
+                    if row < ROWS - 1:
+                        this_plane.showincurses(win, row)
+                        if this_plane.dist_from_antenna > max_distance:
+                            max_distance = this_plane.dist_from_antenna
 
-                    row += 1
-                else:
-                    break
+                        row += 1
+                    else:
+                        break
 
-        now = str(datetime.now())[:19]
-        current = 0
-        for id in planes:
-            if planes[id].active:
-                current += 1
+            # logger.debug(f"I have {len(stale_planes)} stale planes")
+            for id in stale_planes:
+                planes.pop(id, None)
 
-        if current > run["session_max"]:
-            run["session_max"] = len(planes)
+            now = str(datetime.now())[:19]
+            current = 0
+            for id in planes:
+                if planes[id].active:
+                    current += 1
 
-        try:
-            win.addstr(
-                ROWS - 1,
-                1,
-                "Current:{current}  Total (session):{count}  Max (session):{max}  Max Distance:{dist:3.1f}nm  NonPos Filter:{posfilter} DebugLogging:{debug}".format(
-                    current=str(current),
-                    count=str(run["session_count"]),
-                    max=str(run["session_max"]),
-                    posfilter=onoff[pos_filter],
-                    dist=max_distance,
-                    debug=debug_logging,
-                ),
-            )
-            win.addstr(ROWS - 1, COLS - 5 - len(now), now)
-        except:
-            pass
+            if current > run["session_max"]:
+                run["session_max"] = len(planes)
 
-        # lock.release()
-        win.refresh()
+            try:
+                win.addstr(
+                    ROWS - 1,
+                    1,
+                    "Current:{current}  Total (session):{count}  Max (session):{max}  Max Distance:{dist:3.1f}nm  NonPos Filter:{posfilter} DebugLogging:{debug}".format(
+                        current=str(current),
+                        count=str(run["session_count"]),
+                        max=str(run["session_max"]),
+                        posfilter=onoff[pos_filter],
+                        dist=max_distance,
+                        debug=debug_logging,
+                    ),
+                )
+                win.addstr(ROWS - 1, COLS - 5 - len(now), now)
+            except:
+                pass
+
+            # lock.release()
+            win.refresh()
 
     logger.info("exit showplanes")
 
@@ -247,20 +239,21 @@ def get_locations(regsvr_url):
 def get_planes_of_interest(regsvr_url):
     """Load my recognizeable planes from plane_of_interest table in db"""
 
-    planes = []
+    poi_planes = []
     url = "{url}/pois".format(url=regsvr_url)
     try:
         logger.info("Get planes via: {}".format(url))
         r = requests.get(url)
         if r.status_code == 200:
-            planes = r.json()
+            poi_planes = r.json()
     except Exception as ex:
         logger.error("Unable to get planes from regserver: {}".format(ex))
 
-    return planes
+    return poi_planes
 
 
 def get_registrations(lock, runstate, regsvr_url):
+
     locations = get_locations(regsvr_url)
     logger.info(f"Regs={locations}")
     if len(locations) > 0:
@@ -282,12 +275,8 @@ def get_registrations(lock, runstate, regsvr_url):
     reg_cache = {}
     logger.info("Start reg server proper")
     while runstate["run"]:
-        if len(registration_queue) > 0 or len(inactive_queue) > 0:
-            logger.debug(
-                "RegQ: {} InactiveQ: {}".format(
-                    len(registration_queue), len(inactive_queue)
-                )
-            )
+        if len(registration_queue) > 0:
+            logger.debug("RegQ: {}".format(len(registration_queue)))
         regs = copy.copy(registration_queue)
         for id in regs:
             reg, equip, curr_instance = get_registration(id, regsvr_url, reg_cache)
@@ -297,12 +286,6 @@ def get_registrations(lock, runstate, regsvr_url):
                 planes[id].observe_instance = curr_instance
                 planes[id].equip = equip
                 registration_queue.remove(id)
-
-        inactives = copy.copy(inactive_queue)
-        for id in inactives:
-            instance = planes[id].observe_instance
-            with lock:
-                inactive_queue.remove(id)
 
         time.sleep(0.0500)
     logger.info("exit get_registrations")
