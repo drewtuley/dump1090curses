@@ -201,6 +201,7 @@ def get_registration(id, regsvr_url, reg_cache):
     equip = ""
 
     if id in reg_cache.keys():
+        logger.info(f"Reg Cache entry for id:{id} = {reg_cache[id]}")
         reg = reg_cache[id][0] + "*"
         equip = reg_cache[id][1]
         instance = reg_cache[id][2]
@@ -280,11 +281,11 @@ def get_registrations(lock, runstate, regsvr_url):
         regs = copy.copy(registration_queue)
         for id in regs:
             reg, equip, curr_instance = get_registration(id, regsvr_url, reg_cache)
-            reg_cache[id] = (reg, curr_instance)
+            reg_cache[id] = (reg, equip, curr_instance)
             with lock:
                 planes[id].registration = reg
-                planes[id].observe_instance = curr_instance
                 planes[id].equip = equip
+                planes[id].observe_instance = curr_instance
                 registration_queue.remove(id)
 
         time.sleep(0.0500)
