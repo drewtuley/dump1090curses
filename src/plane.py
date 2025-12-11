@@ -29,8 +29,8 @@ class Plane:
         6: ("Speed", 7),
         7: ("Lat", 8),
         8: ("Long", 8),
-        9: ("Nearest Location", 29),
-        10: ("Dist/ant", 14),
+        9: ("Nearest Location", 32),
+        10: ("Dist/ant", 15),
         11: ("Evtdt", 12),
         12: (">15s", 5),
         13: ("Reg", 10),
@@ -225,7 +225,7 @@ class Plane:
             8: "{0:2.2f}".format(float(self.long)) if self.long else "",
             9: self.nearest if self.nearest != "?" else "",
             10: (
-                "{0:3.1f}nm {1:>4s}".format(
+                "{0:5.1f}nm {1:>4s}".format(
                     self.dist_from_antenna, self.dir_from_antenna
                 )
                 if self.dist_from_antenna > -0.0
