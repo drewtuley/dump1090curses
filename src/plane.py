@@ -78,11 +78,17 @@ class Plane:
                 self.callsign = Plane.callsigns[id][0] + "*"
         else:
             self.callsign = "?"
-        self.altitude = 0
-        self.vspeed = 0
-        self.squawk = "0"
-        self.track = 0
-        self.gs = 0
+
+        self._altitude = 0
+        self._altitude_ts = 0
+        self._vspeed = 0
+        self._vspeed_ts = 0
+        self._squawk = "0"
+        self._squawk_ts = 0
+        self._track = 0
+        self._track_ts = 0
+        self._gs = 0
+        self._gs_ts = 0
         self._lat = ""
         self._lat_ts = 0
         self._long = ""
@@ -100,6 +106,61 @@ class Plane:
         self.equip = "?"
         self.posmsgs = 0
         self.STALE_DISPLAY = 30
+
+    @property
+    def altitude(self):
+        if time.time() - self._altitude_ts > self.STALE_DISPLAY:
+            self._altitude = 0
+        return self._altitude
+
+    @altitude.setter
+    def altitude(self, value):
+        self._altitude = value
+        self._altitude_ts = time.time()
+
+    @property
+    def squawk(self):
+        if time.time() - self._squawk_ts > self.STALE_DISPLAY:
+            self._squawk = "0"
+        return self._squawk
+
+    @squawk.setter
+    def squawk(self, value):
+        self._squawk = value
+        self._squawk_ts = time.time()
+
+    @property
+    def vspeed(self):
+        if time.time() - self._vspeed_ts > self.STALE_DISPLAY:
+            self._vspeed = 0
+        return self._vspeed
+
+    @vspeed.setter
+    def vspeed(self, value):
+        self._vspeed = value
+        self._vspeed_ts = time.time()
+
+    @property
+    def track(self):
+        if time.time() - self._track_ts > self.STALE_DISPLAY:
+            self._track = 0
+        return self._track
+
+    @track.setter
+    def track(self, value):
+        self._track = value
+        self._track_ts = time.time()
+
+    @property
+    def gs(self):
+        if time.time() - self._gs_ts > self.STALE_DISPLAY:
+            self._gs = 0
+        return self._gs
+
+    @gs.setter
+    def gs(self, value):
+        self._gs = value
+        self._gs_ts = time.time()
 
     @property
     def lat(self):
