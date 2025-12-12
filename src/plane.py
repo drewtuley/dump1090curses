@@ -74,7 +74,7 @@ class Plane:
             if (datetime.now() - cachetime).total_seconds() > CACHE_EXPIRY:
                 del Plane.callsigns[id]
                 self.callsign = "?"
-            else:
+            elif not Plane.callsigns[id][0].endswith("*"):
                 self.callsign = Plane.callsigns[id][0] + "*"
         else:
             self.callsign = "?"
@@ -147,11 +147,7 @@ class Plane:
 
     @property
     def dir_from_antenna(self):
-        if time.time() - self._dir_from_antenna_ts > (
-            self.STALE_DISPLAY / 2
-        ) and not self._dir_from_antenna.endswith("*"):
-            self._dir_from_antenna = self._dir_from_antenna + "*"
-        elif time.time() - self._dir_from_antenna_ts > self.STALE_DISPLAY:
+        if time.time() - self._dir_from_antenna_ts > self.STALE_DISPLAY:
             self._dir_from_antenna = ""
         return self._dir_from_antenna
 
