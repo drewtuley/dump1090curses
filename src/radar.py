@@ -202,7 +202,10 @@ def get_registration(id, regsvr_url, reg_cache):
 
     if id in reg_cache.keys():
         logger.info(f"Reg Cache entry for id:{id} = {reg_cache[id]}")
-        reg = reg_cache[id][0] + "*"
+        if not reg_cache[id][0].endswith("*"):
+            reg = reg_cache[id][0] + "*"
+        else:
+            reg = reg_cache[id][0]
         equip = reg_cache[id][1]
         instance = reg_cache[id][2]
         logger.info("Registration {} instance {} in cache".format(reg[:-1], instance))
