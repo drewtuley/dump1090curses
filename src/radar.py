@@ -57,10 +57,13 @@ def getplanes(lock, run, config):
                 c_socket.close()
                 break
             for line in lines.strip().split("\n"):
-                logger.debug("got line:" + line.strip())
-                parts = [x.strip() for x in line.split(",")]
+                sline = line.strip()
+                if len(sline) < 1:
+                    continue
+                logger.debug("got line:" + sline)
+                parts = [x.strip() for x in sline.split(",")]
                 if len(parts) < 22:
-                    underrun = line
+                    underrun = sline
                     break
                 if parts[0] in ("MSG", "MLAT") and parts[4] != "000000":
                     id = parts[4]
