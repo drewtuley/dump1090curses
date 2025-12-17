@@ -106,7 +106,37 @@ def getplanes(lock, run, config):
     logger.info("exit getplanes")
 
 
-def showplanes(win, lock, run):
+def logwindow(win, max_row: int, max_col: int, memory_handler, run):
+    while run["run"]:
+        time.sleep(0.500)
+        win.erase()
+        win.border(
+            curses.ACS_VLINE,  # ls
+            curses.ACS_VLINE,  # rs
+            curses.ACS_HLINE,  # ts
+            curses.ACS_HLINE,  # bs
+            curses.ACS_ULCORNER,
+            curses.ACS_URCORNER,
+            curses.ACS_LLCORNER,
+            curses.ACS_LRCORNER,
+        )
+        now = str(datetime.now())[:19]
+
+        try:
+            records = memory_handler.buffer
+            for idx, record in enumerate(records[-(max_row - 2) :]):
+                msg = f"{record.levelname} {record.getMessage()}"
+                win.addstr(idx + 1, 1, msg[0 : max_col - 2])
+
+        except:
+            pass
+
+        win.refresh()
+
+    logger.info("exit logwindow")
+
+
+def showplanes(win, max_row: int, max_col: int, lock, run):
     max_distance = 0
     while run["run"]:
         time.sleep(0.500)
@@ -130,7 +160,7 @@ def showplanes(win, lock, run):
                     and (not pos_filter or this_plane.dist_from_antenna > 0.0)
                     and not stale
                 ):
-                    if row < ROWS - 1:
+                    if row < max_row - 1:
                         this_plane.showincurses(win, row)
                         if this_plane.dist_from_antenna > max_distance:
                             max_distance = this_plane.dist_from_antenna
@@ -154,7 +184,7 @@ def showplanes(win, lock, run):
 
             try:
                 win.addstr(
-                    ROWS - 1,
+                    max_row - 1,
                     1,
                     "Current:{current}  Total (session):{count}  Max (session):{max}  Max Distance:{dist:3.1f}nm  NonPos Filter:{posfilter} DebugLogging:{debug}".format(
                         current=str(current),
@@ -165,7 +195,7 @@ def showplanes(win, lock, run):
                         debug=debug_logging,
                     ),
                 )
-                win.addstr(ROWS - 1, COLS - 5 - len(now), now)
+                win.addstr(max_row - 1, max_col - 5 - len(now), now)
             except:
                 pass
 
@@ -314,18 +344,39 @@ def main(screen):
         fh.setFormatter(fmt)
         logger.addHandler(fh)
 
+        mh = logging.handlers.MemoryHandler(
+            capacity=10, flushLevel=logging.ERROR, target=None
+        )
+        mh.setFormatter(fmt)
+        logger.addHandler(mh)
+
         regsvr_url = config["regserver"]["base_url"]
 
         curses.start_color()
         curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLACK)
         curses.init_pair(2, curses.COLOR_YELLOW, curses.COLOR_BLACK)
+        curses.init_pair(3, curses.COLOR_GREEN, curses.COLOR_BLACK)
         prev_state = curses.curs_set(0)
 
         screen.refresh()
 
-        win = curses.newwin(ROWS, COLS, 0, 0)
-        win.bkgd(curses.color_pair(1))
-        win.box()
+        half_height = int(ROWS / 2)
+        main_win = curses.newwin(half_height, COLS, 0, 0)
+        main_win.bkgd(curses.color_pair(1))
+        main_win.box()
+
+        log_win = curses.newwin(half_height, COLS, half_height + 1, 0)
+        log_win.bkgd(curses.color_pair(3))
+        log_win.border(
+            curses.ACS_VLINE,  # ls
+            curses.ACS_VLINE,  # rs
+            curses.ACS_HLINE,  # ts
+            curses.ACS_HLINE,  # bs
+            curses.ACS_ULCORNER,
+            curses.ACS_URCORNER,
+            curses.ACS_LLCORNER,
+            curses.ACS_LRCORNER,
+        )
 
         runstate = {
             "run": True,
@@ -344,13 +395,19 @@ def main(screen):
             target=getplanes, args=(lock, runstate, norm_config)
         )
 
-        show = threading.Thread(target=showplanes, args=(win, lock, runstate))
+        show = threading.Thread(
+            target=showplanes, args=(main_win, half_height, int(COLS), lock, runstate)
+        )
         registration = threading.Thread(
             target=get_registrations, args=(lock, runstate, regsvr_url)
+        )
+        log_window = threading.Thread(
+            target=logwindow, args=(log_win, half_height, int(COLS), mh, runstate)
         )
         get_norm.start()
         show.start()
         registration.start()
+        log_window.start()
 
         while runstate["run"]:
             ch = screen.getch()
