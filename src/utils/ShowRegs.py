@@ -10,15 +10,15 @@ __date__ = "$07-May-2015 09:11:32$"
 import sqlite3
 
 if __name__ == "__main__":
-    conn = sqlite3.connect('data/sqlite_planes.db')
-    
+    conn = sqlite3.connect("data/sqlite_planes.db")
+
     crs = conn.cursor()
-    
-    crs.execute('select * from registration')
+
+    crs.execute("select * from registration")
     idx = 1
     for row in crs.fetchall():
         icao, reg, dt = row
-        print idx, icao, reg, dt
+        print(idx, icao, reg, dt)
         idx += 1
-        
+
     conn.close()

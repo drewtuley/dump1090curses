@@ -127,7 +127,9 @@ def logwindow(win, max_row: int, max_col: int, display_queue, win_lock, run):
             while True:
                 try:
                     record = display_queue.get(block=False)
-                    msg = logging.Formatter("%(levelname)s: [%(funcName)s] %(message)s").format(record)
+                    msg = logging.Formatter(
+                        "%(levelname)s: [%(funcName)s] %(message)s"
+                    ).format(record)
                     display_buffer.append(msg[0 : max_col - 2])
                 except queue.Empty:
                     break
