@@ -18,6 +18,7 @@ def worker(w, msg, run, lock):
 def runner(w, run, lock):
     x = 1
     y = 1
+    my, mx = w.getmaxyx()
     while run["run"]:
         with lock:
             w.addch(y, x, curses.ACS_RARROW)
@@ -26,19 +27,19 @@ def runner(w, run, lock):
         with lock:
             w.addstr(y, x, " ")
         x += 1
-        if x > 18:
+        if x > mx - 2:
             x = 1
             y += 1
-            if y > 8:
+            if y > my - 2:
                 y = 1
 
 
-def move(x, y, dx, dy):
+def move(x, y, dx, dy, mx, my):
     x += dx
-    if not 2 <= x <= 17:
+    if not 2 <= x <= mx - 3:
         dx *= -1
     y += dy
-    if not 2 <= y <= 7:
+    if not 2 <= y <= my - 3:
         dy *= -1
 
     return x, y, dx, dy
@@ -49,6 +50,8 @@ def pong(w, directions, run, lock):
     y = 1
     dx = 1
     dy = 1
+    my, mx = w.getmaxyx()
+    w.addstr(1, 1, f"my:{my},mx:{mx}")
     while run["run"]:
         ch = directions[(dx, dy)]
         with lock:
@@ -62,7 +65,7 @@ def pong(w, directions, run, lock):
             y,
             dx,
             dy,
-        ) = move(x, y, dx, dy)
+        ) = move(x, y, dx, dy, mx, my)
 
 
 def main(screen):
@@ -81,28 +84,25 @@ def main(screen):
         (1, -1): curses.ACS_URCORNER,
     }
 
-    win = curses.newwin(10, 10, 1, 1)
-    win.bkgd(curses.color_pair(3))
-    win.box()
-
-    win.addstr(1, 1, "hi")
-    win.refresh()
-
-    win1 = curses.newwin(10, 10, 1, 11)
-    win1.bkgd(curses.color_pair(1))
-    win1.box()
-
-    win2 = curses.newwin(10, 10, 1, 21)
-    win2.bkgd(curses.color_pair(2))
-    win2.box()
-
-    win3 = curses.newwin(10, 20, 1, 31)
-    win3.bkgd(curses.color_pair(4))
-    win3.box()
-
-    win4 = curses.newwin(10, 20, 1, 51)
-    win4.bkgd(curses.color_pair(3))
-    win4.box()
+    current_x = 1
+    window_specs = [
+        (10, 10, 3, "hi"),
+        (10, 10, 1, None),
+        (10, 10, 2, None),
+        (10, 25, 4, None),
+        (15, 28, 3, None),
+    ]
+    windows = []
+    for height, width, color, label in window_specs:
+        win = curses.newwin(height, width, 1, current_x)
+        win.bkgd(curses.color_pair(color))
+        win.box()
+        if label:
+            win.addstr(1, 1, label)
+        win.refresh()
+        windows.append(win)
+        current_x += width
+    win, win1, win2, win3, win4 = windows
 
     state = {"run": True}
     lock = threading.Lock()
