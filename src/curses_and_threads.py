@@ -3,24 +3,28 @@ import threading
 import time
 
 
-def worker(w, msg, run):
+def worker(w, msg, run, lock):
     val = 1
     while run["run"]:
-        w.addstr(1, 1, msg + " " + str(val))
-        w.refresh()
+        with lock:
+            w.addstr(1, 1, msg + " " + str(val))
+            w.refresh()
         val += 1
+        if val > 999:
+            val = 1
         time.sleep(1)
 
 
-def runner(w, run):
+def runner(w, run, lock):
     x = 1
     y = 1
     while run["run"]:
-        # w.addstr(y,x, '*')
-        w.addch(y, x, 42)
-        w.refresh()
+        with lock:
+            w.addch(y, x, curses.ACS_RARROW)
+            w.refresh()
         time.sleep(0.1)
-        w.addstr(y, x, " ")
+        with lock:
+            w.addstr(y, x, " ")
         x += 1
         if x > 18:
             x = 1
@@ -31,26 +35,28 @@ def runner(w, run):
 
 def move(x, y, dx, dy):
     x += dx
-    if x > 17 or x < 2:
+    if not 2 <= x <= 17:
         dx *= -1
     y += dy
-    if y > 7 or y < 2:
+    if not 2 <= y <= 7:
         dy *= -1
 
-    return (x, y, dx, dy)
+    return x, y, dx, dy
 
 
-def pong(w, run):
+def pong(w, directions, run, lock):
     x = 1
     y = 1
     dx = 1
     dy = 1
     while run["run"]:
-        # w.addstr(y,x, '*')
-        w.addch(y, x, 42)
-        w.refresh()
+        ch = directions[(dx, dy)]
+        with lock:
+            w.addch(y, x, ch)
+            w.refresh()
         time.sleep(0.1)
-        w.addstr(y, x, " ")
+        with lock:
+            w.addstr(y, x, " ")
         (
             x,
             y,
@@ -67,6 +73,13 @@ def main(screen):
     curses.init_pair(4, curses.COLOR_RED, curses.COLOR_BLACK)
     curses.curs_set(0)
     screen.refresh()
+
+    direction_chars = {
+        (1, 1): curses.ACS_LRCORNER,
+        (-1, 1): curses.ACS_LLCORNER,
+        (-1, -1): curses.ACS_ULCORNER,
+        (1, -1): curses.ACS_URCORNER,
+    }
 
     win = curses.newwin(10, 10, 1, 1)
     win.bkgd(curses.color_pair(3))
@@ -92,11 +105,12 @@ def main(screen):
     win4.box()
 
     state = {"run": True}
+    lock = threading.Lock()
     threads = [
-        threading.Thread(target=worker, args=(win1, "win1", state)),
-        threading.Thread(target=worker, args=(win2, "win2", state)),
-        threading.Thread(target=runner, args=(win3, state)),
-        threading.Thread(target=pong, args=(win4, state)),
+        threading.Thread(target=worker, args=(win1, "win1", state, lock)),
+        threading.Thread(target=worker, args=(win2, "win2", state, lock)),
+        threading.Thread(target=runner, args=(win3, state, lock)),
+        threading.Thread(target=pong, args=(win4, direction_chars, state, lock)),
     ]
     try:
         for t in threads:
