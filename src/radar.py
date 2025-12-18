@@ -13,10 +13,12 @@ import copy
 import curses
 import logging
 import logging.handlers
+import queue
 import socket
 import sys
 import threading
 import time
+from collections import deque
 from datetime import datetime
 
 import requests
@@ -106,101 +108,107 @@ def getplanes(lock, run, config):
     logger.info("exit getplanes")
 
 
-def logwindow(win, max_row: int, max_col: int, memory_handler, run):
+def logwindow(win, max_row: int, max_col: int, display_queue, win_lock, run):
+    display_buffer = deque(maxlen=max_row - 2)
     while run["run"]:
         time.sleep(0.500)
-        win.erase()
-        win.border(
-            curses.ACS_VLINE,  # ls
-            curses.ACS_VLINE,  # rs
-            curses.ACS_HLINE,  # ts
-            curses.ACS_HLINE,  # bs
-            curses.ACS_ULCORNER,
-            curses.ACS_URCORNER,
-            curses.ACS_LLCORNER,
-            curses.ACS_LRCORNER,
-        )
-        now = str(datetime.now())[:19]
+        with win_lock:
+            win.erase()
+            win.border(
+                curses.ACS_VLINE,  # ls
+                curses.ACS_VLINE,  # rs
+                curses.ACS_HLINE,  # ts
+                curses.ACS_HLINE,  # bs
+                curses.ACS_ULCORNER,
+                curses.ACS_URCORNER,
+                curses.ACS_LLCORNER,
+                curses.ACS_LRCORNER,
+            )
+            while True:
+                try:
+                    record = display_queue.get(block=False)
+                    msg = logging.Formatter("%(levelname)s: [%(funcName)s] %(message)s").format(record)
+                    display_buffer.append(msg[0 : max_col - 2])
+                except queue.Empty:
+                    break
+            try:
+                win.addstr(1, 1, str(len(display_buffer)))
+                for idx, message in enumerate(list(display_buffer)):
+                    win.addstr(idx + 1, 1, message)
+            except:
+                pass
 
-        try:
-            records = memory_handler.buffer
-            for idx, record in enumerate(records[-(max_row - 2) :]):
-                msg = f"{record.levelname} {record.getMessage()}"
-                win.addstr(idx + 1, 1, msg[0 : max_col - 2])
-
-        except:
-            pass
-
-        win.refresh()
+            win.refresh()
 
     logger.info("exit logwindow")
 
 
-def showplanes(win, max_row: int, max_col: int, lock, run):
+def showplanes(win, max_row: int, max_col: int, lock, win_lock, run):
     max_distance = 0
     while run["run"]:
         time.sleep(0.500)
         row = 2
-        win.erase()
-        Plane.showheader(win)
-        # lock.acquire()
-        with lock:
-            pos_filter = run["pos_filter"]
-            debug_logging = run["debug_logging"]
-            # logger.debug(f"There are {len(planes)} planes in the list")
+        with win_lock:
+            win.erase()
+            Plane.showheader(win)
+            # lock.acquire()
+            with lock:
+                pos_filter = run["pos_filter"]
+                debug_logging = run["debug_logging"]
+                # logger.debug(f"There are {len(planes)} planes in the list")
 
-            stale_planes = []
-            for id in sorted(planes, key=planes.__getitem__):
-                this_plane = planes[id]
-                stale = (datetime.now() - this_plane.eventdate).total_seconds() > 30
-                if stale:
-                    stale_planes.append(id)
-                if (
-                    this_plane.active
-                    and (not pos_filter or this_plane.dist_from_antenna > 0.0)
-                    and not stale
-                ):
-                    if row < max_row - 1:
-                        this_plane.showincurses(win, row)
-                        if this_plane.dist_from_antenna > max_distance:
-                            max_distance = this_plane.dist_from_antenna
+                stale_planes = []
+                for id in sorted(planes, key=planes.__getitem__):
+                    this_plane = planes[id]
+                    stale = (datetime.now() - this_plane.eventdate).total_seconds() > 30
+                    if stale:
+                        stale_planes.append(id)
+                    if (
+                        this_plane.active
+                        and (not pos_filter or this_plane.dist_from_antenna > 0.0)
+                        and not stale
+                    ):
+                        if row < max_row - 1:
+                            this_plane.showincurses(win, row)
+                            if this_plane.dist_from_antenna > max_distance:
+                                max_distance = this_plane.dist_from_antenna
 
-                        row += 1
-                    else:
-                        break
+                            row += 1
+                        else:
+                            break
 
-            # logger.debug(f"I have {len(stale_planes)} stale planes")
-            for id in stale_planes:
-                planes.pop(id, None)
+                # logger.debug(f"I have {len(stale_planes)} stale planes")
+                for id in stale_planes:
+                    planes.pop(id, None)
 
-            now = str(datetime.now())[:19]
-            current = 0
-            for id in planes:
-                if planes[id].active:
-                    current += 1
+                now = str(datetime.now())[:19]
+                current = 0
+                for id in planes:
+                    if planes[id].active:
+                        current += 1
 
-            if current > run["session_max"]:
-                run["session_max"] = len(planes)
+                if current > run["session_max"]:
+                    run["session_max"] = len(planes)
 
-            try:
-                win.addstr(
-                    max_row - 1,
-                    1,
-                    "Current:{current}  Total (session):{count}  Max (session):{max}  Max Distance:{dist:3.1f}nm  NonPos Filter:{posfilter} DebugLogging:{debug}".format(
-                        current=str(current),
-                        count=str(run["session_count"]),
-                        max=str(run["session_max"]),
-                        posfilter=onoff[pos_filter],
-                        dist=max_distance,
-                        debug=debug_logging,
-                    ),
-                )
-                win.addstr(max_row - 1, max_col - 5 - len(now), now)
-            except:
-                pass
+                try:
+                    win.addstr(
+                        max_row - 1,
+                        1,
+                        "Current:{current}  Total (session):{count}  Max (session):{max}  Max Distance:{dist:3.1f}nm  NonPos Filter:{posfilter} DebugLogging:{debug}".format(
+                            current=str(current),
+                            count=str(run["session_count"]),
+                            max=str(run["session_max"]),
+                            posfilter=onoff[pos_filter],
+                            dist=max_distance,
+                            debug=debug_logging,
+                        ),
+                    )
+                    win.addstr(max_row - 1, max_col - 5 - len(now), now)
+                except:
+                    pass
 
-            # lock.release()
-            win.refresh()
+                # lock.release()
+                win.refresh()
 
     logger.info("exit showplanes")
 
@@ -332,7 +340,11 @@ def main(screen):
     with open("config.toml", "rb") as fd:
         config = tomllib.load(fd)
 
+        log_queue = queue.Queue(-1)
+        qh = logging.handlers.QueueHandler(log_queue)
+
         logger.setLevel(logging.DEBUG)
+        logger.addHandler(qh)
         fname = "{}/{}".format(
             config["directories"]["log"], config["logging"]["logname"]
         )
@@ -343,12 +355,6 @@ def main(screen):
         fmt = logging.Formatter("%(asctime)s %(levelname)s [%(funcName)s] %(message)s")
         fh.setFormatter(fmt)
         logger.addHandler(fh)
-
-        mh = logging.handlers.MemoryHandler(
-            capacity=10, flushLevel=logging.ERROR, target=None
-        )
-        mh.setFormatter(fmt)
-        logger.addHandler(mh)
 
         regsvr_url = config["regserver"]["base_url"]
 
@@ -367,16 +373,6 @@ def main(screen):
 
         log_win = curses.newwin(half_height, COLS, half_height + 1, 0)
         log_win.bkgd(curses.color_pair(3))
-        log_win.border(
-            curses.ACS_VLINE,  # ls
-            curses.ACS_VLINE,  # rs
-            curses.ACS_HLINE,  # ts
-            curses.ACS_HLINE,  # bs
-            curses.ACS_ULCORNER,
-            curses.ACS_URCORNER,
-            curses.ACS_LLCORNER,
-            curses.ACS_LRCORNER,
-        )
 
         runstate = {
             "run": True,
@@ -385,24 +381,27 @@ def main(screen):
             "pos_filter": False,
             "debug_logging": logger.isEnabledFor(logging.DEBUG),
         }
-        lock = threading.Lock()
+        reg_lock = threading.Lock()
+        display_lock = threading.Lock()
         norm_config = {
             "host": config["dump1090"]["host"],
             "port": int(config["dump1090"]["port"]),
             "timeout": float(config["dump1090"]["timeout"]),
         }
         get_norm = threading.Thread(
-            target=getplanes, args=(lock, runstate, norm_config)
+            target=getplanes, args=(reg_lock, runstate, norm_config)
         )
 
         show = threading.Thread(
-            target=showplanes, args=(main_win, half_height, int(COLS), lock, runstate)
+            target=showplanes,
+            args=(main_win, half_height, int(COLS), reg_lock, display_lock, runstate),
         )
         registration = threading.Thread(
-            target=get_registrations, args=(lock, runstate, regsvr_url)
+            target=get_registrations, args=(reg_lock, runstate, regsvr_url)
         )
         log_window = threading.Thread(
-            target=logwindow, args=(log_win, half_height, int(COLS), mh, runstate)
+            target=logwindow,
+            args=(log_win, half_height, int(COLS), log_queue, display_lock, runstate),
         )
         get_norm.start()
         show.start()
