@@ -99,8 +99,8 @@ def pong(w, directions, run, lock):
             )
             w.refresh()
         time.sleep(0.1)
-        # with lock:
-        #     w.addstr(y, x, " ")
+        with lock:
+            w.addstr(y, x, " ")
 
 
 def main(screen):
