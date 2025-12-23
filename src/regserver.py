@@ -2,20 +2,13 @@ import json
 import tomllib
 from datetime import datetime
 
-import requests
-import urllib3.contrib.pyopenssl
-from flask import Flask
-from flask import request
+from flask import Flask, request, Blueprint, current_app, jsonify
+from sqlalchemy import text
 
-from PyRadar import Location
-from PyRadar import ObservationLog
-from PyRadar import PlaneOfInterest
-from PyRadar import PyRadar
-from PyRadar import Registration
+from PyRadar import Location, PyRadar, Registration, PlaneOfInterest, ObservationLog
 
 
 class RegServer(Flask):
-    fr24_url = None
     reg_cache = {}
     loc_cache = {}
     cache_warm = False
@@ -23,9 +16,6 @@ class RegServer(Flask):
 
     def set_db(self, filename):
         self.db_filename = filename
-
-    def set_fr24_url(self, url):
-        self.fr24_url = url
 
     def set_pyradar(self, pyradar):
         self.pyradar = pyradar
@@ -37,11 +27,51 @@ class RegServer(Flask):
         self.cache_warm = state
 
 
-app = RegServer(__name__)
+health_bp = Blueprint("health", __name__)
 
 
-@app.route("/places", methods=["GET"])
+@health_bp.route("/health", methods=["GET"])
+def health():
+    app = current_app
+
+    # Basic structural checks
+    if not getattr(app, "pyradar", None):
+        app.logger.error("health: pyradar missing")
+        return jsonify(status="fail", detail="pyradar missing"), 503
+
+    # Check DB connectivity with a lightweight query
+    try:
+        session = app.pyradar.get_db_session()
+        # lightweight query; SQLAlchemy 1.4+ supports text()
+        session.execute(text("SELECT 1"))
+    except Exception as e:
+        app.logger.exception("health: DB check failed")
+        return jsonify(status="fail", detail="db error"), 503
+    finally:
+        try:
+            session.close()
+        except Exception:
+            pass
+
+    # Optional checks (uncomment if you want them)
+    # try:
+    #     # ensure log dir exists and is writable
+    #     logdir = app.pyradar.config["directories"]["log"]
+    #     open(f"{logdir}/.healthwrite", "w").close()
+    #     os.remove(f"{logdir}/.healthwrite")
+    # except Exception:
+    #     app.logger.exception("health: log dir not writable")
+    #     return jsonify(status="fail", detail="logdir not writable"), 503
+
+    return jsonify(status="ok"), 200
+
+
+places_bp = Blueprint("places", __name__)
+
+
+@places_bp.route("/places", methods=["GET"])
 def places():
+    app = current_app
     if len(app.loc_cache) == 0:
         app.loc_cache = {}
         session = app.pyradar.get_db_session()
@@ -51,8 +81,12 @@ def places():
     return json.dumps(app.loc_cache)
 
 
-@app.route("/pois", methods=["GET"])
+pois_bp = Blueprint("pois", __name__)
+
+
+@pois_bp.route("/pois", methods=["GET"])
 def pois():
+    app = current_app
     session = app.pyradar.get_db_session()
     pois = session.query(PlaneOfInterest)
     ret = []
@@ -61,8 +95,12 @@ def pois():
     return json.dumps(ret)
 
 
-@app.route("/search", methods=["GET"])
+search_bp = Blueprint("search", __name__)
+
+
+@search_bp.route("/search", methods=["GET"])
 def search():
+    app = current_app
     search_icao_code = request.args.get("icao_code", "").upper()
     app.logger.info("search for {}".format(search_icao_code))
     ret = {}
@@ -105,55 +143,33 @@ def search():
 
         else:
             app.logger.debug("not in cache or db")
-            geturl = app.fr24_url.format(str(search_icao_code))
-            app.logger.debug("get from fr24 via {}".format(geturl))
-            response = requests.get(geturl)
-            retjson = response.json()
-            app.logger.debug(retjson)
-            if "results" in retjson and len(retjson["results"]) > 0:
-                try:
-                    reg = retjson["results"][0]["id"]
-                    equip = None
-                    for result in retjson["results"]:
-                        if "detail" in result and "equip" in result["detail"]:
-                            equip = result["detail"]["equip"]
-                            if equip is not None:
-                                break
-                    if equip is None:
-                        equip = "UNK"
-                    app.reg_cache[search_icao_code] = (reg, equip)
-                    ret = {"registration": reg, "equip": equip}
-                    app.logger.debug(ret)
-                    new_reg = Registration("regserver")
-                    new_reg.parse(search_icao_code, reg, str(datetime.now()), equip)
-                    app.logger.debug("Add new reg {}".format(new_reg))
-                    session.add(new_reg)
-                    session.commit()
-                except Exception as ex:
-                    app.logger.debug(
-                        "unable to update DB for ICAO code {}: {}".format(
-                            search_icao_code, ex
-                        )
-                    )
-                    pass
 
     return json.dumps(ret)
 
 
-if __name__ == "__main__":
-    with open("config.toml", "rb") as cf:
+def create_app(config_path="config.toml"):
+    app = RegServer(__name__)
+    with open(config_path, "rb") as cf:
         config = tomllib.load(cf)
         app.set_cache_warm(config["regserver"]["cache_warm"])
 
-    fr24_url = config["fr24"]["api"]
-    app.set_fr24_url(fr24_url)
-    urllib3.contrib.pyopenssl.inject_into_urllib3()
+    app.register_blueprint(places_bp)
+    app.register_blueprint(pois_bp)
+    app.register_blueprint(search_bp)
+    app.register_blueprint(health_bp)
 
     pyradar = PyRadar()
-    pyradar.set_config("config.toml")
+    pyradar.set_config(config_path)
     pyradar.set_logger(pyradar.config["directories"]["log"] + "/regserver.log")
     app.set_pyradar(pyradar)
     app.set_logger(pyradar.logger)
-    app.logger.info("RegServer starting")
+    app.logger.info("started")
+    for rule in app.url_map.iter_rules():
+        app.logger.info("ROUTE %s %s", rule.endpoint, rule.rule)
 
-    app.run(debug=True, host="0.0.0.0", port="5001")
+    return app
+
+
+if __name__ == "__main__":
+    app = create_app()
+    app.run(debug=True, host="0.0.0.0", port=5001)

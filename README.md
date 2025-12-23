@@ -19,3 +19,6 @@ source venv/bin/activate
 python3 scripts/run_radar.py
 ```
 
+## regserver
+The regserver is now containerised.
+See `Makefile` for build instructions
