@@ -1,4 +1,5 @@
 import json
+import os
 import tomllib
 from datetime import datetime
 
@@ -9,9 +10,6 @@ from PyRadar import Location, PyRadar, Registration, PlaneOfInterest, Observatio
 
 
 class RegServer(Flask):
-    reg_cache = {}
-    loc_cache = {}
-    cache_warm = False
     logger = None
 
     def set_db(self, filename):
@@ -22,9 +20,6 @@ class RegServer(Flask):
 
     def set_logger(self, logger):
         self.logger = logger
-
-    def set_cache_warm(self, state):
-        self.cache_warm = state
 
 
 health_bp = Blueprint("health", __name__)
@@ -53,15 +48,14 @@ def health():
         except Exception:
             pass
 
-    # Optional checks (uncomment if you want them)
-    # try:
-    #     # ensure log dir exists and is writable
-    #     logdir = app.pyradar.config["directories"]["log"]
-    #     open(f"{logdir}/.healthwrite", "w").close()
-    #     os.remove(f"{logdir}/.healthwrite")
-    # except Exception:
-    #     app.logger.exception("health: log dir not writable")
-    #     return jsonify(status="fail", detail="logdir not writable"), 503
+    try:
+        # ensure log dir exists and is writable
+        logdir = app.pyradar.config["directories"]["log"]
+        open(f"{logdir}/.healthwrite", "w").close()
+        os.remove(f"{logdir}/.healthwrite")
+    except Exception:
+        app.logger.exception("health: log dir not writable")
+        return jsonify(status="fail", detail="logdir not writable"), 503
 
     return jsonify(status="ok"), 200
 
@@ -72,13 +66,12 @@ places_bp = Blueprint("places", __name__)
 @places_bp.route("/places", methods=["GET"])
 def places():
     app = current_app
-    if len(app.loc_cache) == 0:
-        app.loc_cache = {}
-        session = app.pyradar.get_db_session()
-        locs = session.query(Location)
-        for loc in locs:
-            app.loc_cache[loc.name] = (loc.latitude, loc.longitude)
-    return json.dumps(app.loc_cache)
+    session = app.pyradar.get_db_session()
+    locs = session.query(Location)
+    ret = {}
+    for loc in locs:
+        ret[loc.name] = (loc.latitude, loc.longitude)
+    return json.dumps(ret)
 
 
 pois_bp = Blueprint("pois", __name__)
@@ -105,44 +98,20 @@ def search():
     app.logger.info("search for {}".format(search_icao_code))
     ret = {}
     session = app.pyradar.get_new_db_session()
-    app.logger.info("Cache warm is set to {}".format(app.cache_warm))
-    if len(app.reg_cache) == 0 and app.cache_warm is True:
-        # get all regs
-        app.reg_cache = {}
-        app.logger.info("Warming empty cache")
-        regs = session.query(Registration)
-        for reg in regs:
-            app.reg_cache[reg.icao_code] = (reg.registration, reg.equip)
-        app.logger.info("Loaded {} regs into cache".format(len(app.reg_cache)))
-    if search_icao_code in app.reg_cache:
-        reg, equip = app.reg_cache[search_icao_code]
-        app.logger.debug("Cache hit for {}={}".format(search_icao_code, reg))
-        observation_log = list()
-        observations = (
-            session.query(ObservationLog.event_time)
-            .filter_by(icao_code=search_icao_code)
-            .all()
-        )
-        for obv in observations:
-            observation_log.append("{}".format(obv[0]))
-        ret = {"registration": reg, "equip": equip, "observation_log": observation_log}
+    reg = session.query(Registration).filter_by(icao_code=search_icao_code).first()
+    app.logger.debug(
+        "loaded reg {0} from DB for icao {1}".format(reg, search_icao_code)
+    )
+    if reg is not None:
+        ret = {"registration": reg.registration, "equip": reg.equip}
+
+        log = ObservationLog()
+        log.log_event(search_icao_code, str(datetime.now()))
+        session.add(log)
+        session.commit()
+
     else:
-        reg = session.query(Registration).filter_by(icao_code=search_icao_code).first()
-        app.logger.debug(
-            "loaded reg {0} from DB for icao {1}".format(reg, search_icao_code)
-        )
-        if reg is not None:
-            ret = {"registration": reg.registration, "equip": reg.equip}
-            # update the cache
-            app.reg_cache[search_icao_code] = (reg.registration, reg.equip)
-
-            log = ObservationLog()
-            log.log_event(search_icao_code, str(datetime.now()))
-            session.add(log)
-            session.commit()
-
-        else:
-            app.logger.debug("not in cache or db")
+        app.logger.debug("not in db")
 
     return json.dumps(ret)
 
@@ -151,7 +120,6 @@ def create_app(config_path="config.toml"):
     app = RegServer(__name__)
     with open(config_path, "rb") as cf:
         config = tomllib.load(cf)
-        app.set_cache_warm(config["regserver"]["cache_warm"])
 
     app.register_blueprint(places_bp)
     app.register_blueprint(pois_bp)
