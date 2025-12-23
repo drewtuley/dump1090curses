@@ -5,8 +5,8 @@ charset-normalizer==3.4.4
 click==8.3.1
 expiringdict==1.2.2
 Flask==3.1.2
-gunicorn>=20.0
 greenlet==3.3.0
+gunicorn>=20.0
 idna==3.11
 itsdangerous==2.2.0
 Jinja2==3.1.6
