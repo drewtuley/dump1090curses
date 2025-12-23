@@ -584,7 +584,7 @@ def init():
 
 if __name__ == "__main__":
     pyradar = PyRadar()
-    pyradar.set_config("dump1090curses.props", "dump1090curses.local.props")
+    pyradar.set_config("config.toml")
     pyradar.set_logger(pyradar.config["directories"]["log"] + "/regedit.log")
 
     pyradar.logger.debug("start")
