@@ -79,15 +79,15 @@ class Plane:
         else:
             self.callsign = "?"
 
-        self._altitude = 0
+        self._altitude = -1
         self._altitude_ts = 0
-        self._vspeed = 0
+        self._vspeed = "---"
         self._vspeed_ts = 0
-        self._squawk = "0"
+        self._squawk = "----"
         self._squawk_ts = 0
-        self._track = 0
+        self._track = -1
         self._track_ts = 0
-        self._gs = 0
+        self._gs = -1
         self._gs_ts = 0
         self._lat = ""
         self._lat_ts = 0
@@ -110,8 +110,8 @@ class Plane:
     @property
     def altitude(self):
         if time.time() - self._altitude_ts > self.STALE_DISPLAY:
-            self._altitude = 0
-        return self._altitude
+            self._altitude = -1
+        return "{0:>5d}".format(self._altitude) if self._altitude > -1 else "-----"
 
     @altitude.setter
     def altitude(self, value):
@@ -121,19 +121,19 @@ class Plane:
     @property
     def squawk(self):
         if time.time() - self._squawk_ts > self.STALE_DISPLAY:
-            self._squawk = "0"
+            self._squawk = "----"
         return self._squawk
 
     @squawk.setter
     def squawk(self, value):
-        self._squawk = value
+        self._squawk = str(value)
         self._squawk_ts = time.time()
 
     @property
     def vspeed(self):
         if time.time() - self._vspeed_ts > self.STALE_DISPLAY:
-            self._vspeed = 0
-        return self._vspeed
+            self._vspeed = "---"
+        return "{0:d}".format(self._vspeed) if self._vspeed != "---" else self._vspeed
 
     @vspeed.setter
     def vspeed(self, value):
@@ -143,8 +143,8 @@ class Plane:
     @property
     def track(self):
         if time.time() - self._track_ts > self.STALE_DISPLAY:
-            self._track = 0
-        return self._track
+            self._track = -1
+        return "{0:03d}".format(self._track) if self._track > -1 else "---"
 
     @track.setter
     def track(self, value):
@@ -154,8 +154,8 @@ class Plane:
     @property
     def gs(self):
         if time.time() - self._gs_ts > self.STALE_DISPLAY:
-            self._gs = 0
-        return self._gs
+            self._gs = -1
+        return "{0:03d}".format(self._gs) if self._gs > -1 else "---"
 
     @gs.setter
     def gs(self, value):
@@ -231,11 +231,11 @@ class Plane:
 
     def show(self):
         print(
-            "Id=%s callsign=%s squawk=%04d alt=%s track=%s gs=%s lat=%s long=%s"
+            "Id=%s callsign=%s squawk=%04s alt=%s track=%s gs=%s lat=%s long=%s"
             % (
                 self.id,
                 self.callsign,
-                int(self.squawk),
+                self.squawk,
                 self.altitude,
                 self.track,
                 self.gs,
@@ -273,11 +273,11 @@ class Plane:
         data = {
             0: self.id,
             1: self.callsign,
-            2: "{0:04d}".format(int(self.squawk)),
-            3: str(self.altitude),
-            4: str(self.vspeed),
-            5: "{0:03d}".format(int(self.track)),
-            6: "{0:03d}".format(int(self.gs)),
+            2: self.squawk,
+            3: self.altitude,
+            4: self.vspeed,
+            5: self.track,
+            6: self.gs,
             7: "{0:2.2f}".format(float(self.lat)) if self.lat else "",
             8: "{0:2.2f}".format(float(self.long)) if self.long else "",
             9: self.nearest if self.nearest != "?" else "",
