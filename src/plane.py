@@ -122,7 +122,11 @@ class Plane:
     def squawk(self):
         if time.time() - self._squawk_ts > self.STALE_DISPLAY:
             self._squawk = "----"
-        return self._squawk
+        return (
+            "{0:04d}".format(int(self._squawk))
+            if self._squawk != "----"
+            else self._squawk
+        )
 
     @squawk.setter
     def squawk(self, value):
