@@ -20,6 +20,7 @@ import threading
 import time
 from collections import deque
 from datetime import datetime
+from _version import __version__
 
 import requests
 
@@ -196,15 +197,17 @@ def showplanes(win, max_row: int, max_col: int, lock, win_lock, run):
                     win.addstr(
                         max_row - 1,
                         1,
-                        "Current:{current}  Total (session):{count}  Max (session):{max}  Max Distance:{dist:3.1f}nm  NonPos Filter:{posfilter} DebugLogging:{debug}".format(
+                        "Current:{current}  Total (session):{count}  Max (session):{max}  Max Distance:{dist:3.1f}nm  NPF:{posfilter} DL:{debug}  v:{version}".format(
                             current=str(current),
                             count=str(run["session_count"]),
                             max=str(run["session_max"]),
                             posfilter=onoff[pos_filter],
                             dist=max_distance,
                             debug=debug_logging,
+                            version=__version__,
                         ),
                     )
+
                     win.addstr(max_row - 1, max_col - 5 - len(now), now)
                 except:
                     pass
