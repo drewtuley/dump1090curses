@@ -18,5 +18,5 @@ requests==2.32.5
 SQLAlchemy==2.0.44
 toml==0.10.2
 typing_extensions==4.15.0
-urllib3==2.6.0
+urllib3==2.6.3
 Werkzeug==3.1.4
