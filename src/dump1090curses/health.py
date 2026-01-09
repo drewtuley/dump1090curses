@@ -30,7 +30,7 @@ def post_to_slack(msg):
         print("{0}: Failed to post to slack: {1}".format(str(datetime.now())[:19], ex))
 
 
-with open("config.toml") as f:
+with open("config.toml", "rb") as f:
     config = tomllib.load(f)
 
     slack_url = config["slack"]["url"]
