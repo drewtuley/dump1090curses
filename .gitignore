@@ -13,3 +13,4 @@ dump1090curses.local.props
 *.props
 antonakis/
 /.validate_venv
+src/dump1090curses/__pycache__/

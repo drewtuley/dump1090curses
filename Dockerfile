@@ -47,8 +47,8 @@ RUN python -m pip install --upgrade pip \
  && rm -rf /wheels
 
 # Copy app source
-COPY src/regserver.py  /app
-COPY src/PyRadar.py /app
+COPY src/dump1090curses/regserver.py  /app
+COPY src/dump1090curses/PyRadar.py /app
 
 # Make sure files owned by non-root user
 RUN chown -R $APP_USER:$APP_USER /app

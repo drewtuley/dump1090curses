@@ -10,7 +10,7 @@ BEHAVE       := $(VENV)/bin/behave
 
 REQ_DEV      ?= requirements-dev.txt
 
-WAIT_SCRIPT  := ./scripts/wait-for-regserver-health.sh
+WAIT_SCRIPT  := src/dump1090curses/wait-for-regserver-health.sh
 BASE_URL     := http://localhost:5001/
 CHECK_URL    := $(BASE_URL)/health
 

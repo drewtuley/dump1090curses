@@ -10,7 +10,8 @@ __date__ = "$06-May-2015 09:27:35$"
 import tomllib
 import os
 
-if __name__ == "__main__":
+
+def main() -> None:
     home = os.getenv("HOME")
     if len(home) > 0:
         dump1090 = home + "/git/dump1090curses"
@@ -41,7 +42,7 @@ if __name__ == "__main__":
             if not os.access(logdir, os.R_OK):
                 os.mkdir(logdir)
 
-            script = "src/radar.py"
+            script = "src/dump1090curses/radar.py"
             lines = 23
             with os.popen("tput lines") as fd:
                 for line in fd:
@@ -53,3 +54,7 @@ if __name__ == "__main__":
             else:
                 print("Error: unable to execute " + script)
                 exit(1)
+
+
+if __name__ == "__main__":
+    main()

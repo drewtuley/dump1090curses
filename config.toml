@@ -19,3 +19,4 @@ dbname = "planes.db"
 logname = "plane.log"
 scrapelog = "scrape_"
 
+
